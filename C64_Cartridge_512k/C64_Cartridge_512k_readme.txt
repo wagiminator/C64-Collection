@@ -1,0 +1,1 @@
+512k MagicDesk compatible Cartridge for Commodore C64 based on the work of Marko Šolajić (https://github.com/msolajic/c64-magic-desk-512k) and Zzarko (https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/).

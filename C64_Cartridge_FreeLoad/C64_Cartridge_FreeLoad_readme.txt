@@ -1,0 +1,1 @@
+The FreeLoad cartridge is a simple clone of an Epyx Fastload cartridge, offering a system reset button, a file access activity LED and a disable switch. For more information visit http://www.sys64738.net/ddifl/ddifl.htm.
