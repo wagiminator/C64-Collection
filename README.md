@@ -7,6 +7,12 @@ C64 SD-card adapter and floppy disk drive emulator based on the LarsP-design (ht
 
 ![IMG_20191208_124215_x.jpg](https://image.easyeda.com/pullimage/qJaJaefLPbym2Xr0pGQITwmtaWunRjclIwgd0WJJ.jpeg)
 
+# Tapuino
+
+C64 Tape Emulator based using an Atmega328p based on the design and firmware by Sweetlilmre (https://github.com/sweetlilmre/tapuino). Put your TAP-files on an SD-Card and plug the device in your good old Commodore.
+
+![IMG_20200818_185237_x.jpg](https://image.easyeda.com/pullimage/KNt2mD6XZ4jyFXfjP4JhYUnld9KVl93xVO71qzal.jpeg)
+
 # xu1541
 
 1541 floppy disk drive to USB adapter based on the designs by Till Harbaum and Spiro R. Trikaliotis. For more information visit https://spiro.trikaliotis.net/xu1541.
