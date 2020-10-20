@@ -27,10 +27,11 @@ C64 keyboard to USB adapter based on the design by Mikkel Holm Olsen (https://sy
 
 # SwinSID nano
 
-SID replacement board based on the design by Swinkel. For more information visit http://www.swinkels.tvtom.pl/swinsid/ and https://www.forum64.de/index.php?thread/36481-swinsid-atmega88/.
+Replacement board for the legendary soundchip of the Commodore C64 based on the design by Swinkels. For more information visit http://www.swinkels.tvtom.pl/swinsid/ and https://www.forum64.de/index.php?thread/36481-swinsid-atmega88/.
+
+Project Video: https://youtu.be/UqjzCAr04dE
 
 ![IMG_20191027_143731_x.jpg](https://image.easyeda.com/pullimage/pSJpJqUH2JhHG7IeqL9Pchzhtv8opgAGlQ0MtI53.jpeg)
-
 ![IMG_20191130_133713_x.jpg](https://image.easyeda.com/pullimage/UGbd6wxr0Xs3GjYgJ0a49a94Zua4gGWiOodWjakG.jpeg)
 
 # 8k Cartridge
