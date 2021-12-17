@@ -21,6 +21,9 @@ Sometimes the image file is in CRT format. The [VICE](https://sourceforge.net/pr
 cartconv -i input.crt -o output.bin
 ```
 
+# Setting the DIP Switches
+Depending on the start address of the program on the (E)EPROM, both switches must either be set to "$8000" or to "$E000". If you are unsure, just give it a try. But remember that the C64 has to be switched off if you change the switch positions.
+
 # Operating Instruction
 - Switch off your C64 if you haven't already done so.
 - Insert the cartridge into the expansion slot of your C64.
