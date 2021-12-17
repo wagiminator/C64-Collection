@@ -6,7 +6,7 @@ The FreeLoad cartridge is a simple clone of an Epyx Fastload cartridge, offering
 # Usable Types of (E)EPROMs
 Most 8k (E)EPROMs should work. They usually have one of the following identifiers in their names: 2764, 2864, 27C64, or 28C64.
 
-# Burning a BIN File to the (E)EPROM 
+# Burning the FreeLoad Image to the (E)EPROM 
 There are numerous programming devices/EPROMers. The [MiniPRO TL866](https://aliexpress.com/wholesale?SearchText=MiniPro+TL866) is used in these instructions. This is available for around €50 and supports almost all (E)EPROMs.
 
 After starting the MiniPRO software, search in the IC database for the (E)EPROM used. The (E)EPROM must now be correctly inserted in the socket. A click on the "Information" button shows how this must be positioned. Pay attention to the notch and to pin 1. If an EPROM (not EEPROM) is used, the following must be observed: Make sure that the EPROM is empty. A "blank check" provides information about this. An EPROM that is not empty must first be erased. EEPROMs, on the other hand, can simply be overwritten. Open the cartridge image (freeload_8k.bin, you can find it in the software folder) and confirm with "OK". Now click on the "P" button and confirm with "Program". The (E)EPROM will now be burned. So that the EPROM does not lose its data, the glass pane should be sealed with an opaque adhesive tape. An EEPROM does not have this window and there is also no risk of the data being lost.

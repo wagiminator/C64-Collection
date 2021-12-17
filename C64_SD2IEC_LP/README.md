@@ -29,9 +29,9 @@ Firmware updates can be downloaded from https://www.sd2iec.de/nightlies/ (use fi
 - Plug the SD2IEC floppy emulator to the cassette port of your C64.
 - Connect the IEC cable to the serial port of your C64.
 - Turn on your C64.
-- Type: LOAD "FB64",8 <RETURN>
-- After the program loaded type: RUN <RETURN>
-- This should load and run filebrowser. To navigate the menu either use cursor keys or Joystick in port2.  For single D64 images, just open the D64 by pressing <RETURN> or <FIRE> and then select the first PRG file to LOAD.
+- Type: LOAD "FB64",8 <kbd>RETURN</kbd>
+- After the program loaded type: RUN <kbd>RETURN</kbd>
+- This should load and run filebrowser. To navigate the menu either use cursor keys or Joystick in port2.  For single D64 images, just open the D64 by pressing <kbd>RETURN</kbd> or <kbd>FIRE</kbd> and then select the first PRG file to LOAD.
 
 # DIP switches
 You can change the address of your SD2IEC with the DIP switches:
