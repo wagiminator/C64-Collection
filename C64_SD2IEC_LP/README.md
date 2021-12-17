@@ -37,7 +37,7 @@ Firmware updates can be downloaded from https://www.sd2iec.de/nightlies/ (use fi
 You can change the address of your SD2IEC with the DIP switches:
 
 |DIP1|DIP2|Address|
-|-|-|
+|-|-|-|
 |OFF|OFF|8|
 |ON|OFF|9|
 |OFF|ON|10|

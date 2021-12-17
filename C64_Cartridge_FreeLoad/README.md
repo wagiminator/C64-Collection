@@ -17,7 +17,13 @@ The (E)EPROM is now ready for use and can be plugged into the socket of the cart
 In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EPROMs cannot be overwritten with new data, but must first be erased with an EPROM eraser. This sends ultraviolet radiation into the EPROM. This erases the memory, which can then be rewritten. A cheap [EPROM eraser](https://aliexpress.com/wholesale?SearchText=eprom+eraser) is sufficient. Don't forget to remove any UV cover from the EPROM. The erasing process takes 10-15 minutes in most cases. The EPROM can then be written to again.
 
 # Operating Instruction
-Switch off your C64 if you haven't already done so. Insert the cartridge into the expansion slot of your C64. Switch on the cartridge using the selector switch and then turn on your C64. The Fastloader works automatically. Take a look at the [manual](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_FreeLoad/documentation/Epyx_FastLoad_Manual.pdf) to find out how you can use all the features of the cartridge.
+- Switch off your C64 if you haven't already done so.
+- Insert the cartridge into the expansion slot of your C64.
+- Switch on the cartridge using the selector switch.
+- Turn on your C64.
+- The Fastloader works automatically.
+
+Take a look at the [manual](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_FreeLoad/documentation/Epyx_FastLoad_Manual.pdf) to find out how you can use all the features of the cartridge.
 
 # References, Links and Notes
 1. [Original Project by DDI](http://www.sys64738.net/ddifl/ddifl.htm)

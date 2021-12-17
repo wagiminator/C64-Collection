@@ -22,7 +22,10 @@ cartconv -i input.crt -o output.bin
 ```
 
 # Operating Instruction
-Switch off your C64 if you haven't already done so. Insert the cartridge into the expansion slot of your C64. Then switch on your C64. The program on the cartridge starts automatically.
+- Switch off your C64 if you haven't already done so.
+- Insert the cartridge into the expansion slot of your C64.
+- Switch on your C64.
+- The program on the cartridge starts automatically.
 
 # References, Links and Notes
 1. [Making a C64 Cartridge](http://blog.worldofjani.com/?p=879)

@@ -1,7 +1,7 @@
 # C64 512k Cartridge
 MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of multiple PRG-files!
 
-![C64_Cartridge_512k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_512k_pic1.jpg)
+![C64_Cartridge_512k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_512k/documentation/C64_Cartridge_512k_pic1.jpg)
 
 # Usable Types of (E)EPROMs
 Most 512k (E)EPROMs should work. They usually have one of the following identifiers in their names: 27C040 or 28C040.
@@ -20,7 +20,10 @@ The (E)EPROM is now ready for use and can be plugged into the socket of the cart
 In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EPROMs cannot be overwritten with new data, but must first be erased with an EPROM eraser. This sends ultraviolet radiation into the EPROM. This erases the memory, which can then be rewritten. A cheap [EPROM eraser](https://aliexpress.com/wholesale?SearchText=eprom+eraser) is sufficient. Don't forget to remove any UV cover from the EPROM. The erasing process takes 10-15 minutes in most cases. The EPROM can then be written to again.
 
 # Operating Instruction
-Switch off your C64 if you haven't already done so. Insert the cartridge into the expansion slot of your C64. Then switch on your C64. The program on the cartridge starts automatically.
+- Switch off your C64 if you haven't already done so.
+- Insert the cartridge into the expansion slot of your C64.
+- Switch on your C64.
+- The program on the cartridge starts automatically.
 
 # References, Links and Notes
 1. [Original Hardware by Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k)

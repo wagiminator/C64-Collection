@@ -20,7 +20,10 @@ The (E)EPROM is now ready for use and can be plugged into the socket of the cart
 In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EPROMs cannot be overwritten with new data, but must first be erased with an EPROM eraser. This sends ultraviolet radiation into the EPROM. This erases the memory, which can then be rewritten. A cheap [EPROM eraser](https://aliexpress.com/wholesale?SearchText=eprom+eraser) is sufficient. Don't forget to remove any UV cover from the EPROM. The erasing process takes 10-15 minutes in most cases. The EPROM can then be written to again.
 
 # Operating Instruction
-Switch off your C64 if you haven't already done so. Insert the cartridge into the expansion slot of your C64. Then switch on your C64. The program on the cartridge starts automatically.
+- Switch off your C64 if you haven't already done so.
+- Insert the cartridge into the expansion slot of your C64.
+- Switch on your C64.
+- The program on the cartridge starts automatically.
 
 # References, Links and Notes
 1. [Original Hardware by Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k)
