@@ -32,8 +32,9 @@ On the C64: Load the data to be written to the card or write a little Basic prog
 On the Tapuino:
 - Select the menu item "Record"
 - Select the recording mode. With "Manual" the file name must be entered manually, with "Automatic" a predefined name is generated automatically. If you want to choose the name yourself (manually) you have to type in the name using the buttons, which is very cumbersome.
-  |NEXT|cursor left|
+  |Button|Function|
   |:-|:-|
+  |NEXT|cursor left|
   |PREV|cursor to the right|
   |BACK/SELECT|change letters/characters|
   |Press and hold NEXT|confirm|
