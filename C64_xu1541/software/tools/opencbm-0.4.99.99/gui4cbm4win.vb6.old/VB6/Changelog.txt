@@ -1,0 +1,58 @@
+Initial versions 0.06 up to 0.09 by Leif Bloomquist
+Adoption to OpenCBM 0.4.0, fixes, patches and additions
+by Wolfgang Moser (http://d81.de) and Spiro Trikaliotis.
+
+Changes from GUI4CBM4WIN 0.09 to current:
+
+0.4.1, 2006-10-31
+    * Fix the scratch command by appending a space
+      character after the drive number
+    * Added a "validate" button
+
+0.4.0, 2006-06-08
+    * Added "auto" transfer option
+    * Renamed the stdout and stderr log files to g4c4w*.log
+    * Extended the "Detect" dialog in the options menu so
+      that more than one drive is shown
+    * Fixed the "status" action, the return string now
+      needs to be taken from stdout
+    * Fixed the "dir" action, the status string now needs
+      to be taken from the last line on stdout
+    * The "Morse" code action is now directed to the
+      currently selected IEC bus device
+    * Put the sources under the zlib/libpng license to
+      clearly define usage and reusage by further
+      developers, to make a crystal clear definition of
+      this branch of Leif's software beeing OpenSource for
+      now and all times without the copyleft restriction of
+      the GNU General Public License, but still beeing
+      compatible to the GPL and finally to allow
+      distribution via Sourceforge. All in all I hope to
+      preserve the will of Leif as much as possible with
+      that license.
+    * Added a "Reset bus" action button to the options
+      dialog
+    * Added a generalized check for error conditions in the
+      commands executor
+    * Format action: Added the switches "-v" and "-o" as
+      well as the missing "-s" for printing the status
+    * Fixed the format action, the status string now needs
+      to be taken from the last line on stdout
+    * Using cbmforng instead of cbmformat now
+    * Initialize: Added querying the status after sending
+      the "I0" command
+    * Options dialog fix: the selected drive number is put
+      to the main window object
+    * Options dialog fix: the selected working directory
+      patch is taken over to the main form
+    * Temporary files are created within the
+      Environ$("temp") (%TEMP%) specified directory
+    * Added the quiet option "-q" to cbmcopy, so only
+      error messages get printed
+    * Reomved Leif's eMail and WWW adresses to take back
+      support requests from his side. Support should be
+      handled by the OpenCBM team as long as a third party
+      takes over.
+      officially.
+    * Added Chr$(34)/'"' quotations to all filename
+      arguments given to DoCommand

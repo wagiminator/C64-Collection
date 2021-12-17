@@ -1,0 +1,11 @@
+#include <windows.h>
+
+#include <ntverp.h>
+
+#define VER_FILETYPE                VFT_APP
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "USB configuration program for xum1541 devices"
+#define VER_INTERNALNAME_STR        "xum1541cfg.exe"
+
+//#include "version.common.h"
+//#include "common.ver"

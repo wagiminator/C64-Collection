@@ -1,0 +1,49 @@
+#include <windows.h>
+#include <commctrl.h>
+#include "resource.h"
+
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDC_TAPVIEW MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "&Open CAP image...", IDM_OPENCAPIMAGE
+        MENUITEM SEPARATOR
+        MENUITEM "&About ...", IDM_ABOUT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit", IDM_EXIT
+    }
+    POPUP "&Settings"
+    {
+        MENUITEM "Show half waves", IDM_SHOW_HALFWAVES, CHECKED
+        MENUITEM "First half wave in dark green", IDM_FIRST_HALFWAVE_IN_DARK_GREEN, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Large window width", IDM_DOUBLE_SCREEN_WIDTH
+        MENUITEM "Large window height", IDM_DOUBLE_SCREEN_HEIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "Use 1h buffer", IDM_USE_1H_BUFFER, CHECKED
+        MENUITEM "Use 2h buffer", IDM_USE_2H_BUFFER
+        MENUITEM "Use 5h buffer", IDM_USE_5H_BUFFER
+    }
+}
+
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 68
+STYLE DS_MODALFRAME | DS_SHELLFONT | WS_CAPTION | WS_POPUP | WS_SYSMENU
+CAPTION "About Tapview"
+FONT 8, "MS Shell Dlg", 0, 0, 1
+{
+    LTEXT           "Tapview v1.0", IDC_STATIC, 30, 14, 44, 8, SS_LEFT | SS_NOPREFIX
+    LTEXT           "Copyright (C) 2012 Arnd Menge", IDC_STATIC, 30, 26, 114, 8, SS_LEFT
+    DEFPUSHBUTTON   "OK", IDOK, 113, 47, 50, 14, WS_GROUP
+}
+
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+{
+    IDC_TAPVIEW                   "Tapview"
+    IDS_APP_TITLE                 "Tapview"
+}

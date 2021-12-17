@@ -1,0 +1,74 @@
+Source: opencbm
+Section: misc
+Priority: extra
+Maintainer: Spiro Trikaliotis <spiro.trikaliotis@gmx.de>
+Build-Depends: debhelper (>= 4.1.16), linuxdoc-tools, linuxdoc-tools-latex, linuxdoc-tools-text, libusb-dev
+Standards-Version: 3.7.2.1
+
+Package: opencbm
+Architecture: any
+Depends: ${shlibs:Depends}, debconf (>= 0.5.00)
+Recommends: opencbm-plugin
+Description: Commodore serial IEC bus utilities
+ This package contains cbmctrl and d64copy.
+
+Package: opencbm-xa1541
+Architecture: i386 amd64
+Depends: ${shlibs:Depends}, debconf (>= 0.5.00), opencbm
+Provides: opencbm-plugin
+Recommends: opencbm-xa1541-modules-source
+Description: Commodore serial IEC bus utilities
+ This package contains the XM1541 and XA1541 plugin.
+
+Package: opencbm-xu1541
+Architecture: any
+Depends: ${shlibs:Depends}, debconf (>= 0.5.00), libusb-0.1-4, opencbm
+Provides: opencbm-plugin
+Description: Commodore serial IEC bus utilities
+ This package contains the XU1541 plugin.
+
+Package: opencbm-xum1541
+Architecture: any
+Depends: ${shlibs:Depends}, debconf (>= 0.5.00), libusb-0.1-4, opencbm
+Provides: opencbm-plugin
+Description: Commodore serial IEC bus utilities
+ This package contains the XUM1541 (a.k.a. ZoomFloppy) plugin.
+
+Package: libopencbm0-dev
+Section: devel
+Architecture: any
+Depends: libopencbm0 (= ${Source-Version}), libc6-dev
+Provides: libopencbm-dev
+Conflicts: libopencbm-dev
+Description: Development files for the OpenCBM library
+ Header files for libopencbm.
+
+Package: libopencbm0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Recommends: opencbm
+Description: Commodore serial IEC bus client library
+ Support library for the opencbm utilities.
+
+Package: opencbm-xa1541-modules-source
+Architecture: i386 amd64
+Section: misc
+Pre-Depends: perl
+Depends: debconf (>= 0.5.00), debhelper (>> 3.0.0)
+Recommends: make, dpkg-dev, gcc | c-compiler, kernel-package
+Suggests: opencbm
+Description: Kernel module source for the CBM module
+ Kernel module part of opencbm.
+
+Package: cbm4linux
+Architecture: any
+Depends: opencbm-xa1541
+Description: Transitional package to ease upgrades from previous version.
+ This package can be removed after an upgrade.
+
+Package: cbm4linux-modules-source
+Architecture: any
+Depends: opencbm-xa1541-modules-source
+Description: Transitional package to ease upgrades from previous version.
+ This package can be removed after an upgrade.

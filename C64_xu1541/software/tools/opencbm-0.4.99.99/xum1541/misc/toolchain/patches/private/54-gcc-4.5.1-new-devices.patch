@@ -1,0 +1,64 @@
+--- gcc/config/avr/avr-devices.c.orig	2009-07-17 20:49:03.000000000 +0200
++++ gcc/config/avr/avr-devices.c	2010-08-25 22:26:12.500000000 +0200
+@@ -67,15 +67,21 @@
+   { "attiny13",             ARCH_AVR25, "__AVR_ATtiny13__",         1, 0x0060, "tn13" },
+   { "attiny13a",            ARCH_AVR25, "__AVR_ATtiny13A__",        1, 0x0060, "tn13a" },
+   { "attiny2313",           ARCH_AVR25, "__AVR_ATtiny2313__",       1, 0x0060, "tn2313" },
++  { "attiny2313a",          ARCH_AVR25, "__AVR_ATtiny2313A__",      1, 0x0060, "tn2313a" },
+   { "attiny24",             ARCH_AVR25, "__AVR_ATtiny24__",         1, 0x0060, "tn24" },
++  { "attiny24a",            ARCH_AVR25, "__AVR_ATtiny24A__",        1, 0x0060, "tn24a" },
++  { "attiny4313",           ARCH_AVR25, "__AVR_ATtiny4313__",       1, 0x0060, "tn4313" },
+   { "attiny44",             ARCH_AVR25, "__AVR_ATtiny44__",         0, 0x0060, "tn44" },
++  { "attiny44a",            ARCH_AVR25, "__AVR_ATtiny44A__",        0, 0x0060, "tn44a" },
+   { "attiny84",             ARCH_AVR25, "__AVR_ATtiny84__",         0, 0x0060, "tn84" },
+   { "attiny25",             ARCH_AVR25, "__AVR_ATtiny25__",         1, 0x0060, "tn25" },
+   { "attiny45",             ARCH_AVR25, "__AVR_ATtiny45__",         0, 0x0060, "tn45" },
+   { "attiny85",             ARCH_AVR25, "__AVR_ATtiny85__",         0, 0x0060, "tn85" },
+   { "attiny261",            ARCH_AVR25, "__AVR_ATtiny261__",        1, 0x0060, "tn261" },
++  { "attiny261a",           ARCH_AVR25, "__AVR_ATtiny261A__",       1, 0x0060, "tn261a" },
+   { "attiny461",            ARCH_AVR25, "__AVR_ATtiny461__",        0, 0x0060, "tn461" },
+   { "attiny861",            ARCH_AVR25, "__AVR_ATtiny861__",        0, 0x0060, "tn861" },
++  { "attiny861a",           ARCH_AVR25, "__AVR_ATtiny861A__",       0, 0x0060, "tn861a" },
+   { "attiny43u",            ARCH_AVR25, "__AVR_ATtiny43U__",        0, 0x0060, "tn43u" },
+   { "attiny87",             ARCH_AVR25, "__AVR_ATtiny87__",         0, 0x0100, "tn87" },
+   { "attiny48",             ARCH_AVR25, "__AVR_ATtiny48__",         0, 0x0100, "tn48" },
+@@ -148,6 +154,7 @@
+   { "atmega640",            ARCH_AVR5, "__AVR_ATmega640__",         0, 0x0200, "m640" },
+   { "atmega644",            ARCH_AVR5, "__AVR_ATmega644__",         0, 0x0100, "m644" },
+   { "atmega644p",           ARCH_AVR5, "__AVR_ATmega644P__",        0, 0x0100, "m644p" },
++  { "atmega644pa",          ARCH_AVR5, "__AVR_ATmega644PA__",       0, 0x0100, "m644pa" },
+   { "atmega645",            ARCH_AVR5, "__AVR_ATmega645__",         0, 0x0100, "m645" },
+   { "atmega6450",           ARCH_AVR5, "__AVR_ATmega6450__",        0, 0x0100, "m6450" },
+   { "atmega649",            ARCH_AVR5, "__AVR_ATmega649__",         0, 0x0100, "m649" },
+--- gcc/config/avr/t-avr.orig	2009-12-24 21:32:38.000000000 +0100
++++ gcc/config/avr/t-avr	2010-08-25 22:26:11.453125000 +0200
+@@ -81,15 +81,21 @@
+ 	mmcu?avr25=mmcu?attiny13 \
+ 	mmcu?avr25=mmcu?attiny13a \
+ 	mmcu?avr25=mmcu?attiny2313 \
++	mmcu?avr25=mmcu?attiny2313a \
+ 	mmcu?avr25=mmcu?attiny24 \
++	mmcu?avr25=mmcu?attiny24a \
++	mmcu?avr25=mmcu?attiny4313 \
+ 	mmcu?avr25=mmcu?attiny44 \
++	mmcu?avr25=mmcu?attiny44a \
+ 	mmcu?avr25=mmcu?attiny84 \
+ 	mmcu?avr25=mmcu?attiny25 \
+ 	mmcu?avr25=mmcu?attiny45 \
+ 	mmcu?avr25=mmcu?attiny85 \
+ 	mmcu?avr25=mmcu?attiny261 \
++	mmcu?avr25=mmcu?attiny261a \
+ 	mmcu?avr25=mmcu?attiny461 \
+ 	mmcu?avr25=mmcu?attiny861 \
++	mmcu?avr25=mmcu?attiny861a \
+ 	mmcu?avr25=mmcu?attiny43u \
+ 	mmcu?avr25=mmcu?attiny87 \
+ 	mmcu?avr25=mmcu?attiny48 \
+@@ -152,6 +158,7 @@
+ 	mmcu?avr5=mmcu?atmega640 \
+ 	mmcu?avr5=mmcu?atmega644 \
+ 	mmcu?avr5=mmcu?atmega644p \
++	mmcu?avr5=mmcu?atmega644pa \
+ 	mmcu?avr5=mmcu?atmega645 \
+ 	mmcu?avr5=mmcu?atmega6450 \
+ 	mmcu?avr5=mmcu?atmega649 \

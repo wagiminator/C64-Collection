@@ -1,0 +1,134 @@
+; Copyright (C) 1999 Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+        *=$0500
+
+        jsr $c1e5       ; find ":" in command string
+        bne start       ; ok, let's go!
+
+error   lda #$30        ; gracefull exit
+        jmp $c1c8       ; 30,syntax error,00,00
+
+cont    ldx #8          ; between character delay
+        jsr delay
+
+start   lda ($a3),y     ; get next char
+        tax
+        cpx #$30	; "0"
+        bcc error       ; invalid char
+        cpx #$3A	; "9" + 1
+        bcs testal      ; not a digit
+        lda digits-"0",x
+        bne ok          ; branch always
+testal  cpx #$41	; "A"
+        bcc error       ; invalid char
+        cpx #$5B	; "Z" + 1
+        bcs error       ; invalid char
+        lda alpha-$41,x
+ok      sta $14
+        and #$07        ; isolate bit count
+        sta $15         ; and store
+sendbit ldx #1          ; assume "short"
+        asl $14         ; check msb
+        bcc short
+        ldx #4          ; it's "long"
+short   jsr ledon
+        ldx #1
+        jsr ledoff
+        dec $15         ; all bits sent?
+        bne sendbit     ; no, continue
+        iny             ; get next char
+        cpy $0274       ; reached end?
+        bcc cont
+exit    rts             ; exit successfully
+
+setled  sta $1c00       ; set led
+delay   txa 
+	ldx #$80
+        sty $1f         ; save Y
+        ldy #0
+delay0  iny
+        bne delay0
+        inx
+        bne delay0
+        lsr
+        bne delay0
+        ldy $1f         ; restore Y
+        rts
+
+ledon   lda $1c00       ; switch on and delay
+        ora #$08
+        bne setled      ; branch always
+
+ledoff  lda $1c00       ; switch off and delay
+        and #$f7
+        jmp setled
+
+;
+;             pattern   #bits
+;
+digits  .byt %11111000  | 5; "0"        long-long-long-long-long
+        .byt %01111000  | 5; "1"        short-long-long-long-long
+        .byt %00111000  | 5; "2"
+        .byt %00011000  | 5; "3"
+        .byt %00001000  | 5; "4"
+        .byt %00000000  | 5; "5"
+        .byt %10000000  | 5; "6"
+        .byt %11000000  | 5; "7"
+        .byt %11100000  | 5; "8"
+        .byt %11110000  | 5; "9"
+
+alpha   .byt %01000000  | 2; "A"        short-long
+        .byt %10000000  | 4; "B"        long-short-short-short
+        .byt %10100000  | 4; "C"        long-short-long-short
+        .byt %10000000  | 3; "D"        long-short-short-short
+        .byt %00000000  | 1; "E"        short
+        .byt %00100000  | 4; "F"
+        .byt %11000000  | 3; "G"
+        .byt %00000000  | 4; "H"
+        .byt %00000000  | 2; "I"
+        .byt %01110000  | 4; "J"
+        .byt %10100000  | 3; "K"
+        .byt %01000000  | 4; "L"
+        .byt %11000000  | 2; "M"
+        .byt %10000000  | 2; "N"
+        .byt %11100000  | 3; "O"
+        .byt %01100000  | 4; "P"
+        .byt %11010000  | 4; "Q"
+        .byt %01000000  | 3; "R"
+        .byt %00000000  | 3; "S"
+        .byt %10000000  | 1; "T"
+        .byt %00100000  | 3; "U"
+        .byt %00010000  | 4; "V"
+        .byt %01100000  | 3; "W"
+        .byt %10010000  | 4; "X"
+        .byt %10110000  | 4; "Y"
+        .byt %11000000  | 4; "Z"

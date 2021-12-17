@@ -1,0 +1,30 @@
+# sample kernel module configuration for opencbm
+
+# everyone wants to enable this:
+alias char-major-10-177 cbm
+
+# If you have the 2.[24].x parport system enabled, you might need
+# to specify the parallel port IRQ:
+#options parport_pc io=0x378 irq=7
+
+# again, only for the 2.[24].x parport system:
+#options cbm lp=0
+
+# 2.0.x kernel, or 2.[24].x without parport subsystem:
+#options cbm port=0x378 irq=7
+
+#
+# additional options for the cbm module (usually not needed):
+#
+#    cable=<N>
+#	N < 0 : autodetect (default)
+#	N = 0 : non-inverting (XM1541)
+#	N > 0 : non-inverting (XA1541)
+#
+#    reset=<N>
+#	N < 0 : smart reset (automatically reset if needed)
+#	N = 0 : never reset when loading the module
+#	N = 1 : always reset when loading the module
+#
+
+# vim: ft=conf

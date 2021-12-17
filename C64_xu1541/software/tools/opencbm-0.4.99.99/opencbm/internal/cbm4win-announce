@@ -1,0 +1,123 @@
+Hello,
+
+I'm proud to announce the availability of cbm4win, version 0.1.0 (first
+public release).
+
+
+What is cbm4win?
+
+   cbm4win is a port of cbm4linux [1] to Windows. It allows for access
+   to a VIC 1540, 1541, 1570, 1571, or even 1581 floppy drive from the
+   PC on Windows NT, 2000 and XP.
+
+
+Which operating systems are supported?
+
+   Currently, there is support for Windows NT 4.0, Windows 2000, 
+   Windows XP, and Windows 2003 Server. Previous versions of NT have
+   not been tested, but they might work, too.
+   
+
+Is Windows 95, 98 or Me supported?
+
+   No, there is currently no support for these Windows versions.
+   Anyway, support for Windows 98 Second Edition and Me is planned.
+   I do not know if it will be possible to port it to Windows 98 First
+   Edition, though.
+
+
+What can I do with cbm4win?
+
+   The most important things you can do is to copy D64 or D71 images
+   from a real drive to the PC, or from the PC to a real drive with the
+   help of d64copy.
+   Furthermore, you can copy single files in both directions, too.
+   Some more tools (for example, cbmctrl) are given, too.
+
+
+Is there 3rd party support for cbm4win?
+
+   VICE [2] will have support for cbm4win in the next version. There is an
+   internal version of YAPE [3] which supports cbm4win, too.
+   Other people have already showed interest in supporting cbm4win in
+   their products, too.
+
+
+What is the development state of cbm4win?
+
+   This is the first public announcement of cbm4win. Because of this,
+   there is high probability that there are still errors.
+
+
+What hardware is needed in order to use cbm4win?
+
+  Of course, you need a PC running Windows NT, 2000, XP, or 2003.
+  Furthermore, you need a real drive, like the VIC 1540, 1541, 1570,
+  1571, or 1581 (1581 not fully supported). Then, you need an XA1541,
+  XM1541, XAP1541 or XMP1541 cable in order to connect the driver with
+  the PC.
+
+
+Acknowledgements and Thanks
+
+  Cbm4win is heavily based on cbm4linux [1], written by Michael Klein.
+  Cbm4linux itself uses work from Star Commander [4], written by KOVÁCS
+  Balázs a.k.a. "Joe Forster". I like to thank both for their steady
+  help and their patience.
+
+  Furthermore, I want to thank the following people:
+  - Michael Klein for cbm4linux and many discussions. I do not know if I
+    would have started this project without this.
+  - KOVÁCS Balázs a.k.a. "Joe Forster" for Star Commander, his advice,
+    and for giving me cables for free to work on this project;
+  - Wolfgang Moser for steady discussions, testing, and bug reports, as
+    well as giving me some more needed equipment;
+  - all of my testers for steady tests, reports, and discussions.
+
+
+Contact, Download, Further Info:
+
+  cbm4win can be found and downloaded at
+
+        http://www.trikaliotis.net/cbm4win [5]
+
+  Furthermore, I have setup a project page on sourceforge:
+ 
+        http://sf.net/projects/cbm4win/ [6]
+
+  If you want to submit bug reports, I would thank you for submitting to
+  the bug tracking system [7] over there. There are even two mailing
+  lists available for announcements [8] and for user discussions [9].
+
+  If you want to contact me directly, just contact me at
+  cbm4win(at)trikaliotis(dot)net, or go to my homepage at
+  http://www.trikaliotis.net/.
+
+
+Any hints, suggestions, and the like are welcome!
+
+Happy transferring,
+   Spiro.
+
+
+[1] http://www.lb.shuttle.de/puffin/cbm4linux/
+
+[2] http://www.viceteam.org/
+
+[3] http://yape.plus4.net/
+
+[4] http://sta.c64.org/sc.html
+
+[5] http://www.trikaliotis.net/cbm4win
+
+[6] http://sf.net/projects/cbm4win/
+
+[7] http://sf.net/tracker/?group_id=122047&atid=692219
+
+[8] http://lists.sourceforge.net/lists/listinfo/cbm4win-announce
+
+[9] http://lists.sourceforge.net/lists/listinfo/cbm4win-user
+
+-- 
+Spiro R. Trikaliotis
+http://www.trikaliotis.net/

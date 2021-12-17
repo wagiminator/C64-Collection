@@ -1,0 +1,6 @@
+SUBSYSTEM!="usb_device", ACTION!="add", GOTO="opencbm_rules_end"
+
+# xu1541
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="c632", GROUP="users", MODE="0664"
+
+LABEL="opencbm_rules_end"

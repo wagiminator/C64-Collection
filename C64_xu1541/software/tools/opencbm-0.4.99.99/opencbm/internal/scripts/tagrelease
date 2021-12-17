@@ -1,0 +1,185 @@
+#! /bin/bash
+
+if [ "$3" = "" ]; then
+	echo "Usage: $0 MAJORVER MINORVER SUBVER [DEVELVER [PATCHLEVELVER]]"
+	exit 1
+fi
+
+MAJORVER=$1
+MINORVER=$2
+SUBVER=$3
+
+ADDVER=
+
+DEVELVER=0
+PATCHLEVELVER=0
+
+if [ ! "$4" = "" ]; then
+	DEVELVER=$4
+        ADDVER=.$4
+        ADDVERTAG=_$4
+
+        if [ ! "$5" = "" ]; then
+                PATCHLEVELVER=$5
+                ADDVER=$ADDVER\.$5
+                ADDVERTAG=$ADDVERTAG\_$5
+        fi
+
+fi
+
+
+TAGVERSION=v$MAJORVER\_$MINORVER\_$SUBVER$ADDVERTAG
+VERSION=$MAJORVER.$MINORVER.$SUBVER$ADDVER
+
+NONDEVELVERSION=$MAJORVER.$MINORVER.$SUBVER
+
+TAGVERSIONSRC=$TAGVERSION-src
+
+typeset -i ERROR
+ERROR=0
+
+
+# some functions
+
+funccheckexistance()
+{
+	echo -n "Checking $1: "
+	VER=`grep "$2" "$1"`
+	if [ "$VER" = "" ]; then
+		echo no entry for $VERSION available!
+		ERROR=$ERROR+1
+	else
+		echo ok
+	fi
+}
+
+# param:
+# $1 - text to output
+# $2 - file to check
+# $3 - for what to grep
+# $4 - replace string for sed
+# $5 - for which version to check
+
+funccheck()
+{
+	echo -n "Checking $1: "
+	VER=`grep "$3" $2|sed "s/$4/\1/"`
+	if [ "$VER" = "" ]; then
+		echo NO VERSION AVAILABLE - $5 required
+		ERROR=$ERROR+1
+	else
+		if [ "$VER" = "$5" ]; then
+			echo ok
+		else
+			echo WRONG VERSION: $VER, but $5 required
+			ERROR=$ERROR+1
+		fi
+	fi
+}
+
+funccheckfile()
+{
+	funccheck "$1" "$1" "$2" "$3" "$4"
+}
+
+funccheckmanpage()
+{
+	if [ "$2" == "" ]; then
+		FILE=$1/$1
+	else
+		FILE=$2/$1
+	fi
+	funccheck "$FILE.1, .TH" "$FILE.1" "\.TH"            ".*$1 \([0-9\.]*\).*"          "$VERSION"
+	funccheck "$FILE.1, 2nd" "$FILE.1" "manual page for" ".*page for $1 \([0-9\.]*\).*" "$VERSION"
+}
+
+
+
+echo TAGGING RELEASE $VERSION, Tag $TAGVERSION
+echo
+
+echo Checking if everything is checked in...
+echo
+cvs -nq update
+
+# Check if version information is correct
+
+echo -e \\nChecking version information:
+
+funccheck "include/version.h, CBM4WIN_VERSION_MAJOR"    include/version.h "#define CBM4WIN_VERSION_MAJOR"    "#define CBM4WIN_VERSION_MAJOR[ 	]*\([0-9]*\)"    $MAJORVER
+funccheck "include/version.h, CBM4WIN_VERSION_MINOR"    include/version.h "#define CBM4WIN_VERSION_MINOR"    "#define CBM4WIN_VERSION_MINOR[ 	]*\(.*\)"    $MINORVER
+funccheck "include/version.h, CBM4WIN_VERSION_SUBMINOR" include/version.h "#define CBM4WIN_VERSION_SUBMINOR" "#define CBM4WIN_VERSION_SUBMINOR[ 	]*\(.*\)" $SUBVER
+funccheck "include/version.h, CBM4WIN_VERSION_DEVEL"    include/version.h "#define CBM4WIN_VERSION_DEVEL"    "#define CBM4WIN_VERSION_DEVEL[ 	]*\(.*\)"    $DEVELVER
+funccheck "include/version.h, CBM4WIN_VERSION_PATCHLEVEL" include/version.h "#define CBM4WIN_VERSION_PATCHLEVEL" "#define CBM4WIN_VERSION_PATCHLEVEL[ 	]*\(.*\)"    $PATCHLEVELVER
+#funccheck "include/version.h, CBM4WIN_VERSION_STRING"   include/version.h "#define CBM4WIN_VERSION_STRING"   "#define CBM4WIN_VERSION_STRING[ 	]*\(.*\)"   \"$VERSION\"
+
+funccheck "LINUX/config.make, MAJ" LINUX/config.make  "^MAJ ="  "MAJ \= \([0-9]*\)"          $MAJORVER
+funccheck "LINUX/config.make, MIN" LINUX/config.make  "^MIN ="  "MIN \= \([0-9]*\)"          $MINORVER
+funccheck "LINUX/config.make, REL" LINUX/config.make  "^REL ="  "REL \= \([0-9]*\)"          $SUBVER
+
+funccheckfile sys/wdm/cbm4win.inf           DriverVer               "DriverVer[ 	]*=[ 	]*.*,\(.*\)[ 	]*" $VERSION
+#funccheckfile NEWS                          $NONDEVELVERSION        "version \(.*\):"                $VERSION
+#funccheckfile docs/WINDOWS/README.TXT       README                  "cbm4win \(.*\) README"          $VERSION
+#funccheckfile docs/WINDOWS/cbm4win.txt      "Users Guide"           "cbm4win \(.*\) Users Guide"     $VERSION
+#funccheckfile internal/cbm4win-announce     "proud to announce"     ".*version \(.*\) .*"            $VERSION
+#funccheckfile internal/cbm4win-ankuendigung "gebe ich bekannt"      ".*Version \(.*\), .*"           $VERSION
+funccheckfile debian/rules                  "^version="             "version\=\(.*\)"                $VERSION
+
+funccheckfile cbm4linux.spec                "^\%define ver"         "\%define ver \(.*\)"            $VERSION
+funccheckfile docs/opencbm.sgml             "^<title>opencbm"       ".*opencbm \(.*\) Users Guide" $VERSION
+funccheckfile perl/OpenCBM.pm               "my \$VERSION"          ".*VERSION \= '\(.*\)';"         $VERSION
+
+funccheckfile README                        "README for opencbm/cbm4linux"  ".*cbm4linux \(.*\)"             $VERSION
+
+funccheckmanpage cbmcopy   # cbmcopy/cbmcopy.1
+funccheckmanpage d64copy   # d64copy/d64copy.1
+funccheckmanpage cbmformat # cbmformat/cbmformat.1
+funccheckmanpage cbmforng  # cbmforng/cbmforng.1
+funccheckmanpage cbmctrl   # cbmctrl/cbmctrl.1
+funccheckmanpage instcbm install # install/instcbm.1
+
+funccheckexistance debian/changelog $VERSION
+
+echo
+
+if [ $ERROR -gt 0 ]; then
+	echo $ERROR errors encountered!
+	
+	if [ $DEVELVER = 0 ]; then
+		echo cannot generate release with errors, aborting...
+		exit 1
+	fi
+else
+	echo No errors.
+fi
+
+echo
+read -p "Press ENTER to continue. If you want to abort, press CTRL+C now."
+
+# tag the current versions 
+
+cvs -q tag $TAGVERSION
+cvs -q tag $TAGVERSIONSRC
+cvs -q tag cbm4win-$TAGVERSION
+cvs -q tag cbm4linux-$TAGVERSION
+cvs -q tag $TAGVERSION
+
+
+# untag all linux-specifics for cbm4win
+
+cvs -q tag -d cbm4win-$TAGVERSION `find . -name LINUX -type d` cbm4linux.spec demo/config.make perl/ arch/linux/ sys/linux/ perl/ debian/ compat/ contrib/
+
+# untag all windows-specifics for cbm4linux
+
+cvs -q tag -d cbm4linux-$TAGVERSION `find . -name WINDOWS -type d` `find . -name WINDOWS -type d` arch/windows/ sys/ install/ sample/
+
+# sys/linux is special: Although sys/ is almost Windows specific, sys/linux is for Linux. Thus, re-tag it.
+cvs -q tag cbm4linux-$TAGVERSION sys/linux/
+
+# now, make a copy of all tags, named -src
+
+# remove the internal/ directories from all tags except the main one
+
+cvs -q tag -d $TAGVERSIONSRC internal/
+cvs -q tag -d cbm4win-$TAGVERSION internal/
+cvs -q tag -d cbm4linux-$TAGVERSION internal/

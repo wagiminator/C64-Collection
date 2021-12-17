@@ -1,0 +1,23 @@
+
+TARGETNAME=frm_analyzer
+TARGETPATH=../../../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=../../../../bin/*/opencbm.lib      \
+           ../../../../bin/*/arch.lib         \
+           ../../../../bin/*/libmisc.lib      \
+           $(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../../include;../../../include/WINDOWS;../../../arch/windows/
+
+SOURCES=../frm_analyzer.c \
+        frm_analyzer.rc
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1
+
+NTTARGETFILE0=a65

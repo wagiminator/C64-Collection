@@ -1,0 +1,5 @@
+#! /bin/sh
+
+. $1/buildone.inc.sh
+
+funcbuildinc $2

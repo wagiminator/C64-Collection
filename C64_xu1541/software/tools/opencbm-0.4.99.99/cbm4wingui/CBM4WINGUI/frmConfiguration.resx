@@ -1,0 +1,1071 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="m_objTools.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Left</value>
+  </data>
+  <metadata name="m_objImages.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="m_objImages.ImageSize" type="System.Drawing.Size, System.Drawing">
+    <value>32, 32</value>
+  </data>
+  <data name="m_objToolCBMConfig.Location" type="System.Drawing.Point, System.Drawing">
+    <value>2, 2</value>
+  </data>
+  <data name="m_objToolCBMConfig.Size" type="System.Drawing.Size, System.Drawing">
+    <value>93, 23</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="m_objToolCBMConfig.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="m_objToolCBMConfig.Text" xml:space="preserve">
+    <value>OpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objToolCBMConfig.Name" xml:space="preserve">
+    <value>m_objToolCBMConfig</value>
+  </data>
+  <data name="&gt;&gt;m_objToolCBMConfig.Type" xml:space="preserve">
+    <value>Pabo.MozBar.MozItem, MozBar, Version=1.5.1.0, Culture=neutral, PublicKeyToken=c2cf310c62ad0838</value>
+  </data>
+  <data name="&gt;&gt;m_objToolCBMConfig.Parent" xml:space="preserve">
+    <value>m_objTools</value>
+  </data>
+  <data name="&gt;&gt;m_objToolCBMConfig.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objToolPCConfig.Location" type="System.Drawing.Point, System.Drawing">
+    <value>2, 27</value>
+  </data>
+  <data name="m_objToolPCConfig.Size" type="System.Drawing.Size, System.Drawing">
+    <value>93, 23</value>
+  </data>
+  <data name="m_objToolPCConfig.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_objToolPCConfig.Text" xml:space="preserve">
+    <value>PC</value>
+  </data>
+  <data name="&gt;&gt;m_objToolPCConfig.Name" xml:space="preserve">
+    <value>m_objToolPCConfig</value>
+  </data>
+  <data name="&gt;&gt;m_objToolPCConfig.Type" xml:space="preserve">
+    <value>Pabo.MozBar.MozItem, MozBar, Version=1.5.1.0, Culture=neutral, PublicKeyToken=c2cf310c62ad0838</value>
+  </data>
+  <data name="&gt;&gt;m_objToolPCConfig.Parent" xml:space="preserve">
+    <value>m_objTools</value>
+  </data>
+  <data name="&gt;&gt;m_objToolPCConfig.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_objToolEmulatorConfig.Location" type="System.Drawing.Point, System.Drawing">
+    <value>2, 52</value>
+  </data>
+  <data name="m_objToolEmulatorConfig.Size" type="System.Drawing.Size, System.Drawing">
+    <value>93, 23</value>
+  </data>
+  <data name="m_objToolEmulatorConfig.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="m_objToolEmulatorConfig.Text" xml:space="preserve">
+    <value>Emulator</value>
+  </data>
+  <data name="&gt;&gt;m_objToolEmulatorConfig.Name" xml:space="preserve">
+    <value>m_objToolEmulatorConfig</value>
+  </data>
+  <data name="&gt;&gt;m_objToolEmulatorConfig.Type" xml:space="preserve">
+    <value>Pabo.MozBar.MozItem, MozBar, Version=1.5.1.0, Culture=neutral, PublicKeyToken=c2cf310c62ad0838</value>
+  </data>
+  <data name="&gt;&gt;m_objToolEmulatorConfig.Parent" xml:space="preserve">
+    <value>m_objTools</value>
+  </data>
+  <data name="&gt;&gt;m_objToolEmulatorConfig.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_objTools.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="m_objTools.Size" type="System.Drawing.Size, System.Drawing">
+    <value>97, 485</value>
+  </data>
+  <data name="m_objTools.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;m_objTools.Name" xml:space="preserve">
+    <value>m_objTools</value>
+  </data>
+  <data name="&gt;&gt;m_objTools.Type" xml:space="preserve">
+    <value>Pabo.MozBar.MozPane, MozBar, Version=1.5.1.0, Culture=neutral, PublicKeyToken=c2cf310c62ad0838</value>
+  </data>
+  <data name="&gt;&gt;m_objTools.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;m_objTools.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_btnHelp.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 0</value>
+  </data>
+  <data name="m_btnHelp.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="m_btnHelp.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="m_btnHelp.Text" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="&gt;&gt;m_btnHelp.Name" xml:space="preserve">
+    <value>m_btnHelp</value>
+  </data>
+  <data name="&gt;&gt;m_btnHelp.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnHelp.Parent" xml:space="preserve">
+    <value>m_objButtonPanel</value>
+  </data>
+  <data name="&gt;&gt;m_btnHelp.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_btnCancel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="m_btnCancel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>222, 1</value>
+  </data>
+  <data name="m_btnCancel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="m_btnCancel.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="m_btnCancel.Text" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="&gt;&gt;m_btnCancel.Name" xml:space="preserve">
+    <value>m_btnCancel</value>
+  </data>
+  <data name="&gt;&gt;m_btnCancel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnCancel.Parent" xml:space="preserve">
+    <value>m_objButtonPanel</value>
+  </data>
+  <data name="&gt;&gt;m_btnCancel.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_btnDone.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="m_btnDone.Location" type="System.Drawing.Point, System.Drawing">
+    <value>299, 1</value>
+  </data>
+  <data name="m_btnDone.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="m_btnDone.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_btnDone.Text" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="&gt;&gt;m_btnDone.Name" xml:space="preserve">
+    <value>m_btnDone</value>
+  </data>
+  <data name="&gt;&gt;m_btnDone.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnDone.Parent" xml:space="preserve">
+    <value>m_objButtonPanel</value>
+  </data>
+  <data name="&gt;&gt;m_btnDone.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_objButtonPanel.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Bottom</value>
+  </data>
+  <data name="m_objButtonPanel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>97, 458</value>
+  </data>
+  <data name="m_objButtonPanel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>381, 27</value>
+  </data>
+  <data name="m_objButtonPanel.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;m_objButtonPanel.Name" xml:space="preserve">
+    <value>m_objButtonPanel</value>
+  </data>
+  <data name="&gt;&gt;m_objButtonPanel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objButtonPanel.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;m_objButtonPanel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objTabs.Alignment" type="System.Windows.Forms.TabAlignment, System.Windows.Forms">
+    <value>Bottom</value>
+  </data>
+  <data name="m_radParallel.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_radParallel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 77</value>
+  </data>
+  <data name="m_radParallel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>220, 21</value>
+  </data>
+  <data name="m_radParallel.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="m_radParallel.Text" xml:space="preserve">
+    <value>Parallel (Requires X?P Cable!)</value>
+  </data>
+  <data name="&gt;&gt;m_radParallel.Name" xml:space="preserve">
+    <value>m_radParallel</value>
+  </data>
+  <data name="&gt;&gt;m_radParallel.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_radParallel.Parent" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_radParallel.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_radSerial2.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_radSerial2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>173, 49</value>
+  </data>
+  <data name="m_radSerial2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>146, 21</value>
+  </data>
+  <data name="m_radSerial2.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="m_radSerial2.Text" xml:space="preserve">
+    <value>Serial 2 (Not Slow)</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial2.Name" xml:space="preserve">
+    <value>m_radSerial2</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial2.Parent" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_radAutomatic.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_radAutomatic.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 22</value>
+  </data>
+  <data name="m_radAutomatic.Size" type="System.Drawing.Size, System.Drawing">
+    <value>91, 21</value>
+  </data>
+  <data name="m_radAutomatic.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="m_radAutomatic.Text" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="&gt;&gt;m_radAutomatic.Name" xml:space="preserve">
+    <value>m_radAutomatic</value>
+  </data>
+  <data name="&gt;&gt;m_radAutomatic.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_radAutomatic.Parent" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_radAutomatic.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_radSerial1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_radSerial1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 49</value>
+  </data>
+  <data name="m_radSerial1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>123, 21</value>
+  </data>
+  <data name="m_radSerial1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="m_radSerial1.Text" xml:space="preserve">
+    <value>Serial 1 (Slow!)</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial1.Name" xml:space="preserve">
+    <value>m_radSerial1</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial1.Parent" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_radSerial1.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="m_radOriginal.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_radOriginal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>173, 22</value>
+  </data>
+  <data name="m_radOriginal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>157, 21</value>
+  </data>
+  <data name="m_radOriginal.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_radOriginal.Text" xml:space="preserve">
+    <value>Original (Very Slow!)</value>
+  </data>
+  <data name="&gt;&gt;m_radOriginal.Name" xml:space="preserve">
+    <value>m_radOriginal</value>
+  </data>
+  <data name="&gt;&gt;m_radOriginal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RadioButton, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_radOriginal.Parent" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_radOriginal.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="m_objGroupTransferMode.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 316</value>
+  </data>
+  <data name="m_objGroupTransferMode.Size" type="System.Drawing.Size, System.Drawing">
+    <value>361, 113</value>
+  </data>
+  <data name="m_objGroupTransferMode.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="m_objGroupTransferMode.Text" xml:space="preserve">
+    <value>Transfer Mode</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupTransferMode.Name" xml:space="preserve">
+    <value>m_objGroupTransferMode</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupTransferMode.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupTransferMode.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupTransferMode.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_chkRefreshDirectory.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_chkRefreshDirectory.Location" type="System.Drawing.Point, System.Drawing">
+    <value>10, 268</value>
+  </data>
+  <data name="m_chkRefreshDirectory.Size" type="System.Drawing.Size, System.Drawing">
+    <value>274, 21</value>
+  </data>
+  <data name="m_chkRefreshDirectory.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="m_chkRefreshDirectory.Text" xml:space="preserve">
+    <value>Refresh Directory After Write to Floppy</value>
+  </data>
+  <data name="&gt;&gt;m_chkRefreshDirectory.Name" xml:space="preserve">
+    <value>m_chkRefreshDirectory</value>
+  </data>
+  <data name="&gt;&gt;m_chkRefreshDirectory.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_chkRefreshDirectory.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_chkRefreshDirectory.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_chkPreviewCommands.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_chkPreviewCommands.Location" type="System.Drawing.Point, System.Drawing">
+    <value>10, 240</value>
+  </data>
+  <data name="m_chkPreviewCommands.Size" type="System.Drawing.Size, System.Drawing">
+    <value>221, 21</value>
+  </data>
+  <data name="m_chkPreviewCommands.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="m_chkPreviewCommands.Text" xml:space="preserve">
+    <value>Preview OpenCBM Commands</value>
+  </data>
+  <data name="&gt;&gt;m_chkPreviewCommands.Name" xml:space="preserve">
+    <value>m_chkPreviewCommands</value>
+  </data>
+  <data name="&gt;&gt;m_chkPreviewCommands.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_chkPreviewCommands.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_chkPreviewCommands.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_chkDisableWarp.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_chkDisableWarp.Location" type="System.Drawing.Point, System.Drawing">
+    <value>10, 212</value>
+  </data>
+  <data name="m_chkDisableWarp.Size" type="System.Drawing.Size, System.Drawing">
+    <value>154, 21</value>
+  </data>
+  <data name="m_chkDisableWarp.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="m_chkDisableWarp.Text" xml:space="preserve">
+    <value>Disable Warp Mode</value>
+  </data>
+  <data name="&gt;&gt;m_chkDisableWarp.Name" xml:space="preserve">
+    <value>m_chkDisableWarp</value>
+  </data>
+  <data name="&gt;&gt;m_chkDisableWarp.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_chkDisableWarp.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_chkDisableWarp.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="m_btnResetBus.Location" type="System.Drawing.Point, System.Drawing">
+    <value>259, 73</value>
+  </data>
+  <data name="m_btnResetBus.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="m_btnResetBus.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="m_btnResetBus.Text" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="&gt;&gt;m_btnResetBus.Name" xml:space="preserve">
+    <value>m_btnResetBus</value>
+  </data>
+  <data name="&gt;&gt;m_btnResetBus.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnResetBus.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_btnResetBus.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="m_btnDetectDevices.Location" type="System.Drawing.Point, System.Drawing">
+    <value>258, 43</value>
+  </data>
+  <data name="m_btnDetectDevices.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="m_btnDetectDevices.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="m_btnDetectDevices.Text" xml:space="preserve">
+    <value>Detect</value>
+  </data>
+  <data name="&gt;&gt;m_btnDetectDevices.Name" xml:space="preserve">
+    <value>m_btnDetectDevices</value>
+  </data>
+  <data name="&gt;&gt;m_btnDetectDevices.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnDetectDevices.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_btnDetectDevices.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="DefaultDataGridViewCheckBoxColumn.HeaderText" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="DefaultDataGridViewCheckBoxColumn.Width" type="System.Int32, mscorlib">
+    <value>59</value>
+  </data>
+  <data name="DeviceDataGridViewTextBoxColumn.HeaderText" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="DeviceDataGridViewTextBoxColumn.Width" type="System.Int32, mscorlib">
+    <value>76</value>
+  </data>
+  <data name="ModelDataGridViewTextBoxColumn.HeaderText" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="ModelDataGridViewTextBoxColumn.Width" type="System.Int32, mscorlib">
+    <value>71</value>
+  </data>
+  <metadata name="m_objCbmDevicesBindingSource1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 60</value>
+  </metadata>
+  <metadata name="m_objCbmDevicesBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>601, 17</value>
+  </metadata>
+  <metadata name="m_objCbmDevices.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>423, 17</value>
+  </metadata>
+  <data name="m_objDevicesGrid.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 43</value>
+  </data>
+  <data name="m_objDevicesGrid.RowHeadersWidth" type="System.Int32, mscorlib">
+    <value>15</value>
+  </data>
+  <data name="m_objDevicesGrid.Size" type="System.Drawing.Size, System.Drawing">
+    <value>246, 150</value>
+  </data>
+  <data name="m_objDevicesGrid.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;m_objDevicesGrid.Name" xml:space="preserve">
+    <value>m_objDevicesGrid</value>
+  </data>
+  <data name="&gt;&gt;m_objDevicesGrid.Type" xml:space="preserve">
+    <value>System.Windows.Forms.DataGridView, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objDevicesGrid.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objDevicesGrid.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="Label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="Label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>7, 22</value>
+  </data>
+  <data name="Label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>91, 17</value>
+  </data>
+  <data name="Label1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="Label1.Text" xml:space="preserve">
+    <value>CBM Devices</value>
+  </data>
+  <data name="&gt;&gt;Label1.Name" xml:space="preserve">
+    <value>Label1</value>
+  </data>
+  <data name="&gt;&gt;Label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;Label1.Parent" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;Label1.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="m_objGroupOpenCBM.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="m_objGroupOpenCBM.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="m_objGroupOpenCBM.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 450</value>
+  </data>
+  <data name="m_objGroupOpenCBM.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_objGroupOpenCBM.Text" xml:space="preserve">
+    <value>OpenCBM Configuration</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupOpenCBM.Name" xml:space="preserve">
+    <value>m_objGroupOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupOpenCBM.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupOpenCBM.Parent" xml:space="preserve">
+    <value>m_objPageOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupOpenCBM.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objPageOpenCBM.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="m_objPageOpenCBM.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 6</value>
+  </data>
+  <data name="m_objPageOpenCBM.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 456</value>
+  </data>
+  <data name="m_objPageOpenCBM.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;m_objPageOpenCBM.Name" xml:space="preserve">
+    <value>m_objPageOpenCBM</value>
+  </data>
+  <data name="&gt;&gt;m_objPageOpenCBM.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objPageOpenCBM.Parent" xml:space="preserve">
+    <value>m_objTabs</value>
+  </data>
+  <data name="&gt;&gt;m_objPageOpenCBM.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_btnBrowse.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="m_btnBrowse.Location" type="System.Drawing.Point, System.Drawing">
+    <value>295, 38</value>
+  </data>
+  <data name="m_btnBrowse.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="m_btnBrowse.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="m_btnBrowse.Text" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="&gt;&gt;m_btnBrowse.Name" xml:space="preserve">
+    <value>m_btnBrowse</value>
+  </data>
+  <data name="&gt;&gt;m_btnBrowse.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_btnBrowse.Parent" xml:space="preserve">
+    <value>m_objGroupPC</value>
+  </data>
+  <data name="&gt;&gt;m_btnBrowse.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_txtInitialDirectory.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left, Right</value>
+  </data>
+  <data name="m_txtInitialDirectory.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 39</value>
+  </data>
+  <data name="m_txtInitialDirectory.Size" type="System.Drawing.Size, System.Drawing">
+    <value>284, 22</value>
+  </data>
+  <data name="m_txtInitialDirectory.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;m_txtInitialDirectory.Name" xml:space="preserve">
+    <value>m_txtInitialDirectory</value>
+  </data>
+  <data name="&gt;&gt;m_txtInitialDirectory.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_txtInitialDirectory.Parent" xml:space="preserve">
+    <value>m_objGroupPC</value>
+  </data>
+  <data name="&gt;&gt;m_txtInitialDirectory.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_lblInitialDirectory.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_lblInitialDirectory.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 18</value>
+  </data>
+  <data name="m_lblInitialDirectory.Size" type="System.Drawing.Size, System.Drawing">
+    <value>315, 17</value>
+  </data>
+  <data name="m_lblInitialDirectory.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_lblInitialDirectory.Text" xml:space="preserve">
+    <value>Default location of your .d64, .prg, and .seq files:</value>
+  </data>
+  <data name="&gt;&gt;m_lblInitialDirectory.Name" xml:space="preserve">
+    <value>m_lblInitialDirectory</value>
+  </data>
+  <data name="&gt;&gt;m_lblInitialDirectory.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_lblInitialDirectory.Parent" xml:space="preserve">
+    <value>m_objGroupPC</value>
+  </data>
+  <data name="&gt;&gt;m_lblInitialDirectory.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_objGroupPC.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="m_objGroupPC.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="m_objGroupPC.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 450</value>
+  </data>
+  <data name="m_objGroupPC.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_objGroupPC.Text" xml:space="preserve">
+    <value>PC Configuration</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupPC.Name" xml:space="preserve">
+    <value>m_objGroupPC</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupPC.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupPC.Parent" xml:space="preserve">
+    <value>m_objPagePC</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupPC.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objPagePC.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="m_objPagePC.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 6</value>
+  </data>
+  <data name="m_objPagePC.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 456</value>
+  </data>
+  <data name="m_objPagePC.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;m_objPagePC.Name" xml:space="preserve">
+    <value>m_objPagePC</value>
+  </data>
+  <data name="&gt;&gt;m_objPagePC.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objPagePC.Parent" xml:space="preserve">
+    <value>m_objTabs</value>
+  </data>
+  <data name="&gt;&gt;m_objPagePC.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="m_lblComingSoon.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="m_lblComingSoon.Location" type="System.Drawing.Point, System.Drawing">
+    <value>6, 23</value>
+  </data>
+  <data name="m_lblComingSoon.Size" type="System.Drawing.Size, System.Drawing">
+    <value>104, 17</value>
+  </data>
+  <data name="m_lblComingSoon.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_lblComingSoon.Text" xml:space="preserve">
+    <value>Coming Soon...</value>
+  </data>
+  <data name="&gt;&gt;m_lblComingSoon.Name" xml:space="preserve">
+    <value>m_lblComingSoon</value>
+  </data>
+  <data name="&gt;&gt;m_lblComingSoon.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_lblComingSoon.Parent" xml:space="preserve">
+    <value>m_objGroupEmulator</value>
+  </data>
+  <data name="&gt;&gt;m_lblComingSoon.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objGroupEmulator.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="m_objGroupEmulator.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="m_objGroupEmulator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 450</value>
+  </data>
+  <data name="m_objGroupEmulator.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="m_objGroupEmulator.Text" xml:space="preserve">
+    <value>Emulator Configuration</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupEmulator.Name" xml:space="preserve">
+    <value>m_objGroupEmulator</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupEmulator.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupEmulator.Parent" xml:space="preserve">
+    <value>m_objPageEmulator</value>
+  </data>
+  <data name="&gt;&gt;m_objGroupEmulator.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="m_objPageEmulator.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <data name="m_objPageEmulator.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 0, 0, 6</value>
+  </data>
+  <data name="m_objPageEmulator.Size" type="System.Drawing.Size, System.Drawing">
+    <value>373, 456</value>
+  </data>
+  <data name="m_objPageEmulator.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;m_objPageEmulator.Name" xml:space="preserve">
+    <value>m_objPageEmulator</value>
+  </data>
+  <data name="&gt;&gt;m_objPageEmulator.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objPageEmulator.Parent" xml:space="preserve">
+    <value>m_objTabs</value>
+  </data>
+  <data name="&gt;&gt;m_objPageEmulator.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="m_objTabs.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="m_objTabs.Location" type="System.Drawing.Point, System.Drawing">
+    <value>97, 0</value>
+  </data>
+  <data name="m_objTabs.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>0, 3, 0, 3</value>
+  </data>
+  <data name="m_objTabs.Padding" type="System.Drawing.Point, System.Drawing">
+    <value>0, 3</value>
+  </data>
+  <data name="m_objTabs.Size" type="System.Drawing.Size, System.Drawing">
+    <value>381, 485</value>
+  </data>
+  <data name="m_objTabs.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;m_objTabs.Name" xml:space="preserve">
+    <value>m_objTabs</value>
+  </data>
+  <data name="&gt;&gt;m_objTabs.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabControl, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objTabs.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;m_objTabs.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <metadata name="m_objFolder.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>160, 17</value>
+  </metadata>
+  <data name="m_objFolder.Description" xml:space="preserve">
+    <value>Please select the folder containing your D64 images.</value>
+  </data>
+  <metadata name="m_objHelp.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>297, 17</value>
+  </metadata>
+  <data name="m_objHelp.HelpNamespace" xml:space="preserve">
+    <value>GUI4CBM4WIN</value>
+  </data>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>100</value>
+  </metadata>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>8, 16</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>478, 485</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="&gt;&gt;m_objImages.Name" xml:space="preserve">
+    <value>m_objImages</value>
+  </data>
+  <data name="&gt;&gt;m_objImages.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ImageList, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;DefaultDataGridViewCheckBoxColumn.Name" xml:space="preserve">
+    <value>DefaultDataGridViewCheckBoxColumn</value>
+  </data>
+  <data name="&gt;&gt;DefaultDataGridViewCheckBoxColumn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.DataGridViewCheckBoxColumn, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;DeviceDataGridViewTextBoxColumn.Name" xml:space="preserve">
+    <value>DeviceDataGridViewTextBoxColumn</value>
+  </data>
+  <data name="&gt;&gt;DeviceDataGridViewTextBoxColumn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.DataGridViewTextBoxColumn, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;ModelDataGridViewTextBoxColumn.Name" xml:space="preserve">
+    <value>ModelDataGridViewTextBoxColumn</value>
+  </data>
+  <data name="&gt;&gt;ModelDataGridViewTextBoxColumn.Type" xml:space="preserve">
+    <value>System.Windows.Forms.DataGridViewTextBoxColumn, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevicesBindingSource1.Name" xml:space="preserve">
+    <value>m_objCbmDevicesBindingSource1</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevicesBindingSource1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevicesBindingSource.Name" xml:space="preserve">
+    <value>m_objCbmDevicesBindingSource</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevicesBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevices.Name" xml:space="preserve">
+    <value>m_objCbmDevices</value>
+  </data>
+  <data name="&gt;&gt;m_objCbmDevices.Type" xml:space="preserve">
+    <value>GUI4CBM4WIN.CbmDevices, CbmDevices.Designer.vb, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;m_objFolder.Name" xml:space="preserve">
+    <value>m_objFolder</value>
+  </data>
+  <data name="&gt;&gt;m_objFolder.Type" xml:space="preserve">
+    <value>System.Windows.Forms.FolderBrowserDialog, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;m_objHelp.Name" xml:space="preserve">
+    <value>m_objHelp</value>
+  </data>
+  <data name="&gt;&gt;m_objHelp.Type" xml:space="preserve">
+    <value>System.Windows.Forms.HelpProvider, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>frmConfiguration</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+</root>

@@ -1,0 +1,20 @@
+
+TARGETNAME=cbmlinetester
+TARGETPATH=../../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=../../../bin/*/opencbm.lib      \
+           ../../../bin/*/arch.lib         \
+           ../../../bin/*/libmisc.lib      \
+           $(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../include;../../include/WINDOWS;../../arch/windows/
+
+SOURCES=../cbmlinetester.c \
+        cbmlinetester.rc
+
+UMTYPE=console
+
+USE_MSVCRT=1

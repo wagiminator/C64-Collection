@@ -1,0 +1,409 @@
+; Copyright (C) 2005,2006 Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; cbmforng   - 6502 based fast formatting routine with probing for
+;              the Commodore 1541 floppy disk drive and compatibles
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+    ; calculate the offset address for the format pattern buffer
+BaseAddress = CGCRBUF & $ff00
+
+;****************************************************************************
+;
+;  Write a 5 Byte buffer pointed to by (CGCRBUF & $ff00),y to disk
+;
+;  Note: This function call may be critical in timing, because 8 cycles
+;        were consumed up to the first Byte-Ready-Wait-Loop (bvc *).
+;        Calling this function and setting the functions parameter
+;        additionally costs 2+6=8 cycles, previously writing to DC_DATA
+;        and clearing the V-Flag 6 cycles again, in sum  8+8+6=22 cycles.
+;
+;        Since the loop is taken at least 4 times, a somewhat delayed
+;        register write (sta DC_DATA) is compensated by the following
+;        loop runs, which only need 17 cycles per round (36 cycles
+;        compensation).
+;
+;        If the previous write to DC_DATA before calling this funtion was
+;        nearly perfectly in sync to the Byte-Ready-Signal, then this
+;        single write to DC_DATA _may_ be delayed by up to 40 cycles
+;        despite the theoretical minimum value of less than 26 cycles.
+;        But the delayed write (15 cycles hanging over) needs to be
+;        compensated by at least two additional runs of the loop in
+;        "BufferedWriteLoop".
+;        Such a single write delay is possible because the written value
+;        is latched into the serial shift register with the _next_
+;        Byte-Ready-Signal, which means a byte needs to be written to
+;        DC_DATA just _before_ the next Byte-Ready-Signal happens.
+;
+;
+; clock cycle (cylic)
+;             11111111111222222         11111111111222222         
+;    1234567890123456789012345612345678901234567890123456123456789
+;
+;clock pulse of the Byte-Ready signal, byte at PA is latched
+; 0001000000000000000000000000010000000000000000000000000100000000
+;    |                         |                         |
+;    |                         |                         |
+;possible exits in time of the  bvc *  loop
+;  BBB11                                      11 
+;    BBB11                                      11
+;   BBB11 .                                    11 .
+;    |    .                    |                  .      |
+;    |    .                    |                  .      |
+; V-Flag resetting (done via SBC)                 .
+;         CC                                      CC 
+;    |    . .                  |                  . .    |
+; normal store to DC_DATA (in time)         delayed store (last possible)
+;         . SSSS                                  . SSSS   
+;    |    . .   .              |                  . .    |
+;     1234. .   .  1111111111222222222233333333334. .
+;         123456789012345678901234567890123456789012345678
+;
+; The abstracted schema above was derived from real disk drive tests.
+; The maximum delay of 40 cycles can only be reached, if the V flag
+; reset is made before the store to DC_DATA. If the store to DC_DATA
+; comes first, then the maximum delay for the store would only be 39
+; cycles.
+;
+; The function exit may also be critial, because 12 cycles are
+; consumed since the last Byte-Ready-Syncronisation.
+;
+;
+;  input:  Y            - offset into the buffer (limited to page boundary)
+;          C            - must be cleared, otherwise 6 GCR bytes are written
+;                         out instead of 5
+;
+;  output: Y            - new offset into the buffer pointing behind
+;                         the last byte written
+;          A            - $ff
+;          X            - arbitrary
+;          C            - cleared
+;
+;****************************************************************************
+
+BufferedWrite
+    lda #$04
+BufferedWriteLoop
+    ldx BaseAddress,y       ;  6(*)   : 15(*)
+    __syncBR                ;  8(*)   : 17(*)
+    sbc #$01                ;         :  6
+    stx DC_DATA             ;         :  4
+    iny                     ;         :  8
+    bcs BufferedWriteLoop   ; 10      : 11
+
+    __checkPageCrossing BufferedWriteLoop
+
+    ldx BaseAddress,y       ; 14
+    iny                     ; 16
+    __syncBR                ; 18
+    clv                     ;  2
+    stx DC_DATA             ;  6
+
+    rts                     ; 12
+
+;****************************************************************************
+;
+;  Write a GAP of arbitrary length (counted in 4-Bit nybbles) followed
+;  by a SYNC mark
+;
+;  Note: This routine implements an algorithm that is able to write
+;        "half GAP bytes" to disk. It does this by using an alternation
+;        scheme, for each odd sector number written to disk, one
+;        additional GAP byte is written. For even sector numbers this
+;        additional GAP byte write is omitted.
+;        "Half GAP bytes" are written to disk, when Bit 0 of the
+;        Akkumulator is set.
+;
+;  Drawbacks of the implementation below:
+;        (1) In fact no additional GAP bytes ($55) are written to disk,
+;            but the headerSYNC mark is shortened by one byte sometimes,
+;            thus non-standard SYNC marks of length 4 (32 On-Bits) are
+;            written to disk, dependent from several input conditions.
+;         !  When calling this routine with an even value for A, the
+;            following SYNC mark always gets the standard length of
+;            five bytes.
+;
+;  input:  A            - Length of first GAP written, counted in 4-Bit
+;                         nybbles ("half GAP bytes"), must be less than
+;                         $80, otherwise one byte write is omitted due
+;                         to the overflow flag not cleared
+;          C            - Must be cleared, otherwise the GAP may be one
+;                         byte bigger under certain circumstances 
+;
+;  output: A            - $fe or $ff, dependent from several inputs
+;          X            - $ff
+;          C            - cleared
+;
+;****************************************************************************
+
+WriteGAPnSYNC
+    ldx #$55                ; 2
+    jsr SequentialWrite     ; 6
+
+    ora SECTCNT             ;    :    : 17  ; combine both bit-0's
+    ror                     ;    :    : 19  ; and put the result to C
+
+    ldx #$ff                ;    :    : 21
+    lda #$08                ;    :    : 23  ; an even value is required
+                ; normally this SYNC length would be too short
+
+
+;****************************************************************************
+;
+;  Write a consecutive byte sequence of arbitrary length
+;
+;  Note: The number of bytes written calculates to:  (A + 1 + C) / 2
+;        To become independent from the state of the Carry, set the
+;        Akkumulator to:  A = length * 2 - 1
+;
+;
+;  input:  A            - Length parameter (see note), must be less
+;                         than $80, otherwise one byte write is omitted
+;                         due to the overflow flag not cleared
+;          X            - The byte to be written
+;          C            - Must be cleared, otherwise one more GCR byte
+;                         is written sometimes (see note)
+;
+;  output: A            - $ff, if A is even and C=0, or if A is odd and C=1
+;                         $fe, if A is even and C=1, or if A is odd and C=0
+;          C            - cleared
+;
+;****************************************************************************
+
+SequentialWrite
+    __syncBR                ;  8 : 11 : 25
+    sbc #$02                ;         :  2
+    stx DC_DATA             ;         :  6
+    bcs SequentialWrite     ;    :  9 :  8
+
+    __checkPageCrossing SequentialWrite
+
+    rts                     ;    :    : 14
+
+
+;##############################################################################
+;##############################################################################
+
+
+;****************************************************************************
+;
+;  Compare a 5 Byte buffer pointed to by (CGCRBUF & $ff00),y with
+;  bytes read from disk
+;
+;  Note: This function call is much more critical in timing than
+;        BufferedWrite above. First, on reading, there may be only 25
+;        cycles between two consecutive byte reads, second the additional
+;        branch after the comparison additionally eats up two cycles.
+;
+;        In sum all these circumstances reduce the maximum number of
+;        cycles between two consecutive calls to this function to 38
+;        cycles instead of 40.
+;
+;  input:  Y            - offset into the buffer (limited to page boundary)
+;
+;  output: Y            - new offset into the buffer pointing behind
+;                         the last byte compared
+;          X            - $ff
+;          A            - $00
+;          C            - unchanged
+;
+;****************************************************************************
+
+BufferedCompare
+    ldx #$03                ;  2
+
+BufferedCmpLoop
+    __syncBR                ;  4      : 21(*)
+    clv                     ;         :  2
+    lda DC_DATA             ;         :  6
+
+    eor BaseAddress,y       ;         : 10(*)
+    bne ErrorHandler        ;         : 12(*)
+
+
+    iny                     ;         : 14(*)
+    dex                     ;         : 16(*)
+
+    bpl BufferedCmpLoop     ; 18(*)   : 19(*)
+
+    __checkPageCrossing BufferedCmpLoop
+
+
+    lda BaseAddress,y       ; 22(**)
+    iny                     ; 24(**)
+    __syncBR                ; 26(**)
+    clv                     ;  2
+    eor DC_DATA             ;  6
+    bne ErrorHandler        ;  8
+
+    rts                     ; 14
+
+;****************************************************************************
+;
+;  Wait for the end of the current SYNC followed by waiting for the next
+;  SYNC with obeying a timeout of 540...700 bytes
+;
+;  output: A            - arbitrary
+;          X            - arbitrary
+;          Y            - arbitrary
+;          C            - set
+;
+;****************************************************************************
+
+WaitForNextSYNC
+    clv
+    __syncBR        ; Wait for end of the SYNC, the first byte coming in
+    ldy #$80 - $40  ; Wait for at least:  $40 * 17 / 2 bytes
+
+;****************************************************************************
+;
+;  Wait for a SYNC with counting all the read bytes until there and
+;  calculating a new nybble based GAP adjustment value. Within this
+;  routine there's also some sort of timeout implemented, so that
+;  this code can be used as a general SYNC wait routine.
+;
+;
+;  input:  A            - The current GAPLEN (offset adjusted) value to
+;                         be substracted from the remaining bytes first
+;                         (if Y is set to -1 aka $FF).
+;                         If Y is set to 0 or another adjustment offset,
+;                         A should be initialised with MAXSECT.
+;          Y            - Initial GAP adjustment value, -1 aka $FF for
+;                         taking into account the current GAPLEN. Should
+;                         be set to 0, if the remaining GAP should only
+;                         be divided by MAXSECT nybbles.
+;          C            - If cleared, the very first substraction
+;                         decreases A by one more
+;
+;  output: A            - The complementary remainder of the division
+;          X            - arbitrary
+;          Y            - The GAP adjustmend value
+;          C            - set
+;
+;****************************************************************************
+
+WaitForSYNCwithProbing
+    bvc WaitByteReadyWithSYNC
+    ; clv   ; not needed since the following SBC perfectly clears out
+            ; the overflow flag (if A is not in the range of $80..$82)
+
+    sbc #$02
+
+    bcs WaitByteReadyWithSYNC
+
+        ; Carry is already cleared
+        ; A contains either $fe or $ff, dependent from the oddity of
+        ; MAXSECT. This effectively implements a fixed point based
+        ; division:
+        ;  If  MAXSECT  is odd, one time  MAXSECT/2  number of bytes
+        ;  are substracted, the other round  MAXSECT/2+1  bytes
+    adc MAXSECT
+        ; since A was  $fe  or  $ff  and since  MAXSECT  is always
+        ; greater than 2, the Carry is set now again.
+
+    iny ; Increase the GAP adjustment counter, if MAXSECT number of
+        ; GAP nibbles (half a GAP byte) fit into the track tail GAP
+
+    bmi ErrorHandler            ; Prevent an endless loop, if no SYNC
+                                ; can be found, this jump is done, after
+                                ; $80*MAXSECT/2 >= $40*17 = 1088 bytes
+                                ; were read without a SYNC
+WaitByteReadyWithSYNC
+    ldx DC_SETTINGS
+    bmi WaitForSYNCwithProbing
+
+    ldx DC_DATA ; clear the value from the buffer, unlock tha buffer latch
+
+    clv         ; V should be cleared normally, but there seem to be
+                ; circumstances, where it is not, so clear it again
+    rts
+
+;****************************************************************************
+;
+;  Error exception handler for all the comparison subroutines above.
+;  It removes one call frame from the stack, so that it becomes able
+;  to either return completely out of the track format loop or to jump
+;  to the format restart point directly.
+;
+;****************************************************************************
+
+ErrorHandler
+    ; not needed, if the error handler of the DOS ROM is called
+    ; since it automatically restores the stack pointer
+.if 0
+    pla                         ; remove the current return address
+    pla                         ; from the stack, get to the stack frame
+                                ; of the job code routine
+.endif
+
+.ifdef DebugFormat
+    ldy DBGBPTR                 ; Save the result of the SYNC check.
+    dey                         ; Decrease Y, because we already did
+    lda DebugFormatBuffer,y     ; advance the pointer
+
+    ora #$c0                    ; Mark bits 6 and 7 of the remainder
+    sta DebugFormatBuffer,y     ; complementary for verify fail
+
+
+
+    ldx ERREXCP
+    bpl CompareError
+
+;****************************************************************************
+
+    and #$7f                    ; Mark bit 6 of the remainder
+    sta DebugFormatBuffer,y     ; complementary only for SYNC fail
+.else
+    lda ERREXCP
+    bpl CompareError
+.endif
+
+    lda BASEGAP         ; the following SYNC was overwritten, so make
+    lsr                 ; the new GAP a lot smaller (divide by two)
+    bne StoreGAP
+    lda #MinGAPn        ; if it got zero, load the MinGAP value
+StoreGAP
+    sta BASEGAP         ; store the new value and reformat this track
+
+.ifdef DebugFormat
+    ldx #$03
+CompareError
+    txa
+.else
+    lda #$03
+CompareError
+.endif
+
+    .byte $ae           ; eat up the following operation
+WriteProtectError
+    lda #$08            ; Write protect error
+    jmp ERRR
+
+;****************************************************************************

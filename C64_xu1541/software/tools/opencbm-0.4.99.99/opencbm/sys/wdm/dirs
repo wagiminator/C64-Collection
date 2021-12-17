@@ -1,0 +1,5 @@
+DIRS= \
+	win2000
+
+OPTIONAL_DIRS= \
+	win98

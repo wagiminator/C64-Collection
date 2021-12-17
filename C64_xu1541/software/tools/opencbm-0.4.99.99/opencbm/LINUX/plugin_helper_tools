@@ -1,0 +1,145 @@
+#!/bin/bash
+#
+# opencbm_plugin_helper_tools
+#
+
+OS="$(uname -s)";
+case "${OS}" in
+	"Linux")
+	ROOTGRP="root";
+	;;
+	"FreeBSD")
+	ROOTGRP="wheel";
+	;;
+	"Darwin")
+	ROOTGRP="wheel";
+	;;
+	*)
+	ROOTGRP="root";
+	;;
+esac
+
+do_help() {
+	echo
+	echo "$0 USAGE:"
+	echo
+}
+
+get_location_etc_conf() {
+	LOCATION_ETC_CONF="$1/opencbm.conf.d"
+
+	# generate directory for conf.d if it is not available
+	test -e "$LOCATION_ETC_CONF" || install -d "$LOCATION_ETC_CONF"
+	test -d "$LOCATION_ETC_CONF" || (echo "error: $LOCATION_ETC_CONF exists,"; echo "but it is not a directory! Aborting..."; exit 1)
+}
+
+do_rebuild() {
+	LOCATION_ETC="$1"
+
+	CONF_FILE="$LOCATION_ETC/opencbm.conf"
+
+	get_location_etc_conf "$LOCATION_ETC"
+
+	NO_OF_FILES=`ls -1A $LOCATION_ETC_CONF/|wc -l`
+	if [ $NO_OF_FILES  -ne 0 ]; then
+		echo ";" > $CONF_FILE
+		echo "; This is a GENERATED FILE! - DO NOT EDIT!" >> $CONF_FILE
+		echo "; Modify the files in /$(basename $(dirname ${LOCATION_ETC_CONF}))/$(basename ${LOCATION_ETC_CONF})/ instead," >> $CONF_FILE
+		echo "; and execute 'opencbm_$(basename ${0}) rebuild'..." >> $CONF_FILE
+		echo ";" >> $CONF_FILE
+		echo "" >> $CONF_FILE
+		cat $LOCATION_ETC_CONF/*.conf >> $CONF_FILE
+	else
+		[ -e "$CONF_FILE" ] && rm "$CONF_FILE"
+		rmdir -p $LOCATION_ETC_CONF 2> /dev/null
+		echo "" # make sure we do not end with an errorlevel > 0
+	fi
+}
+
+do_install() {
+	LOCATION_ETC="$1"
+	FILE_DESTINATION="$2"
+	FILE_SOURCE="$3"
+
+	get_location_etc_conf "$LOCATION_ETC"
+
+	if test $(id -u) -eq 0; then
+		install -d -o root -g ${ROOTGRP:-root} -m 755 "$LOCATION_ETC_CONF"
+		install -o root -g ${ROOTGRP:-root} -m 644 "$FILE_SOURCE" "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+	else
+		install -d -m 755 "$LOCATION_ETC_CONF"
+		install -m 644 "$FILE_SOURCE" "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+	fi
+
+	do_rebuild $LOCATION_ETC
+}
+
+do_uninstall() {
+	LOCATION_ETC="$1"
+	FILE_DESTINATION="$2"
+
+	get_location_etc_conf "$LOCATION_ETC"
+
+	[ -e "$LOCATION_ETC_CONF/$FILE_DESTINATION" ] && rm "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+
+	do_rebuild $LOCATION_ETC
+}
+
+do_set_default_plugin() {
+	LOCATION_ETC="$1"
+	FILE_DESTINATION="$2"
+	PLUGIN_NAME="$3"
+
+	get_location_etc_conf "$LOCATION_ETC"
+
+	if [ -e "$LOCATION_ETC_CONF/00opencbm.conf" ]; then
+		if [ -z "`grep "^default=$" "$LOCATION_ETC_CONF/00opencbm.conf"`" ]; then
+			echo "------- Default already set, quitting..."
+			echo ""
+			exit 0
+		fi
+	fi
+
+	echo "------ setting new default to: '${PLUGIN_NAME}'."
+	echo ""
+	echo "[plugins]" > "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+	echo "default=${PLUGIN_NAME}" >> "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+	echo "" >> "$LOCATION_ETC_CONF/$FILE_DESTINATION"
+
+	do_rebuild $LOCATION_ETC
+}
+
+process_commands() {
+	COMMAND=$1
+	shift
+
+	case "$COMMAND" in
+		"install")
+			do_install "$@"
+			;;
+
+		"uninstall")
+			do_uninstall "$@"
+			;;
+
+		"rebuild")
+			do_rebuild "$@"
+			;;
+
+		"setdefaultplugin")
+			do_set_default_plugin "$@"
+			;;
+
+		"help"|"")
+			do_help
+			;;
+
+		*)
+			echo "Unknown command '$COMMAND' given."
+			echo ""
+			do_help
+			;;
+	esac
+}
+
+process_commands "$@"

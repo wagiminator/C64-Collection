@@ -1,0 +1,16 @@
+Source: opencbm
+Section: misc
+Priority: extra
+Build-Depends: debhelper (>= 4.1.16)
+Maintainer: Spiro Trikaliotis <spiro.trikaliotis@gmx.de>
+Standards-Version: 3.7.2.1
+
+Package: opencbm-xa1541-module-KERNEL_VERSION
+Provides: opencbm-xa1541-module
+Architecture: i386
+Section: misc
+Description: Driver module for the Commodore serial IEC bus
+ This driver provides access to serial IEC devices (C=1541 etc.)
+ .
+ This package contains the cbm module for compiled for kernel version
+ KERNEL_VERSION.

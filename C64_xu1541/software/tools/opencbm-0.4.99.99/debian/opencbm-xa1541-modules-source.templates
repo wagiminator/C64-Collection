@@ -1,0 +1,10 @@
+Template: opencbm-xa1541-modules-source/direct_port
+Type: boolean
+Default: false
+_Description: Use direct parallel port access?
+ By default, /dev/cbm attaches itself to the Linux parport subsystem, which
+ was introduced in the 2.2.x kernel series. If you don't want to use the
+ parport system you can say yes here, and /dev/cbm will access the port
+ directly.
+ .
+ If you're compiling for 2.0.x, this flag is entirely ignored.

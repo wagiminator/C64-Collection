@@ -1,0 +1,38 @@
+        *=$0500
+
+        tr = $0b
+        se = tr+1
+
+        get_ts     = $0700
+        get_block  = $0706
+        send_byte  = $0709
+        init       = $070f
+
+        nop
+        nop
+        nop
+        jsr init
+        sei
+        jsr get_ts
+        txa
+        bne br0
+        rts
+
+br0     stx tr
+        sty se
+        ldy #$00
+        jsr get_block
+        cli
+        lda #$90
+        ldx #$00
+        jsr $ff54
+        cmp #$02
+        bcs br1
+        lda #$00
+br1     sei
+        jsr send_byte
+        cli
+        jmp $0506
+        lda #$66
+        jmp $ff3f
+

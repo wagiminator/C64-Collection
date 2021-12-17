@@ -1,0 +1,128 @@
+rem THIS IS A SAMPLE FILE FOR POSTBUILD_LOCAL.BAT
+rem ADJUST THIS TO YOUR OWN NEEDS, AND PLACE IT *ABOVE* THE
+rem CURRENT OPENCBM DIRECTORY.
+rem
+rem EXAMPLE:
+rem
+rem If the cbm4win sources are in ~/somedir/cbm4win/,
+rem then store this file in ~/somedir/postbuild_local.bat
+rem
+rem
+rem PARAMETERS:
+rem
+rem This script file is called with the cbm4win
+rem source home directory as parameter %1
+
+set INSTALL_BASE=C:\_DDK_Test\cbm4win\
+set SYMBOL_STORE=C:\_DDK_Test\DebugSymbols\NewSymbols
+set EXE_I_TARGET=C:\WINDOWS
+
+
+if not defined DDKBUILD_PLATFORM set DDKBUILD_PLATFORM=i386
+
+for /f "tokens=3 delims=, " %%f in ('%1\bin\%DDKBUILD_PLATFORM%\cbmctrl.exe --version') do set VERSION=%%f
+echo Version is set to: %VERSION%
+
+set REPLVERSTRING=sed s/%VERSION%/0.4.0/g
+REM set REPLVERSTRING=cat
+(
+	setlocal
+
+	REM don't search for the cbm4win tools anywhere
+	REM else as in the local directory
+	PATH=%CYGWIN%\bin;.
+
+	echo creating exe and version dependent help documentation
+
+	if not exist %1\bin\helpdoc mkdir %1\bin\helpdoc
+	del /f /q %1\bin\helpdoc\*.1
+	del /f /q %1\bin\helpdoc\*.ps
+	del /f /q %1\bin\helpdoc\*.dvi
+	del /f /q %1\bin\helpdoc\*.pdf
+	del /f /q %1\bin\helpdoc\*.html
+
+	cd %1\bin\%DDKBUILD_PLATFORM%
+
+		REM convert files that don't need any fixups
+	for %%f in (d64copy cbmforng cbmformat) do (
+		echo Creating %%~nf.1
+		%BASH% -c "help2man -N %%f" | tr -d "\r" | %REPLVERSTRING% > ..\helpdoc\%%~nf.1
+	)
+		REM convert files that need path corrections
+	for %%f in (cbmcopy) do (
+		echo Creating %%~nf.1
+		%BASH% -c "help2man -N %%f" | tr -d "\r" | sed "s/[^ ]*[^ ""]%%f[^ ]*/%%f/g" | %REPLVERSTRING% > ..\helpdoc\%%~nf.1
+	)
+		REM convert files that need extended version information fixes
+	for %%f in (instcbm) do (
+		echo Creating %%~nf.1
+		%BASH% -c "help2man -N %%f" | tr -d "\r" | sed "s/%%f Version %VERSION%, built on .* at .*$/%%f %VERSION%/g" | %REPLVERSTRING% > ..\helpdoc\%%~nf.1
+	)
+
+		REM get handcrafted man files and remove DOS line endings
+	cd ..\helpdoc
+	for %%f in (cbmctrl) do (
+		tr -d "\r" < ..\..\%%f\%%f.1 | %REPLVERSTRING% > %%f.1
+	)
+	endlocal
+)
+REM get back the old PATH variable and CWD
+
+REM Once we got a collection of man pages, we now can get them as
+REM source for other formatted output  ==>  outformation.
+(
+	setlocal
+	cd %1\bin\helpdoc
+	PATH=%PATH%;%CYGWIN%\bin
+
+	for %%f in (*.1) do (
+		echo Creating %%f.ps
+		groff -t -e -mandoc -Tps  %%f > %%f.ps
+		echo Creating %%~nf.pdf from %%f.ps
+		%BASH% -c "ps2pdf %%f.ps %%~nf.pdf"
+
+		echo Creating %%f.dvi
+		groff -t -e -mandoc -Tdvi %%f > %%f.dvi
+		echo Creating %%f.pdf from %%f.dvi
+		dvipdfm -o %%f.pdf %%f.dvi
+
+		REM groff 1.19.x introduces a new script for PDF generation (untested)
+		REM echo Creating %%~nf.pdfroff.pdf from %%f
+		REM %BASH% -c "pdfroff.sh --pdf-output=%%~nf.pdfroff.pdf %%f"
+
+		echo Creating %%~nf.html
+		man2html %%f > %%~nf.html
+	)
+	endlocal
+)
+REM get back the old PATH variable and CWD
+
+set INSTL_TARGET=%INSTALL_BASE%\%VERSION%
+if not exist %INSTL_TARGET% (
+	mkdir %INSTL_TARGET%
+	mkdir %INSTL_TARGET%\pdb
+)
+
+
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.inf %INSTL_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy INF file to %INSTL_TARGET%"
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.sys %INSTL_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy SYS files to %INSTL_TARGET%"
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.exe %INSTL_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy EXE files to %INSTL_TARGET%"
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.dll %INSTL_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy DLL files to %INSTL_TARGET%"
+
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.exe %EXE_I_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy EXE files to %EXE_I_TARGET%"
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.dll %EXE_I_TARGET%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy DLL files to %EXE_I_TARGET%"
+
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.pdb %INSTL_TARGET%\pdb
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy PDB files to %INSTL_TARGET%\pdb"
+
+xcopy /y %1\bin\%DDKBUILD_PLATFORM%\*.pdb %SYMBOL_STORE%
+if errorlevel 1 echo "INSTALL_current_cbm4win.bat(1) : error : could not copy PDB files for debugging to %SYMBOL_STORE%"
+
+echo Next job is: runas /user:Administrator "cmd /c cd /d %INSTL_TARGET% & instcbm -r & instcbm -n"
+runas /user:Administrator "cmd /c cd /d %INSTL_TARGET% & instcbm -r & instcbm -n & pause"

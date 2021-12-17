@@ -1,0 +1,26 @@
+opencbm-xa1541-modules-source for Debian
+----------------------------------------
+
+After untarring /usr/src/opencbm.tar.gz, enter the top-level kernel
+source directory and compile the module with
+
+$ cd <path_to_kernel_source>
+$ fakeroot make-kpkg modules_image
+
+This should give you an installable package named
+
+/usr/src/opencbm-<opencbm version>-<kernel version>.deb
+
+
+Alternatively, if you don't have/use make-kpkg:
+
+$ cd /usr/src/modules/opencbm
+$ fakeroot debian/rules KSRC=/lib/modules/`uname -r`/build KVERS=`uname -r` build
+
+This leaves you (hopefully!) with the loadable module cbm.o
+
+
+Good luck!
+
+  -- Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>, Sun, 31 Aug 2003 19:16:27 +0200
+  -- Spiro Trikaliotis <cbm4win@trikaliotis.net>, Thu, 12 Jan 2012 21:33:03 +0100

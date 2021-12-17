@@ -1,0 +1,16 @@
+#! /bin/sh
+# postrm script for opencbm-xa1541
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+#DEBHELPER#
+
+if [ "$1" = "purge" ]; then
+	/usr/lib/opencbm/install_plugin.sh uninstall xa1541
+fi
+
+db_stop
+
+exit 0

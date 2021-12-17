@@ -1,0 +1,166 @@
+This file describes the error szenario encoding in the accompanying NIB files.
+It is oriented at Peter Schepers format description of the D64 file format.
+
+	http://ist.uwaterloo.ca/~schepers/formats/D64.TXT
+
+Overview:
+	Track 2, sector 1: Header ID byte changed from 0x08 to 0x09            ==> "20" read error
+
+	Track 4, sector 1: Track and sector number changed to 36;33            ==> "20" read error
+
+	Track 6, sector 1: First header filler byte changed from 0x0F to 0x3F  ==> "20" read error
+
+	Track 8: SYNC marks from headers and data blocks of sectors 11 to 20, 0 and 1 are wiped  ==> "21" read error
+
+	Track 10, sector 1: Data block ID byte changed from 0x07 to 0x17       ==> "22" read error
+
+	Track 12, sector 1: Changed the header checksum byte                   ==> "27" read error
+
+	Track 14, sector 1: Changed both ID bytes within the sector header     ==> "29" read error
+
+	Track 16, sector 1: Changed data block checksum byte                   ==> "23" read error.
+
+	Track 20, sector 1: Header checksum byte encoded with invalid GCR data ==> ???
+
+	Track 22, sector 1: First header filler byte invalidly GCR encoded     ==> ???
+
+	Track 24, sector 1: Sixth data block byte is invalidly GCR encoded     ==> ???
+
+	Track 26, 27, 28: All tracks are filled with 0x00-GCR-Bytes            ==> "74" drive not read error
+
+	Track 30: Tracks 30 contains a killer track with all bytes being 0xFF  ==> hangup alike behavior
+
+Technical details of changes:
+
+Track	Sector	H-ID	F-ID	Fil-1	Fil-2	I-Leave
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:55:e5:2d:52:73:9d:95:55:55:)  hex(8:e:1:2:44:49:f:f:)
+2	1	0x8	ID	0xf	0xf	1
+
+ * Destroyed the Head-ID to have a "20" read error (code "02" in D64 error info)
+   ==> 56:55:e5:2d:52:73:9d:95:55:55
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:54:95:2d:4e:73:9d:95:55:55:)  hex(8:8:1:4:44:49:f:f:)
+4	1	0x8	ID	0xf	0xf	1
+
+ * Changed both track and sector to invalid values to have another "20"
+   read error (code "02" in D64 error info), checksum is still valid to
+   avoid error 27 (code "09")
+
+   ==> 52:54:99:2e:4e:73:9d:95:55:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:55:a5:2d:56:73:9d:95:55:55:)  hex(8:a:1:6:44:49:f:f:)
+6	1	0x8	ID	0xf	0xf	1
+
+ * Changed the first filler byte to have another "20" read error
+   (code "02" in D64 error info)
+
+   ==> (52:55:a5:2d:56:73:9d:99:d5:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:55:e5:6d:49:73:9d:95:55:55:)  hex(8:e:b:8:44:49:f:f:)
+8	11	0x8	ID	0xf	0xf	1
+  [...]
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:54:e5:2d:49:73:9d:95:55:55:)  hex(8:4:1:8:44:49:f:f:)
+8	1	0x8	ID	0xf	0xf	1
+
+ * All SYNC marks from all sector headers in the range from sector 11 to
+   sector 20 and then sector 0 and 1 and all accompanying data blocks
+   are wiped with 0x55 to hopefully create a "21" read error (code 03)
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:55:65:2d:5a:73:9d:95:55:55:)  hex(8:6:1:a:44:49:f:f:)
+10	1	0x8	ID	0xf	0xf	1
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+
+ * Changed the ID byte of the data block to have another "22" read error
+   (code "04" in D64 error info). Also the first data byte is changed to
+   have a valid checksum again.
+
+   ==> (5d:d6:a5:29:4a:52:94:a5:29:4a:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:54:a5:2d:4d:73:9d:95:55:55:)  hex(8:0:1:c:44:49:f:f:)
+12	1	0x8	ID	0xf	0xf	1
+
+ * Changed the checksum byte of the header to have a "27" read error
+   (code "09" in D64 error info).
+
+   ==> (52:6b:55:2d:4d:73:9d:95:55:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:55:25:2d:5e:73:9d:95:55:55:)  hex(8:2:1:e:44:49:f:f:)
+14	1	0x8	ID	0xf	0xf	1
+
+ * Changed both ID bytes within the sector header to have a "29" read
+   error (code "0B" in D64 error info). Both ID bytes are changed, so
+   that the checksum remains valid.
+
+   ==> (52:55:25:2d:5e:ab:ab:95:55:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:56:d5:2d:6a:73:9d:95:55:55:)  hex(8:1c:1:10:44:49:f:f:)
+16	1	0x8	ID	0xf	0xf	1
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+
+ * Changed the checksum byte of the data block to form a data block
+   checksum, "23" read error.
+
+	Last Tupel: hex-GCR(52:94:A5:29:4A)  hex(0:0:0:0)
+   ==> (52:AB:55:29:4A) / (0:FF:0:0)
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:56:95:2d:6e:73:9d:95:55:55:)  hex(8:18:1:14:44:49:f:f:)
+20	1	0x8	ID	0xf	0xf	1
+
+  * Introduced invalid GCR code into the header checksum byte
+
+   ==> (52:7f:95:2d:6e:73:9d:95:55:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:57:a5:2d:76:73:9d:95:55:55:)  hex(8:1a:1:16:44:49:f:f:)
+22	1	0x8	ID	0xf	0xf	1
+
+  * Introduced invalid GCR code into the first header filler byte
+
+   ==> (52:57:a5:2d:76:73:7f:95:55:55:
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:56:e5:2d:69:73:9d:95:55:55:)  hex(8:14:1:18:44:49:f:f:)
+24	1	0x8	ID	0xf	0xf	1
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+
+  * Introduced invalid GCR code into sixth data block byte
+
+   ==> (55:d4:a5:29:4a:52:7f:a5:29:4a
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:57:25:3d:7a:73:9d:95:55:55:)  hex(8:12:5:1a:44:49:f:f:)
+26	5	0x8	ID	0xf	0xf	-3
+
+[...]
+
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:57:95:25:6d:73:9d:95:55:55:)  hex(8:19:8:1c:44:49:f:f:)
+28	8	0x8	ID	0xf	0xf	1
+
+  * Tracks 26,27,28 are all made empty (no SYNC, no GAP, just invalid
+    0x00-GCR bytes) to perhaps provoke a "74" read error (code "0f"),
+    "drive not ready"
+------
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:57:65:3d:7e:73:9d:95:55:55:)  hex(8:16:5:1e:44:49:f:f:)
+30	5	0x8	ID	0xf	0xf	-3
+
+[...]
+
+  Debug: hex-GCR(55:d4:a5:29:4a:52:94:a5:29:4a:)  hex(7:0:0:0:0:0:0:0:)
+  Debug: hex-GCR(52:57:b5:25:7e:73:9d:95:55:55:)  hex(8:1b:8:1e:44:49:f:f:)
+30	8	0x8	ID	0xf	0xf	1
+
+  * Tracks 30 contins a killer track with all bytes being 0xFF.
+------

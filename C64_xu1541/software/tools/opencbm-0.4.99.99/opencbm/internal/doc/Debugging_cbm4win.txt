@@ -1,0 +1,38 @@
+Gathering timing informations out of the driver
+
+ * Create a directory:  C:\opencbm\timing\
+   and delete older files with the name  timing.dat  in it. All instances
+   of the driver then write performance data into a (new) file with the
+   name  timing.dat.
+
+
+Undocumented (internal) command line arguments for instcbm:
+
+ * Definition of DebugFlags for the driver, the DLL and instcbm itself to
+   be stored into the registry:
+
+      "--debugflags"  or  "-D"
+         followed by up to three arguments (at least one). E.g.:
+
+         instcbm -u -D0x10000007,0x10000003,0x5000001F
+
+     The first argument tells the flags for the driver itself, the second one
+     for gathering debug output from the accompaying DLL, the third argument
+     defines the debug flags for the installer program instcbm.
+
+ * For a definition of the possible flag settings, see the accompaying
+   spreadsheet
+
+ * Advice instcbm to extract the internal debugging queue of cbm4win.
+   cbm4win must be loaded (generally use the "-A" switch with instcbm)
+   and available (not opened by any other process), to do so:
+  
+      "--buffer"  or   "-B"
+
+
+Working with WinDBG and manually extracting the debug queue buffer:
+ * ToDo
+
+
+Working with Sysinternals' DebugView
+ * ToDo

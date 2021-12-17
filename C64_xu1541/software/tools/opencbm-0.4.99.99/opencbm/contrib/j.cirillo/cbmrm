@@ -1,0 +1,54 @@
+#!/bin/sh
+# cbmrm 1.0
+# This program uses the cbm4linux cbmctrl program by Michael Klein (www.lb.shuttle.de/puffin/cbm4linux)
+# to delete a file on a Commodore drive connected to the parallel port via an XM1541 cable.
+# Written 5-01-2001 by John Cirillo  (cirillo(at)purdue(dot)edu)
+# Enjoy!
+#
+if [ "$1" = "" ] 
+then 
+echo ""
+echo "cbmrm 1.0 by John Cirillo"
+echo "This script is a frontend to the cbm4linux cbmctrl utility written by Michael Klein."
+echo "Cbmrm makes it easier to delete a file from a Commodore drive connected to the parallel port"
+echo "via an XM-1541 cable."
+echo ""
+echo "usage: cbmrm filename [drive]  (defaults to 8)"
+echo ""
+exit 1
+fi
+text=$1
+if [ "$2" = "" ]
+then 
+drive="8"
+else 
+drive=$2
+fi
+if [ $drive != "8" ] && [ $drive != "9" ] && [ $drive != 10 ] && [ $drive != 11 ]
+then
+echo "Valid drive numbers are 8 through 11."
+exit 1
+fi
+
+# ** Enable this if you want to test whether the cbm module is loaded **
+#/sbin/lsmod|grep cbm > /dev/null
+#if [ $? -ne 0 ]
+#then
+#echo "I guess the cbm module is not loaded. Please make sure the cbm module is loaded."
+#exit 1
+#fi
+
+echo "Initializing drive"
+cbmctrl command $drive I0:
+utext=`echo $text | awk '{print toupper($0)}'`
+#above converts the filename to all uppercase
+cbmctrl listen $drive 15
+announce="Deleting $text from CBM drive $drive"
+echo $announce
+echo -n S0:$utext > /dev/cbm
+echo ""
+cbmctrl unlisten
+cbmctrl status $drive
+
+exit 0
+

@@ -1,0 +1,130 @@
+; Copyright 1999-2005 Michael Klein <michael.klein@puffin.lb.shuttle.de>
+; Copyright      2005 Spiro Trikaliotis
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+.if .defined(Drive1541)
+.else
+        Drive1571       = 1                     ;Compile for 1571 drives
+.endif
+
+        .include "common.i65"
+
+        * = $0700
+
+get_ts     jmp gts         ; get track/sector
+get_byte   jmp gbyte       ; get byte
+get_block  jmp gblk        ; receive block
+send_byte  jmp sbyte       ; send byte
+send_block jmp sblk        ; send block
+init    jsr setinput
+        jmp data_1
+
+sblk    jsr setoutput
+sblk0   jsr clk_1
+        lda (ptr),y
+        sta PP_DATA
+        jsr data_0
+        iny
+        jsr clk_0
+        lda (ptr),y
+        sta PP_DATA
+        jsr data_1
+        iny
+        bne sblk0
+
+        ; fall through to sbyte: perform end-handshake
+
+sbyte   pha
+        jsr setoutput
+        jsr clk_1
+        pla
+        sta PP_DATA
+        jsr data_0
+        jsr clk_0
+        jsr data_1
+
+setinput
+        lda #PP_DDR_IN
+        .byte OPCODE_BIT_2BYTE
+setoutput
+        lda #PP_DDR_OUT
+        sta PP_DDR
+        rts
+
+
+; wait for clock to go inactive
+clk_0   lda #IEC_PORT_CLK_IN
+c0      bit IEC_PORT
+        beq c0
+        rts
+ 
+; wait for clock to go active
+clk_1   lda #IEC_PORT_CLK_IN
+c1      bit IEC_PORT
+        bne c1
+        rts
+
+gbyte   tya
+        pha
+        jsr gts
+        pla
+        tay
+        txa
+        rts
+
+gts     jsr clk_1
+        ldx PP_DATA
+        jsr data_0
+        jsr clk_0
+        ldy PP_DATA
+data_1  lda #IEC_PORT_DATA_OUT
+        .byte OPCODE_BIT_2BYTE
+data_0  lda #IEC_PORT_NONE
+        sta IEC_PORT
+        rts
+
+gblk    tya
+        lsr
+        bcc gblk0
+        jsr gbyte
+        iny
+gblk0   jsr clk_1
+        lda PP_DATA
+        sta (ptr),y
+        iny
+        jsr data_0
+        jsr clk_0
+        lda PP_DATA
+        sta (ptr),y
+        jsr data_1
+        iny
+        bne gblk0
+        rts

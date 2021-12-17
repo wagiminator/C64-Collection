@@ -1,0 +1,2 @@
+#! /bin/sh
+doxygen Doxyfile > doxygen.con.log 2> doxygen.err.log

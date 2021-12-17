@@ -1,0 +1,189 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; Copyright (C) 1998-2005 Wolfgang Moser (http://d81.de)
+; Copyright (C) 2005      Spiro Trikaliotis
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+;Detect disk change function for 1541/1570/1571 drives
+
+		.include "common.i65"	;Common constants
+
+StartAddress	= $0500
+
+		.byte <StartAddress	;Load address
+		.byte >StartAddress
+
+		.org StartAddress	;Start address
+
+WriteProtValue	= TransferByte		;Expected value on write prot sense
+PulseDelay	= TempReg0		;LED pulse delay
+PulseDir	= TempReg1		;LED pulse direction (lighten/darken)
+MotorOffDelay	= TempReg2		;Delay before switching motor off
+PulseSpeed	= TempReg3		;LED pulse speed
+
+.if 0
+SendByte	= StartAddress+$0102
+.endif
+
+		sei			;Disable interrupts
+
+.if 1
+		lda #sbDataOut		;Set DATA to indicate no disk change has been detected
+.else
+		lda #sbClear		;Clear serial port
+.endif
+		sta SerialPort
+		lda #1			;Initialize pulse delay and direction
+		sta PulseDelay
+		sta PulseDir
+		lda #DefMotorOffDel	;Set delay before switching drive
+		sta MotorOffDelay	; motor off
+		lda #DefLEDPulseSpd	;Set pulse speed, delay before
+		sta PulseSpeed		; changing LED brightness
+		lda DriveCtrlPort	;Skip waiting for disk write-prot
+		and #drWriteProt	; hole to pass sensor when the hole is
+		beq DiskWPTabIsOut	; covered
+		lda #drClear		;Wait for write-protection hole to
+		jsr PulseLED		; pass sensor, as disk is pulled out
+		bcs End			;Terminate on termination signal
+DiskWPTabIsOut:	lda #drWriteProt	;Wait for edge of disk to pass sensor,
+		jsr PulseLED		; as disk is pulled out
+		bcs End			;Terminate on termination signal
+		lda #drClear		;Wait for edge of disk to reach
+		jsr PulseLED		; sensor, as new disk is inserted
+		bcs End			;Terminate on termination signal
+		lda MotorOffDelay	;Skip switching drive motor on if it
+		bne MotorIsOK		; has not been switched off yet
+		lda DriveCtrlPort	;Switch drive motor on
+		ora #drDriveMotor
+		sta DriveCtrlPort
+		ldy #MotorSpinDelay	;Busy loop, wait for drive motor to
+		ldx #0			; spin up
+SpinUp:		dex
+		bne SpinUp
+		dey
+		bne SpinUp
+MotorIsOK:	cli
+		lda #2			;Set buffer number
+		sta BufferNumber
+		lda DirTrack		;Set track number to directory track
+		sta TrackNumBuf2
+CheckDisk:	ldx BufferNumber	;Seek to track and read into a sector,
+		lda #jcSeek		; to catch the moment when the disk is
+		jsr SetJobCommand	; fully inserted
+WaitJob:	lda SerialPort		;Terminate upon ATN high
+		bmi End
+		lda JobControls,x	;Wait until job finished
+		bmi WaitJob
+		cmp #jsError		;Restart check if any error occurred
+		bcs CheckDisk
+		cli			;Enable interrupts
+		lda #sbClkOut+sbDataOut	;Set CLK out and DATA out to high
+		sta SerialPort
+Wait1:		bit SerialPort		;Wait until ATN high
+		bpl Wait1
+
+.if 1
+End:
+.endif
+		lda #sbClear		;Clear serial port
+		sta SerialPort
+.if 0
+		sei			;Disable interrupts
+		lda #ddAllOutput	;Set parallel port to output (!PATCH!)
+		bit ParallelPortDDR
+		ldy #$FF
+		lda #'O'		;Send "O" character
+		jsr SendByte
+		dey
+		lda #DummyByte		;Send dummy character
+		jsr SendByte
+		lda #ddAllInput		;Set parallel port to input (!PATCH!)
+		bit ParallelPortDDR
+End:
+.endif
+		cli			;Enable interrupts
+		jmp IdleLoop		;Return to DOS idle loop
+
+.if 0
+	AlignCodeToAddr StartAddress+$00A0
+.endif
+
+;Pulse LED, return upon write protection sense returning expected value or
+;  upon termination signal arriving from host
+;  Input : A: expected value for write protection sense
+;  Output: Carry: when set, host sent termination signal
+PulseLED:	sta WriteProtValue	;Save expected write prot sense value
+		ldx PulseSpeed		;Load LED pulse speed counter
+PulseLoop:	ldy PulseDelay		;Bright LED phase, delay with busy
+WaitBright:	iny			; loop
+		bne WaitBright
+		lda DriveCtrlPort	;Switch drive LED off
+		and #<(~drDriveLED)
+		sta DriveCtrlPort
+		ldy PulseDelay		;Dark LED phase, delay with busy loop
+WaitDark:	dey			; of inverted length
+		bne WaitDark
+		ora #drDriveLED		;Switch drive LED on
+		sta DriveCtrlPort
+		dex			;Loop to maintain LED brightness level
+		bne CheckSignal		; until pulse speed counter underflows
+		ldx PulseSpeed		;Reload LED pulse speed counter
+ChangeDelay:	lda PulseDelay		;Change overall LED brightness, by
+		clc			; increasing or decreasing LED pulse
+		adc PulseDir		; delay counter
+		sta PulseDelay 		;Skip if LED delay counter not zero
+		bne CheckSignal		; (LED is completely bright or dark)
+		lda MotorOffDelay	;Skip if drive motor switch off delay
+		bne DecMotorDelay	; is not over yet
+		lda DriveCtrlPort	;Switch drive motor off
+		and #<(~drDriveMotor)
+		sta DriveCtrlPort
+		.byte mcBIT_Abs		;Hide next instruction
+DecMotorDelay:	dec MotorOffDelay	;Decrease drive motor off delay
+		lda PulseDir		;Invert LED pulse direction, switch
+		eor #$FE		; between 1 and -1
+		sta PulseDir
+		bne ChangeDelay
+CheckSignal:
+.if 1
+		lda #sbAtnIn		;Terminate with error if ATN high
+.else
+		lda #sbClkIn  		;Terminate with error if CLK high
+.endif
+		bit SerialPort
+		sec			;Signal error
+		bne EndPulse
+		lda DriveCtrlPort	;Check write protection sense,
+		and #drWriteProt	; continue LED pulse if not as
+		cmp WriteProtValue	; expected
+		bne PulseLoop
+		clc			;No errors
+EndPulse:	rts

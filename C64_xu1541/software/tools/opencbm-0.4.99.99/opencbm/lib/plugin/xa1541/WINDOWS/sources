@@ -1,0 +1,26 @@
+TARGETNAME=opencbm-xa1541
+TARGETPATH=../../../../../bin
+TARGETTYPE=DYNLINK
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib \
+           $(SDK_LIB_PATH)/winmm.lib    \
+           $(SDK_LIB_PATH)/setupapi.lib \
+           $(SDK_LIB_PATH)/version.lib  \
+           ../../../../../bin/*/libmisc.lib \
+           ../../../../../bin/*/arch.lib         
+
+USE_MSVCRT = 1
+
+DLLBASE=0x71000000
+
+INCLUDES=../../../../include;../../../../include/WINDOWS;../../..;../../../WINDOWS;../../../../arch/windows
+
+SOURCES=iec.c \
+	parburst.c \
+	i_opencbm.c \
+	install.c \
+	parport.c \
+	service.c \
+	startstop.c \
+	opencbm-xa1541.rc

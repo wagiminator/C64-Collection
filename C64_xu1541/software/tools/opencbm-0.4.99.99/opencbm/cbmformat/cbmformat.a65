@@ -1,0 +1,631 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; Copyright (C) 1999      Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; Copyright (C) 2005      Spiro Trikaliotis
+; Copyright (C) 2005      Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+JOB_BUMP	= $C0 ; bump the head
+JOB_EXEC2	= $E0 ; execute after drive runs
+
+CMDNUM_NEW	= $0B ; command number for "NEW" command
+
+JOB2	= $02 ; job code for buffer 2
+TRACK2	= $0A ; track for buffer 2 ($0500-$05FF)
+SECTOR2	= $0B ; sector for buffer 2 ($0500-$05FF)
+HDRID1	= $16 ; 1st character of disk ID
+HDRID2	= $17 ; 2nd character of disk ID
+DRVTRK	= $22 ; Track currently under R/W head on drive #0
+BUFPTR	= $30 ; Pointer to the currently active buffer
+HDRPNT	= $32 ; Pointer to active values in header
+HBID	= $39 ; Header block ID ($08)
+CHKSUM	= $3A ; storage for data or header checksum
+SECTR	= $43 ; sector counter
+GAPLEN	= $90 ; temporary storage
+FILDRV	= $E2 ; default flag, drive # (all 0 on 1541)
+JOBNUM	= $F9 ; current job number
+CMDNUM	= $22A ; command code number
+FILTBL	= $27B ; ???
+
+TmpGap	= $01b0
+
+STACK	= $0100
+CMDBUF	= $0200
+BUFFER0	= $0300
+BUFFER1	= $0400
+BUFFER2	= $0500
+BUFFER4	= $0700
+
+BC_PB	= $1800
+
+DC_SETTINGS	= $1C00
+DC_DATA	= $1C01
+DC_DATADDR	= $1C03
+DC_PCR	= $1C0C
+
+ERROUT	= $C1C8
+TAGCMD	= $C1EE ;
+ONEDRV	= $C312
+SETDRIVENUM	= $C388
+INITDR	= $D042
+DOJOB	= $D58C
+WRITEBAM	= $EE40
+MAXSEC	= $F24B
+BINGCR	= $F78F
+ERRR	= $F969
+STPIN	= $FA63
+MOVUP	= $FDE5
+MOVOVR	= $FDF5
+TRACK_FF	= $FDA3
+KILL	= $FE00
+TRACK_55	= $FE0E
+FBTOG	= $FE30
+ZONESECTR = $fed1
+ZONEBOUNDARIES	= $FED7
+SLOWS	= $FEF3
+
+StartTrack = 1
+Security = 2
+MinGAP = 5
+
+	* = BUFFER2
+
+	jmp JobRoutine
+
+; here is the program entry
+
+; the command-line has the following format:
+;        M-E<StartLow><StartHigh><Tracks+1><Orig><Bump><ShowProgress>0:<Name>,<ID1><ID2>
+;                                                                     1 1 
+; Byte:  012    3         4          5        6    7         8       90 1..x x  x    x
+;                                                                            +  +    +
+;                                                                            1  2    3
+;
+; Note: progress.bit7: verify
+;       bump.bit7: demagnetize
+
+CMDBUF_TRACKS	= CMDBUF+5
+CMDBUF_ORIG	= CMDBUF+6
+CMDBUF_BUMP	= CMDBUF+7
+CMDBUF_PROGRESS	= CMDBUF+8
+CMDBUF_DEMAGNET	= CMDBUF+9
+CMDBUF_VERIFY	= CMDBUF+10
+
+Start	lda #CMDNUM_NEW	; set the command number for "new" command
+	sta CMDNUM	; 
+
+	jsr TAGCMD
+	jsr ONEDRV
+	lda FILDRV
+	jsr SETDRIVENUM
+
+	; set the header id into appropriate zp locations
+	ldy FILTBL
+	lda CMDBUF,y
+	sta HDRID1
+	lda CMDBUF+1,y
+	sta HDRID2
+
+	; set track number to start with in buffer #2
+	lda #StartTrack
+	sta TRACK2
+
+	ldx #$02
+	stx JOBNUM
+
+	; execute bump if it was given on the command line
+	lda CMDBUF_BUMP	; get bump value
+	beq NoBump	; if 0, do not execute a bump
+	lda #JOB_BUMP
+	jsr DOJOB	; execute the job in A
+
+	; execute program in buffer #2
+NoBump	lda #JOB_EXEC2
+	jsr DOJOB
+
+	; if an error occurred, process that error
+	lda JOB2
+	cmp #1
+	bne ErrorOccurred
+
+	jsr INITDR	; @@@
+	jmp WRITEBAM	; write BAM and quit
+	; -------------------------------------
+
+ErrorOccurred
+
+	lda JOB2
+;	sec		; here, carry is set ("bcs ErrorOccurred")
+	adc #$20-2-1
+	jmp ERROUT
+
+; This is the IRQ routine
+JobRoutine
+
+	; set the current buffer address
+	; BUFPTR = 0 is assumed!
+	lda #>BUFFER1
+	sta BUFPTR+1
+
+	; start with a gap which is most likely too small
+	lda #MinGAP
+	sta GAPLEN
+
+	; set the value for an empty sector
+	; if <Orig> is set, it has the content $4B/$01/$01/.../$01;
+	; else, it is set to all 0.
+	
+	ldy CMDBUF_ORIG	; get <Orig> parameter
+	beq NotOrig	; if 0, we do not need to set $4B/$01/.../$01 pattern
+
+	ldy #$00	; start with first byte
+	lda #$4b	; value for the first byte
+	sta (BUFPTR),y	; store it
+	iny		; advance to next byte
+
+	; set all bytes for the sector
+NotOrig	tya
+ClrBuf	sta (BUFPTR),y
+	iny
+	bne ClrBuf
+
+	; now, calculate the checksum for the buffer
+	tya		; A = 0
+ChkBuf	eor (BUFPTR),y
+	iny
+	bne ChkBuf
+	sta CHKSUM	; store the checksum.
+
+	jsr BINGCR	; convert the buffer into GCR, more bytes in $01BB-$01FF
+
+	; copy $01BA-$01FF to $07BA-$07FF
+	ldy #$ba
+CopyGCR	lda STACK,y
+	sta BUFFER4,y
+	iny
+	bne CopyGCR
+
+NxtTrk	jsr status	; perform handshake for next sector if needed
+
+	; check for write protect
+	lda DC_SETTINGS
+	and #$10
+	beq WrtPrtc
+
+	jsr BegWrt	; set write mode, start overwriting
+	jsr FrmtTrk	; Format the track
+
+	bcs JobErr
+
+	inc TRACK2	; Increment track number
+
+	lda TRACK2
+	cmp CMDBUF_TRACKS
+	bcs RetOk	; last track written, jump
+
+	; increment the track
+	inc DRVTRK	; increment track number
+
+	; advance to next track
+	ldy #$02	; advance for 2 half-tracks
+AdvTrk	jsr STPIN	; advance one half-track to the inner of the disk
+
+	; wait for R/W head to react
+	ldx #$80
+Delay	jsr SLOWS
+	dex
+	bne Delay
+
+	dey
+	bne AdvTrk
+	beq NxtTrk	; unconditional: Process next track
+	; ---------------------------------------------------
+
+RetOk	lda #$01
+	.byte $2c
+
+WrtPrtc	lda #$08
+JobErr	jmp ERRR
+
+
+; Format one track
+
+FrmtTrk	lda TRACK2	; get track no
+
+	ldx #3
+ZoneTrk	cmp SpdTrk,x
+	beq NewZone
+	dex
+	bpl ZoneTrk
+	bmi OldZone
+
+NewZone
+	lda SpdADD,x
+;	sec		; here, carry is already set
+	adc GAPLEN
+	sta GAPLEN
+
+	lda DC_SETTINGS
+	and #$9f
+	ora SpdMask,x
+	sta DC_SETTINGS
+
+	lda ZONESECTR,x
+	sta SECTR
+
+OldZone
+
+	lda CMDBUF_DEMAGNET	; get bump value
+	beq NoDemagnetize
+
+	jsr TRACK_FF	; overwrite track with $ff
+	jsr TRACK_55	; overwrite track with $55
+
+NoDemagnetize
+	; prepare the header infos for the track
+	ldy #$00	; start with sector 0
+	sty SECTOR2
+
+PrepSec	lda HBID
+	sta BUFFER0,y
+	lda TRACK2
+	sta BUFFER0+3,y
+	lda HDRID2
+	sta BUFFER0+4,y
+	lda HDRID1
+	sta BUFFER0+5,y
+
+	lda #$0f	; set the intra header GAP value
+	sta BUFFER0+6,y
+	sta BUFFER0+7,y
+
+	lda SECTOR2
+	sta BUFFER0+2,y
+
+	; calculate checksum and store it
+	eor TRACK2
+	eor HDRID2
+	eor HDRID1
+	sta BUFFER0+1,y
+
+	; advance write pointer by 8
+	tya
+	clc
+	adc #$8
+	tay
+
+	; advance sector number and continue if this was not the last one
+	inc SECTOR2
+	lda SECTOR2
+	cmp SECTR
+	bcc PrepSec
+
+	; convert $0300-... into GCR ($01BB-$01FF)
+	lda #>BUFFER0
+	sta BUFPTR+1
+	jsr FBTOG
+
+	; copy GCR data to $0300-$0344
+	ldy #$ba
+	jsr MOVUP	; move $0300-$03BA to $0345-$03FF
+	jsr MOVOVR	; move $01BB-$01FF to $0300-$0344
+
+Restart
+
+	lda #$00
+	sta HDRPNT
+
+	; store the next sector onto disk
+NxtSec	ldy GAPLEN
+	jsr SyncWrt	; write GAP & sync
+
+	; write header info onto disk
+	ldx #$0A	; write 10 byte
+	ldy HDRPNT	; where to start with data
+
+SecNByt	lda BUFFER0,y	; write next byte
+SecByte	bvc SecByte	; wait for end of previous byte
+	clv
+	sta DC_DATA	; to DC
+	iny
+	dex
+	bne SecNByt
+
+	sty HDRPNT	; remember where to get the next hdr byte from
+
+	; write gap between header and data block
+	ldy #$09	; 9 byte GAP
+	jsr SyncWrt	; write GAP and sync
+
+	; write the data block
+	ldy #$bb
+NxtByt	lda BUFFER4,y
+DtaByt	bvc DtaByt
+	clv
+	sta DC_DATA
+	iny
+	bne NxtByt
+
+NxtByt2	lda BUFFER1,y
+DtaByt2	bvc DtaByt2
+	clv
+	sta DC_DATA
+	iny
+	bne NxtByt2
+
+	; check if there is another sector to be written
+	dec SECTOR2
+	bne NxtSec	; another sector, process that one
+
+DtaByt3	bvc DtaByt3	; wait for the current byte to be written
+	clv
+DtaByt4	bvc DtaByt4	; wait for another byte to be written
+	clv
+
+	; put DC into read mode again and quit
+	jsr KILL
+	; ----------------------------------------------------
+
+	; try to find out how many byte are left until the next SYNC mark
+
+;	ldy #0	; unnecessary
+
+	ldx GAPLEN
+	dex		; subtract 2 as we already have waited 2 additional bytes
+	dex
+
+	dey		; Y = -1; this is the marker that the GAP is too big
+
+	; test for sync
+RdWait	lda DC_SETTINGS
+	bpl SyncFnd
+	bvc RdWait	; wait for the next byte
+	clv
+	LDA DC_DATA	; clear the value from the buffer
+	dex
+	bne RdWait
+	iny
+	ldx SECTR
+	bne RdWait
+	; ---------------------------------
+
+
+	; we have found a sync. First of all, clear the oldest entry from the
+	; input port so that we can get another one
+SyncFnd	stx TmpGap	; store the remaining gap for later testing
+
+	clv		; allow for accounting the next byte
+	lda DC_DATA	; clear the value from the buffer
+
+	sty HDRPNT	; remember the additional GAP we want to add
+
+	ldx #10		; read 10 byte
+	ldy #0		; where to start with data reading
+
+
+CmpByte	bvc CmpByte	; wait for end of byte
+	clv
+	lda DC_DATA	; read data from DC
+	cmp BUFFER0,y	; compare with the expected data
+	bne Smaller	; we found a wrong sync, we have a problem
+	iny
+	dex
+	bne CmpByte
+
+	; check if there are more byte left than there are sectors
+	lda HDRPNT
+;	beq Verify
+	bpl SyncAdd
+
+	; now, check how much byte are missing for a complete gap.
+	; if it is not too much, do not do anything
+	ldx TmpGap
+	cpx #Security
+	bcc Verify
+
+	; the GAP was too big. Now, half it (and make sure it is not zero)
+Smaller	lda GAPLEN
+	lsr
+	bne StoreGap
+	lda #MinGAP
+	bne StoreGap
+
+SyncAdd
+	; if the additional gap is one or less, ignore it
+	cmp #2
+	bcc Verify
+
+	; add the additional gap the the gap already used
+	clc
+	adc GAPLEN
+StoreGap	sta GAPLEN
+
+	; restart the formatting
+GapFin	lda SECTR	; reset the sector counter
+	sta SECTOR2
+	jsr BegWrt	; set write mode, overwrite first byte
+	jmp Restart	; beq Restart	; continue with writing of the next sector
+	; ----------------------
+
+
+; write Y times $55, then write 5 times $FF (sync)
+
+SyncWrt	lda #$55
+
+	; handle first byte specially so we save the 6 byte
+GapWrt	bvc GapWrt
+	sta DC_DATA
+	clv
+	dey
+	bne GapWrt
+	ldy #$05
+	lda #$ff
+
+; write Y times the contents of A onto disk
+
+BlkWrt	bvc BlkWrt	; wait for end of previous byte
+	sta DC_DATA	; write the data byte
+	clv
+	dey		; another one? than write that
+	bne BlkWrt
+	rts
+
+Verify
+	lda CMDBUF_VERIFY	; check if we should verify
+	beq VerOk	; no, skip verify
+
+	ldx SECTR	; get the number of sectors to check
+	stx SECTOR2
+
+	ldy #10
+	sty HDRPNT	; where to start reading sector info
+
+	bne VerData	; skip finding the block header
+	; ----------------
+
+	; verify the next sector
+VerNxtSec
+	lda DC_SETTINGS
+	bmi VerNxtSec	; wait for sync mark
+
+	clv
+	LDA DC_DATA	; clear the value from the buffer
+	
+	ldx #10		; read 10 byte
+	ldy HDRPNT	; where to start with data reading
+
+VerHdr	bvc VerHdr	; wait for end of byte
+	clv
+	lda DC_DATA	; read data from DC
+	cmp BUFFER0,y	; compare with the expected data
+	bne VerErrorHdr	; we found a wrong sync, we have a problem
+	iny
+	dex
+	bne VerHdr
+
+	sty HDRPNT
+
+VerData
+	lda DC_SETTINGS
+	bmi VerData	; wait for sync mark
+
+	clv
+	lda DC_DATA
+
+	ldy #$bb
+
+VerDt0	bvc VerDt0
+	clv
+	lda DC_DATA
+	cmp BUFFER4,y
+	bne VerErrorData
+	iny
+	bne VerDt0
+
+VerDt1	bvc VerDt1
+	clv
+	lda DC_DATA
+	cmp BUFFER1,y
+	bne VerErrorData
+	iny
+	bne VerDt1
+
+	dec SECTOR2
+	bne VerNxtSec
+
+VerOk	clc
+	rts
+
+VerOut
+	lda #8
+
+	.byte $2c
+
+VerErrorHdr
+	lda #9
+
+	.byte $2c
+
+VerErrorData
+	lda #5
+	sec
+	rts
+
+BegWrt	; set R/W head into write mode
+
+	lda #$ce
+	sta DC_PCR
+	lda #$ff
+	sta DC_DATADDR
+
+	; Overwrite start of track with 256 x $55 byte
+	ldy #$00
+	lda #$55
+	jmp BlkWrt
+
+	; speedzone masks for setting the correct data rate
+SpdMask	.byte $0,$20,$40,$60
+
+	; inter sector gap for every speedzone
+;SpdGAP	.byte $a,$c,$12,$8
+
+	; the differences in the inter sector gap for every speed zone
+	; relative to the speed zone before
+	; as carry is alway set when this add is performed,
+	; we subtract 1 from every value
+SpdADD	.byte <(-3-1), <(-5-1),9-1,<(0-1)
+
+	; the tracks at which each zone starts
+SpdTrk	.byte 31, 25, 18, 1
+
+	; wait for handshake if ShowProgress is active
+	; this allows the PC to update the progress indicator
+status	lda CMDBUF_PROGRESS	; ShowProgress
+	beq back	; if 0, do not handshake, thus quit
+	; here, A=1 is assumed
+
+	; set data out
+	asl		; A = 2
+	sta BC_PB
+
+	; wait for clock in to be 1
+	asl		; A = 4
+Clk0	bit BC_PB
+	beq Clk0
+
+	; release data out
+	ldy #$00	
+	sty BC_PB
+
+	; wait for clock in to be 0
+Clk1	bit BC_PB
+	bne Clk1
+
+back	rts

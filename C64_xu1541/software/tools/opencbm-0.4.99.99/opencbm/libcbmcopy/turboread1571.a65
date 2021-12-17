@@ -1,0 +1,181 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+; 1541 Turbo read
+
+	*=$0500
+	
+	buf = $f9
+	drv = $7f
+	cnt = $8c
+	bufx2  = $71
+	
+	dbufptr    = $31
+	n_sectors  = $43
+	retry_mode = $6a
+	bump_cnt   = $8d
+	retry_flag = $90
+
+	errbuf     = $02d5
+	do_read    = $0400
+
+	init       = $0680
+	chkerr     = $0683
+	noerr	   = $0686
+	send_byte  = $0689
+
+	jmp main	; to job routine
+
+	jsr init	; custom I/O init
+	ldy #$ff	; copy 
+i0	lda $960f,y	; ROM
+	sta do_read-1,y	; routines
+	dey
+	bne i0
+	ldy #$36
+i1	lda $d5f8,y	; job retry
+	sta do_retry,y	; ROM routine
+	dey
+	bpl i1
+	lda #$60	; == RTS
+	sta do_read+$fa	; patch
+	sta do_retry+$37
+	lda #$57
+	sta do_read+$29
+	lda #$2b
+	sta do_read+$c5
+	lda #>do_read
+	sta do_read+$2a
+	sta do_read+$c6
+	ldx drv
+	lda $feca,x	; led
+	sta $026d	; mask
+	lda #$01
+	sta $1c,x
+	lda #$01
+	sta $82		; channel
+	lda #$00
+	sta $83		; sec addr
+	jsr $df93	; get buffer number
+	asl
+	tax
+	stx bufx2
+	ldy $0204
+	lda $0203
+	bne startts	; start by track/sector
+	ldy $07,x	; sector
+	lda $06,x	; track
+startts sta $0a
+	sty $0b
+
+copy	jsr chkerr
+	lda $0a
+	cmp $02ac
+	bcs ill_ts
+	lda #$02
+	sta buf		; exec prog in buffer 2
+	sta bump_cnt
+	jsr chkerr
+exec	ldx buf
+	lda #$e0	; execute buffer
+	jsr $d57d	; set job parameters
+	lda $00,x	; wait until
+	bmi *-2		; job has finished
+check	cmp #$02
+	bcs error
+	lda cnt
+	bne copy
+	sta $1800
+	jmp $db29
+error	jsr $d6a6
+	bcc check
+	bit retry_mode
+	bvs noht
+	jsr do_retry
+	bcc check
+noht	bit retry_mode	; bump head?
+	bmi abort2	; no -> skip
+	dec bump_cnt
+	beq abort2
+	lda #$c0	; bump head
+	jsr $d57d
+	jsr $d599
+	bne exec
+abort2	ldx $f9
+	jmp $e60a
+
+ill_ts  sta $80
+	lda $0b
+	sta $81
+	lda #$67
+	jmp $e645
+
+main	jsr chkerr
+	lda #$03
+	sta $31
+
+	lda $026d	; flash
+	eor $1c00	; led
+	sta $1c00
+
+	jsr $9600
+	jsr do_read
+	jsr noerr
+
+	lda $0300
+	bne notlast
+	ldy $0301
+	dey
+	tya
+	.byte $2c
+notlast	lda #$ff
+	sta cnt
+	jsr send_byte
+
+	ldy #$01
+send	iny
+	beq next
+	lda $0300,y
+	jsr send_byte	; block data
+	dec cnt
+	bne send
+
+next	lda $0301
+	sta $0b
+	lda $0300
+	beq exitjob
+	cmp $0a
+	sta $0a
+	beq main
+exitjob	lda #$00
+	jmp $99b5	; terminate job
+
+do_retry = *

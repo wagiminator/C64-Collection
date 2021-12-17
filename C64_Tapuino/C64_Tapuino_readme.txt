@@ -1,1 +1,0 @@
-C64 Tape Emulator based using an Atmega328p based on the design and firmware by Sweetlilmre (https://github.com/sweetlilmre/tapuino). Put your TAP-files on an SD-Card and plug the device in your good old Commodore.

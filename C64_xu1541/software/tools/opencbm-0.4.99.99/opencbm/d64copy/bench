@@ -1,0 +1,35 @@
+#!/bin/bash
+modes="parallel serial1 serial2"
+args="-q -s1 -e35"
+out=./bench.out
+img=~/test.d64
+tmp=/tmp/bench.d64
+drv=8
+r="$drv $tmp"
+w="$img $drv"
+echo 'mode;write;read' > $out
+for tm in $modes; do
+    echo -n $tm turbo\; >> $out
+    echo $tm turbo write... 1>&2
+	( time -p ./d64copy $args -t $tm $w ) 2>&1 | awk '/^real / {printf $2 ";"}' >> $out
+    echo $tm turbo read... 1>&2
+	( time -p ./d64copy $args -t $tm $r ) 2>&1 | awk '/^real / {print $2}' >> $out
+	if ! diff --brief $img $tmp; then
+		echo "disk image corrupted!" 1>&2
+		rm -f $tmp
+		exit 1;
+	fi
+    echo -n $tm warp\; >> $out
+    echo $tm warp write... 1>&2
+	( time -p ./d64copy $args -w -t $tm $w ) 2>&1 | awk '/^real / {printf $2 ";"}' >> $out
+    echo $tm warp read... 1>&2
+	( time -p ./d64copy $args -w -t $tm $r ) 2>&1 | awk '/^real / {print $2}' >> $out
+	if ! diff --brief $img $tmp; then
+		echo "disk image corrupted!" 1>&2
+		rm -f $tmp
+		exit 1;
+	fi
+done
+
+awk -F\; '{printf "%-16s %8s %8s\n",$1,$2,$3}' $out
+rm -f $tmp

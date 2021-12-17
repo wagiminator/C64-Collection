@@ -1,0 +1,26 @@
+
+TARGETNAME=libtrans
+TARGETPATH=../../../bin
+TARGETTYPE=LIBRARY
+
+TARGETLIBS=../../../bin/*/opencbm.lib      \
+           ../../../bin/*/arch.lib         \
+           $(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../include;../../include/WINDOWS
+
+SOURCES= \
+	../s1.c \
+	../s2.c \
+	../pp.c \
+	../o65.c \
+	../turbo.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1
+
+NTTARGETFILE0=a65

@@ -1,0 +1,181 @@
+INSTALLATION OF OpenCBM
+
+WARNING! If you have already installed a previous version of OpenCBM on your
+machine, you have to uninstall it before installing a new version. For this, go
+to the directory where the old version is located, and enter instcbm --remove. 
+
+
+Note: If I tell you that you should enter a command "ABC", it means you should
+enter ABC without the surrounding quotation marks!):
+
+
+
+First of all, Windows must know about the driver. For this, we must install it.
+Do the following:
+
+
+- Make sure you have a supported operating system up and running.
+
+- You need administrator privileges on the Windows machine to perform the
+  following actions.
+
+- At first, you have to make sure you have the needed hardware ready. Do the
+  following:
+
+  - Get your VIC 15xx drive (out of the basement, or wherever it is!
+
+  - Moving cables with turned on equipment can damage either your PC, and/or
+    the drive, so, be carefull!
+
+  - Thus, switch off your PC and your VIC 15xx drive!
+
+  - Connect your XA1541 or XM1541 cable to your PC. If you have a parallel port
+    cable (XP1541), connect that one, too.
+
+  - Connect your VIC 15xx floppy drive to the cable
+
+  - Switch the PC on.
+
+- Just download the binary package, and unpack it into an arbitrary directory.
+
+- Get a command-line, and change into the directory you unpackaged the drivers
+  into.
+
+- Type "cd exe"
+
+- Type "instcbm" and check the outputs. Its last line should look like No
+  problems found in current configuration. The program might suggest a reboot,
+  which you should follow. If it does not, don't worry, instcbm tries to avoid
+  that if possible.
+
+- You might want to have a look at the possible options for instcbm. They are
+  available by typing "instcbm --help"
+
+- If we had to reboot in the previous step, do the following:
+
+  - Go to a command-line, and change into the directory you unpackaged the
+    drivers into again.
+
+  - Type "cd exe"
+
+  - Type "instcbm --check". There should not be any further suggestion for a
+    reboot. If there is, do not proceed, but contact me instead.
+
+- If you want to use another port than LPT1, you must tell this to the driver.
+  I assume you want to use LPTX, with X being the correct value, then type:
+  "instcbm --lpt=X --update"
+
+
+
+Here, the installation is complete. Anyway, it is wise to check if the
+installation works as expected. For this, do the following:
+
+- Now, it is time to switch on the floppy drive. Depending on the type of cable
+  you are using (XA1541 or XM1541) and the parallel port of your PC, this drive
+  might keep spinning endless now, because it is continuously resetted.
+
+- Now, type "cbmctrl reset" and press enter. If it does not already, the red
+  floppy drive LED should light up, and the drive should start spinning. After
+  approximately one second, the red LED should switch off again, and the drive
+  stops spinning.
+
+- Now, type "cbmctrl status 8" to get the status (error) code from the attached
+  floppy drive. If everythings works fine, your drive should answer which its
+  identification string. For a 1541, this is something like 73,cbm dos v2.6
+  1541,00,00, while for a 1571, this line looks like 73,cbm dos v3.0
+  1571,00,00. There might also be some variant of this line, depending on the
+  firmware version of your drive.
+
+- Type "cbmctrl status 8" to get the status (error) code from the floppy drive.
+  As the power on message has been read, your drive should answer with a 00,
+  ok,00,00 string.
+
+- Type "cbmctrl detect". This command tries to detect the types of drive which
+  are connected on the cable. You should see the drive which you posess.
+
+- Now, we want to check if we can send anything to the floppy drive. Remove any
+  diskette from the drive and press "cbmctrl open 8 15 I0". (Make sure the "I"
+  is an upper-case "I". A lower-case "I" will not work!)
+  This command tries to initialize the disk. Anyway, since we don't have a disk
+  in the drive, an error occurs. You should hear the floppy spinning, and in
+  case of a 1541, the R/W-head should start bumping. After some seconds, the
+  red LED starts starts flashing, indicating that an error occurred.
+
+- Now, press again "cbmctrl status 8" to get the status (error) code from the
+  floppy drive. As an error occurred before, an error string should be
+  displayed. For my setup, it is the "21,read error,18,00" string. Furthermore,
+  the red LED should stop flashing.
+
+
+If you have come so far, you are sure that you send commands to the floppy, and
+receive answers from it. This is very good so far. Furthermore, don't panic:
+you do not have to enter these commands over and over again, these are only
+tests to make sure that anything is correctly installed.
+
+Now, let's proceed. If you have a D64 file or a floppy disk ready, you can try
+transferring it over the cable. Do not use all of the followinng commands, but
+only these one you want to perform.
+
+
+- If you want to transfer an existing floppy from the drive to the PC, use the
+  following command: "d64copy --transfer=serial2 --warp 8 A.D64", while
+  replacing A.D64 by the name you want to give to the file. If you have a
+  parallel cable up and ready, just try with that one: 
+  "d64copy --transfer=parallel --warp 8 A.D64".
+
+- WARNING THE FOLLOWING COMMAND OVERWRITES ANYTHING THAT WAS ON THE FLOPPY
+  BEFORE, so make sure you do not need that floppy anymore.  If you have a D64
+  or D71 on your PC, and you want to write it to a new, already formatted disk,
+  enter "d64copy --transfer=serial2 --warp A.D64 8" if the file is called
+  A.D64. Again, if you have a parallel cable, you might want to replace
+  "--transfer=parallel".
+
+- WARNING THE FOLLOWING COMMAND OVERWRITES ANYTHING THAT WAS ON THE FLOPPY
+  BEFORE, so make sure you do not need that floppy anymore.  If you have a disk
+  you want to format, you have two options: Either use the command "cbmctrl
+  command 8 N0:NAME,ID", or use the cbmformat program.
+
+
+If you want to completely remove the cbm4win driver from your machine, you can
+do so by issuing a "instcbm --remove" command.
+
+You can have a look at the available cbmctrl commands by issuing cbmctrl on
+your command line. For the other programs, you get help by issuing the "--help"
+option.
+
+Currently, there is still some documentation missing. Anyway, you can find the
+documentation in the cbm4linux docs. This is not true for the instcbm tool,
+which is for Windows only.
+
+
+
+
+The following options are available for the "instcbm" tool:
+
+   instcbm
+      Installs the DLL and the driver on the machine. The driver and the DLL are
+      copied into the Windows system directory.
+
+   instcbm --nocopy
+      Installs the DLL and the driver on the machine. Unlike above, both files
+      are not copied, but they are used just "where they are".
+      If you use this option, the directory where your files reside must be
+      accessible for the system while booting. For example, network drives,
+      USB drives or FireWire drives are not allowed.
+
+   instcbm --remove
+      Uninstall the driver from the machine. The DLL and the driver file itself
+      are removed if --nocopy was *not* given at installation time.
+
+   instcbm --check
+      Check if the installation was set up successfully.
+
+   instcbm --lpt=X --update
+      (With X a value from 1 to ...) Choose LptX is default port.
+
+   instcbm --help
+      Print out a short help describing the possible options.
+
+Have fun!
+
+Spiro Trikaliotis.

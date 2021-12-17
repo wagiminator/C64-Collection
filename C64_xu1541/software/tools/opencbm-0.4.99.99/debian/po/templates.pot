@@ -1,0 +1,101 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-09-03 17:23+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: boolean
+#. Description
+#: ../cbm4linux-modules-source.templates:4
+msgid "Use direct parallel port access?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../cbm4linux-modules-source.templates:4
+msgid ""
+"By default, /dev/cbm attaches itself to the Linux parport subsystem, which "
+"was introduced in the 2.2.x kernel series. If you don't want to use the "
+"parport system you can say yes here, and /dev/cbm will access the port "
+"directly."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../cbm4linux-modules-source.templates:4
+msgid "If you're compiling for 2.0.x, this flag is entirely ignored."
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../cbm4linux.templates:4
+msgid "Should I create the cbm device node if it is not there?"
+msgstr ""
+
+#. Type: boolean
+#. Description
+#: ../cbm4linux.templates:4
+msgid "cbm4linux requires the device node /dev/cbm to work."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid "Kernel module configuration"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid "The cbm4linux utilities require a few more steps until they are usable:"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid ""
+"- First, you will need to install the cbm4linux-modules-source package and\n"
+"  compile the binary module (preferably through make-kpkg)."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid "- Install the freshly compiled binary module."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid ""
+"- Then, check the runtime configuration located in /etc/modutils/cbm4linux.\n"
+"  Don't forget to run update-modules if you make any changes."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../cbm4linux.templates:9
+msgid ""
+"See /usr/share/doc/cbm4linux/README.gz and /usr/share/doc/cbm4linux-modules-"
+"source/README.Debian for more detailed instructions"
+msgstr ""

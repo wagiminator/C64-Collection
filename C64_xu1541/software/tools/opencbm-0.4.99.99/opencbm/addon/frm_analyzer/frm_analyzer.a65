@@ -1,0 +1,1339 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; Copyright (C) 2005      Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+DebugFormat = 1		; write debugging and status output to $0600
+; DryDebugVICE = 1	; don't do  bvc *  loops for timing a VICE analysis
+
+RelaxedTiming = 1	; save 4 cycles on the function exit of  BufferedWrite
+; SwapWrtNSync  = 1	; do  sta DC_DATA /clv  instead of  clv / sta DC_DATA
+
+DontWaitForDummy = 1;
+
+.ifndef RelaxedTiming
+	StretchTiming = 1	; only useful with size optimized loops
+.endif
+
+DoBranchAlign = 1	; ensure that timing critial branches don't cross a
+					; page boundary (not needed for the relaxed timing)
+
+.macro syncBR
+	.ifdef DryDebugVICE
+		cmp #$00	; Dry debug for VICE timing analysis
+	.else
+		bvc *
+		.if >* - >(*-2) <> 0
+			.error .concat ("timing critical 'bvc *' loop crosses page boundary at address: ", .string(*))
+		.endif
+	.endif
+.endmacro
+
+	; -1 : stretch to 40 cycles   |   -2 : stretch to 39
+cycleAdjust = -1
+.macro eatCycles number		; prepared for 41 cycles
+	.ifdef StretchTiming 
+		.if number + cycleAdjust = 3
+			jmp *+3
+		.elseif number + cycleAdjust > 1
+			nop
+			eatCycles number + cycleAdjust - 2
+		.endif
+	.endif
+.endmacro
+
+.macro checkPageCrossing loopAddress
+	.if >* - >loopAddress <> 0
+		.error .concat ("timing critical loop crosses page boundary at label: ", .string(loopAddress))
+	.endif
+.endmacro
+
+;;;
+;;; Test results:
+;;;
+;;; StretchTiming=1 && SwapWrtNSync=1
+;;;    does only work with cycleAdjust=-2 or less (39 cycles max)
+;;;
+;;; StretchTiming=1 && SwapWrtNSync=0
+;;;    does only work with cycleAdjust=-1 or less (40 cycles max)
+;;;
+;;; Side note: The timing wents evil, if a branch crosses a page boundary
+;;;
+
+JOB_BUMP	= $C0 ; bump the head
+JOB_EXEC0	= $E0 ; execute after drive runs
+
+CMDNUM_NEW	= $0B ; command number for "NEW" command
+MAXNOSECTR	= $15 ; maximum number of sectors per track
+
+
+JOB0	= $00 ; job code for buffer 0
+TRACK0	= $06 ; track for buffer 0 ($0300-$03ff)
+SECTOR0	= $07 ; number of sectors for current track (sector for buffer 0)
+
+HDRID1	= $16 ; 1st character of disk ID
+HDRID2	= $17 ; 2nd character of disk ID
+DRVTRK	= $22 ; Track currently under R/W head on drive #0
+
+BUFPTR	= $30 ; pointer to the currently active buffer
+BPOFFS  = $34 ; offset into the currently active buffer
+
+CDBSPTR	= $32 ; pointer to compressed data block begin pattern
+; ; don't use location $33, it disturbs the BAM initializer
+CDBEPTR	= $43 ; pointer to compressed data block end pattern
+
+
+HBID	= $39 ; Header block ID ($08)
+DBID	= $47 ; Data block ID ($07)
+
+CHKSUM	= $3A ; storage for data or header checksum
+
+
+
+CVTBBF  = $52 ; 4 BIN bytes into GCR conversion
+
+SECTCNT = CVTBBF	; sector counter in the fmt loop (instead of $43)
+HEADCNT = CVTBBF+1	; 1st header block counter in the fmt loop
+CDBICNT = CVTBBF+2	; compressed data block intermediate section counter
+GAPMODV = CVTBBF+2  ; GAPLen modification value
+
+GAPLEN	= $90 ; temporary storage
+; $86..$8F and $91..$92 may also be used for temp storage ???
+
+.ifdef DebugFormat
+DBGBPTR = $91		; page pointer into buffer with debug informations
+.endif
+
+FILDRV	= $E2 ; default flag, drive # (all 0 on 1541)
+JOBNUM	= $F9 ; current job number
+CMDNUM	= $22A ; command code number
+FILTBL	= $27B ; ???
+
+STACK	= $0100
+CMDBUF	= $0200
+BUFFER0	= $0300
+BUFFER1	= $0400
+BUFFER2	= $0500
+BUFFER4	= $0700
+
+		; up to 21 headers a 5 byte, plus 6 per disk constants
+		; of 5 GCR bytes for second header part and data block
+		; parts, in sum 27*5=135 GCR bytes
+		;    ==> CGCRBUF = $0179...$01ff
+CGCRBUF = $0200 - 21*5 - 6*5
+
+	; dedicated pointers to each 5-byte GCR block
+CDBGIMT = CGCRBUF + 0	; intermediate section of data block
+CDBGSTN = CGCRBUF + 5	; start of data block for track 2 to 40
+CDBGST1 = CGCRBUF +10	; start of data block for track 1
+CDBGEN1 = CGCRBUF +15	; end of data block for tracks 1
+CDBGENN = CGCRBUF +20	; end of data block for tracks 2 to 40
+CHDR2ND = CGCRBUF +25	; second part of sector header block including filler
+CHDRBUF = CGCRBUF +30	; up to 21 first part sector header blocks
+
+
+BC_PB	= $1800
+
+DC_SETTINGS	= $1C00
+DC_DATA	= $1C01
+DC_DATADDR	= $1C03
+DC_PCR	= $1C0C
+
+ERROUT	= $C1C8
+TAGCMD	= $C1EE ;
+ONEDRV	= $C312
+SETDRIVENUM	= $C388
+INITDR	= $D042
+DOJOB	= $D58C
+WRITEBAM	= $EE40
+MAXSEC	= $F24B
+
+CNV4T5  = $F6D0
+
+BINGCR	= $F78F
+ERRR	= $F969
+STPIN	= $FA63
+MOVUP	= $FDE5
+MOVOVR	= $FDF5
+TRACK_FF	= $FDA3
+KILL	= $FE00
+TRACK_55	= $FE0E
+FBTOG	= $FE30
+ZONESECTR = $fed1
+ZONEBOUNDARIES	= $FED7
+SLOWS	= $FEF3
+
+	; must be a track number, where a new speed zone starts,
+	; otherwise speed zone dependent settings may not be
+	; adjusted correctly
+StartTrack = 1
+
+	; The MinGAPn parameter now determines the number of GAP nybbles
+	; written to disk beside the number of GAP bytes with the former
+	; parameter MinGAP, this parameter must not be bigger than 129
+	; for the current implementation
+; MinGAPn = 5*2		;;; standard, 6 less than the least useful GAP size
+
+; MinGAPn = 11*2+3
+
+; MinGAPn = 13*2;-1
+; MinGAPn = 8*2
+; MinGAPn = 15*2	;;; too much, for test purposes only
+; MinGAPn = 64*2+1	;;; much too much, for test purposes only
+; MinGAPn = 3*2		;;; too less, for test purposes only
+
+	; Test "Half GAPs"
+MinGAPn = 5*2
+
+	; Upper margin for the discriminating window of the probing routine
+	; This value is nybble based, as all other GAP based parameters too
+	; A value of 2 may lead to a somewhat better sector distribution,
+	; but then track format reruns are more likely to happen.
+	; Allowed (useful) value range:  2, ( 3 ), 4, 5
+Security = 3
+
+
+
+
+
+
+
+	* = BUFFER0
+
+	jmp JobRoutine
+
+; here is the program entry
+
+; the command-line has the following format:
+;        M-E<StartLow><StartHigh><Tracks+1><Orig><Bump><ShowProgress>0:<Name>,<ID1><ID2>
+;                                                                     1 1 
+; Byte:  012    3         4          5        6    7         8       90 1..x x  x    x
+;                                                                            +  +    +
+;                                                                            1  2    3
+;
+; Note: progress.bit7: verify
+;       bump.bit7: demagnetize
+
+CMDBUF_TRACKS	= CMDBUF+5
+CMDBUF_ORIG		= CMDBUF+6
+CMDBUF_BUMP		= CMDBUF+7
+CMDBUF_PROGRESS	= CMDBUF+8
+CMDBUF_DEMAGNET	= CMDBUF+9
+CMDBUF_VERIFY	= CMDBUF+10
+
+Start
+	lda #CMDNUM_NEW	; set the command number for "new" command
+	sta CMDNUM	; 
+
+	jsr TAGCMD
+	jsr ONEDRV
+	lda FILDRV
+	jsr SETDRIVENUM
+
+	; set the header id into appropriate zp locations
+	ldy FILTBL
+	lda CMDBUF,y
+	sta HDRID1
+	lda CMDBUF+1,y
+	sta HDRID2
+
+	; set track number to start with in buffer #0
+;	lda #StartTrack
+;	sta TRACK0
+
+ldx CMDBUF_TRACKS
+dex
+stx TRACK0
+
+
+	ldx #$00
+	stx JOBNUM
+
+	; execute bump if it was given on the command line
+	lda CMDBUF_BUMP	; get bump value
+	beq NoBump	; if 0, do not execute a bump
+	lda #JOB_BUMP
+	jsr DOJOB	; execute the job in A
+
+	; execute program in buffer #0
+NoBump
+	lda #JOB_EXEC0
+	jsr DOJOB
+
+.ifdef DebugFormat
+	ldx #$00
+CopyDebugBuf
+	lda DebugFormatBuffer,x
+	sta $0500,x
+	inx
+	bne CopyDebugBuf
+.endif
+
+
+	; if an error occurred, process that error
+	lda JOB0
+	cmp #1		; 1 means everything is OK
+	bne ErrorOccurred
+
+		;;; this doesn't work yet ???
+	jsr INITDR	; @@@
+	jmp WRITEBAM	; write BAM and quit
+	; -------------------------------------
+
+ErrorOccurred
+
+;	lda JOB0	; is already loaded into A
+	clc
+	adc #$20-2
+	jmp ERROUT
+
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+; This is the IRQ routine
+JobRoutine
+; FIXME: See FIXME note below at the other "sta GAPLEN"
+;
+	; start with a gap which is most likely too small
+	lda #MinGAPn
+	sta GAPLEN
+
+	; set the value for an empty sector
+	; if <Orig> is set, it has the content $4B/$01/$01/.../$01;
+	; else, it is set to all 0.
+
+.ifdef DebugFormat
+	lda #$00
+	sta DBGBPTR		; initialise pointer into debug buffer
+	tax
+FillDebugBuffer
+	sta DebugFormatBuffer&$ff00,X
+	inx
+	bne FillDebugBuffer
+.endif
+
+
+	lda CMDBUF_ORIG	; get <Orig> parameter
+
+;	lda #$4b	;;; Commodore 1541 original format with track 1 special
+;	lda #$4c	;;; SpeedDOS format
+
+;	lda #$00	;;; Zero out format
+;	ldx #$01	;;; no Akkumulator fillup
+
+	ldx #$00	;;; always do Akkumulator fillup
+
+		;;; this routines sets BUFPTR and BPOFFS accordingly
+	jsr PrepareDataBlckBuffer
+		;;; BUFPTR is now prepared for compressed header buffer also
+
+	; check for write protect
+	lda DC_SETTINGS
+	and #$10
+	beq WrtPrtc
+
+NxtTrk
+	jsr FrmtTrk
+
+	;;; currently don't handle in-format errors
+	; bcs JobErr
+
+	inc TRACK0	; Increment track number
+	lda TRACK0
+	cmp CMDBUF_TRACKS
+	bcs RetOk	; last track written, jump
+
+
+
+	; increment the track
+	inc DRVTRK	; increment track number
+
+	; advance to next track
+	ldy #$02	; advance for 2 half-tracks
+AdvTrk
+	jsr STPIN	; advance one half-track to the inner of the disk
+
+	; wait for R/W head to react
+	ldx #$80
+Delay
+	jsr SLOWS
+	dex
+	bne Delay
+
+	dey
+	bne AdvTrk
+
+	
+
+
+	beq NxtTrk	; unconditional: Process next track
+	; ---------------------------------------------------
+
+RetOk
+	lda #$01
+	.byte $2c
+
+WrtPrtc	lda #$08
+JobErr	jmp ERRR
+
+
+;****************************************************************************
+;
+;  Prepare a buffer pointed to by BUFPTR with the GCR encoded 5 byte
+;  fields for a sector start of track 1 and all the remaining tracks,
+;  the sector intermediate GCR sequence and the sector end as well as
+;  the second part of all sector headers used for formatting this disk
+;
+;  input:  A  ==  0     - "zero format"
+;             ==  $4b   - Commodore 1541 format with track 1 special
+;             else      - Commodore alike without track 1 special
+;
+;          Z  ==  set   - "Akkumulator byte fillup"
+;             ==  unset - "$01 fillup"
+;
+;  output: A            - arbitrary
+;          X            - arbitrary
+;          Y            - arbitrary
+;
+;****************************************************************************
+
+PrepareDataBlckBuffer
+;	sta CHKSUM			;;; temporary store for checksum calculation
+	pha					;;; save "Commodore format" marker byte
+
+	beq ZeroOut
+	lda #$01
+ZeroOut
+	ldx #$04
+FillInterMediate
+	sta CVTBBF-1,x		;;; prepare intermediate data block section
+	dex
+	bne FillInterMediate
+
+	stx BUFPTR		;;; maybe this could be _assumed_ to be $00
+						;;; and does not needed to be set explicitly
+
+.if (>CGCRBUF <> $01)
+	lda #>CGCRBUF
+	sta BUFPTR+1		;;; prepare the buffer pointer high byte
+.else
+	inx
+	stx BUFPTR+1		;;; prepare the buffer pointer high byte
+.endif
+
+	ldx #<CGCRBUF		;;; start of the GCR encoded disk constants
+	stx BPOFFS			;;; pointer to last converted byte +1 in buffer
+
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CDBGIMT
+
+
+	lda DBID			;;; prepare data block start sequence for track 2 and up
+	sta CVTBBF			;;; store data block marker into conversion buffer
+	pla					;;; retrieve first data block byte
+	pha
+;	lda CHKSUM			;;; get first data block byte
+	sta CVTBBF+1		;;; store to conversion buffer
+
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CDBGSTN
+
+	lda CVTBBF+1		;;; prepare data block start sequence for track 1
+	eor #$4b			;;; "compare" against "Commodore format"
+	bne NonCBM
+	sta CVTBBF+1		;;; zero out the first data block byte
+NonCBM
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CDBGST1
+
+
+	lda CVTBBF+2		;;; prepare data block end sequence for track 1
+	sta CVTBBF			;;; fill first data end block byte
+	eor CVTBBF+1		;;; calculate checksum byte (under the assumption
+	sta CVTBBF+1		;;; that bytes 1 to 256 are the same)
+	lda #$0f
+	sta CVTBBF+2		;;; filler bytes for data block, these are not the
+	sta CVTBBF+3		;;; same as in the original format routines ($00)
+
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CDBGEN1
+
+
+						;;; prepare data block end sequence for track 2 and up
+	pla					;;; retrieve first data block byte
+;	lda CHKSUM			;;; prepare data block end sequence for track 2 and up
+	eor CVTBBF			;;; calculate checksum byte (under the assumption
+	sta CVTBBF+1		;;; that bytes 1 to 256 are the same)
+
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CDBGENN
+
+
+				
+	lda HDRID2			;;; prepare second part header block
+	sta CVTBBF			;;; store header ID 2
+	lda HDRID1			;;; get and
+	sta CVTBBF+1		;;; store header ID 1
+
+.if 0
+	lda #$0f	; already set by data block filler bytes
+	sta CVTBBF+2		;;; set the header filler bytes (GAP value)
+	sta CVTBBF+3
+.endif
+				;;; A, X, Y get destroyed
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+		; stored to: CHDR2ND
+
+	rts
+
+;****************************************************************************
+;
+;  Prepare a buffer pointed to by BUFPTR with SECTOR0 5 byte GCR blocks
+;  containing the first sector header parts for the current track with
+;  the constants delimited by HBID, A (track number), HDRID1 and HDRID2
+;
+;  input:  A            - track number to prepare the headers for
+;
+;  output: A            - contains the value of SECTOR0
+;          X            - same as SECTOR0 (No. of sectors for current track)
+;          Y            - arbitrary
+;          C            - set
+;
+;****************************************************************************
+PrepareHeaderBuffer
+
+	sta CVTBBF+3			;;; this is a per track constant
+
+	eor HDRID2
+	eor HDRID1
+	sta CHKSUM			;;; this is a per track constant
+
+	lda HBID			;;; this is a per disk constant
+	sta CVTBBF				;;; but maybe overwritten ?
+
+
+	lda #$00			;;; sector counter
+
+PrepHdr
+	sta CVTBBF+2		;;; store the current sector number
+
+	eor CHKSUM
+	sta CVTBBF+1		;;; header checksum
+
+				;;; A, X, Y get destroyed
+	jsr CNV4T5	; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+
+	ldx CVTBBF+2	;; inc $CVTBBF+2
+	inx
+	txa				;; lda $CVTBBF+2
+
+	cmp SECTOR0			;;; compare with max sector number per track
+	bcc PrepHdr
+	rts
+;****************************************************************************
+
+
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+;****************************************************************************
+;
+;  Write a 5 Byte buffer pointed to by (CGCRBUF & $ff00),y to disk
+;
+;  Note: This function call may be critical in timing, because 8 cycles
+;        were consumed up to the first Byte-Ready-Wait-Loop (bvc *).
+;        Calling this function and setting the functions parameter
+;        additionally costs 2+6=8 cycles, previously writing to DC_DATA
+;        and clearing the V-Flag 6 cycles again, in sum  8+8+6=22 cycles.
+;
+;        Since the loop is taken at least 4 times, a somewhat delayed
+;        register write (sta DC_DATA) is compensated by the following
+;        loop runs, which only need 19 cycles per round (24 cycles
+;        compensation).
+;
+;        If the previous write to DC_DATA before calling this funtion was
+;        nearly perfectly in sync to the Byte-Ready-Signal, then this
+;        single write to DC_DATA _may_ be delayed by up to 41 cycles
+;        despite the theoretical minimum value of less than 26 cycles.
+;        But the delayed write (15 cycles hanging over) needs to be
+;        compensated by a three additional runs of the loop in
+;        "BufferedWriteLoop".
+;        Such a single write delay is possible because the written value
+;        is latched into the serial shift register with the _next_
+;        Byte-Ready-Signal, which means a byte needs to be written to
+;        DC_DATA just _before_ the next Byte-Ready-Signal happens.
+;
+;
+; clock cycle (cylic)
+;             11111111111222222         11111111111222222         
+;    1234567890123456789012345612345678901234567890123456123456789
+;
+;clock pulse of the Byte-Ready signal, byte at PA is latched
+; 0001000000000000000000000000010000000000000000000000000100000000
+;    |                         |                         |
+;    |                         |                         |
+;possible exits in time of the  bvc *  loop
+;  BBB11                                       11 
+;    BBB11                                       11
+;   BBB11 .                                     11 .
+;    |    .                    |                   .     |
+;    |    .                    |                   .     |
+; V-Flag resetting (done via SBC)                  .
+;         CC                                       CC 
+;    |    . .                  |                   . .   |
+; normal store to DC_DATA (in time)         delayed store (last possible)
+;         . SSSS                                   . SSSS   
+;    |    . .   .              |                   . .   |
+;     1234. .   .  11111111112222222222333333333344. .
+;         123456789012345678901234567890123456789012345678
+;
+; The abstracted schema above was derived from real disk drive tests.
+; The maximum delay of 41 cycles can only be reached, if the store to
+; DC_DATA is made before the V-Flag is cleared. If the V-Flag reset
+; comes first, then the maximum delay for the store would only be 40
+; cycles.
+;
+; The function exit may also be critial, because 16 cycles are
+; consumed since the last Byte-Ready-Syncronisation. If the
+; "RelaxedTiming" version is assembled, then only 12 cycles are
+; consumed and may be an advantage, when chaining together several calls
+; to this function with additional control logic in between.
+;
+;
+;  input:  Y            - offset into the buffer (limited to page boundary)
+;          C            - must be cleared, otherwise 6 GCR bytes are written
+;                         out instead of 5
+;
+;  output: Y            - new offset into the buffer pointing behind
+;                         the last byte written
+;          A            - $ff
+;          X            - arbitrary
+;          C            - cleared
+;
+;****************************************************************************
+
+.if .def(DoBranchAlign) && *<$0400
+	.res $0400-*, $00	; ensure, all branches not crossing a page boundary
+.endif
+	;;; do some additional aligning
+.res $05, $00		; adjust the paging for several  bvc *  loops
+
+BaseAddress = CGCRBUF & $ff00
+
+BufferedWrite
+.ifdef RelaxedTiming
+	lda #$04
+.else
+	lda #$05				;  2
+.endif
+BufferedWriteLoop
+	ldx BaseAddress,y		;  6(*)   : 17(*)
+	syncBR					;  8(*)   : 19(*)
+.ifdef SwapWrtNSync
+	stx DC_DATA				;         :  4
+	sbc #$01				;         :  6
+.else
+	sbc #$01				;         :  6
+	stx DC_DATA				;         :  4
+.endif
+	iny						;         :  8
+	bcs BufferedWriteLoop	; 10      : 11
+
+	checkPageCrossing BufferedWriteLoop
+
+.ifdef RelaxedTiming
+	ldx BaseAddress,y		; 14
+	iny						; 16
+	syncBR					; 18
+.ifdef SwapWrtNSync
+	stx DC_DATA				;  4
+	clv						;  6+6=12
+.else
+	clv						;  6+6=12
+	stx DC_DATA				;  4
+.endif
+.endif
+
+	rts						; 16
+
+;##############################################################################
+;##############################################################################
+
+;****************************************************************************
+;
+;  Write a GAP of arbitrary length (counted in 4-Bit nybbles) followed
+;  by a SYNC mark
+;
+;  Note: This routine implements an algorithm that is able to write
+;        "half GAP bytes" to disk. It does this by using an alternation
+;        scheme, for each odd sector number written to disk, one
+;        additional GAP byte is written. For even sector numbers this
+;        additional GAP byte write is omitted.
+;        "Half GAP bytes" are written to disk, when Bit 0 of the
+;        Akkumulator is set.
+;
+;  Drawbacks of the implementation below:
+;        (1) In fact no additional GAP bytes ($55) are written to disk,
+;            but the SYNC mark is shortened by one byte, thus
+;            non-standard SYNC marks of length 4 (32 On-Bits) are
+;            written to disk, dependent from several input conditions.
+;         !  When calling this routine with an even value for A, the
+;            following SYNC mark gets the standard length of 5 bytes.
+;
+;  input:  A            - Length of first GAP written, counted in 4-Bit
+;                         nybbles ("half GAP bytes"), must be less than
+;                         $80, otherwise one byte write is omitted due
+;                         to the overflow flag not cleared
+;          C            - Must be cleared, otherwise the GAP may be one
+;                         byte bigger under certain circumstances 
+;
+;  output: A            - $fe or $ff, dependent from several inputs
+;          X            - $ff
+;          C            - cleared
+;
+;****************************************************************************
+
+WriteGAPnSYNC
+	ldx #$55				; 2
+	jsr SequentialWrite		; 6
+
+	ora SECTCNT				;    :    : 17	; combine both bit-0's
+	ror						;    :    : 19	; and put the result to C
+
+	ldx #$ff				;    :    : 21
+	lda #$08				;    :    : 23	; an even value is required
+				; normally this SYNC length would be too short
+
+
+;****************************************************************************
+;
+;  Write a consecutive byte sequence of arbitrary length
+;
+;  Note: The number of bytes written calculates to:  (A + 1 + C) / 2
+;        To become independent from the state of the Carry, set the
+;        Akkumulator to:  A = length * 2 - 1
+;
+;
+;  input:  A            - Length parameter (see note), must be less
+;                         than $80, otherwise one byte write is omitted
+;                         due to the overflow flag not cleared
+;          X            - The byte to be written
+;          C            - Must be cleared, otherwise one more GCR byte
+;						  more is written sometimes (see note)
+;
+;  output: A            - $ff, if A is even and C=0, or if A is odd and C=1
+;                         $fe, if A is even and C=1, or if A is odd and C=0
+;          C            - cleared
+;
+;****************************************************************************
+
+SequentialWrite
+	syncBR					;  8 : 11 : 25
+.ifdef SwapWrtNSync
+	stx DC_DATA				;         :  4
+	sbc #$02				;         :  6
+.else
+	sbc #$02				;         :  2
+	stx DC_DATA				;         :  6
+.endif
+	bcs SequentialWrite 	;    :  9 :  8
+
+	checkPageCrossing SequentialWrite
+
+	rts						;    :    : 14
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+;****************************************************************************
+;****************************************************************************
+;
+; Format a track sequencer
+;
+;****************************************************************************
+;****************************************************************************
+
+FrmtTrk
+	lda TRACK0	; get current track number
+	ldx #$04
+
+TracknoNotFound
+	dex
+	bmi NoNewZoneFound
+
+	cmp SpdTrk,x
+	bne TracknoNotFound
+
+	lda SpdADD,x
+;	sec		; here, carry is already set
+	adc GAPLEN
+	sta GAPLEN
+; FIXME: See FIXME note below at the other "sta GAPLEN"
+;
+
+		; don't do inter-sector GAP calculations yet
+	lda DC_SETTINGS
+	and #$9f
+	ora SpdMask,x
+	sta DC_SETTINGS
+
+	lda ZONESECTR,x
+	sta SECTOR0
+
+NoNewZoneFound
+
+
+	ldx #<CDBGSTN		;;; prepare the buffer pointers to the data
+	ldy #<CDBGENN		;;; block start and end sequences
+
+	lda TRACK0			;;; load track number to prepare the headers for
+
+	cmp #$02
+	bcs NotTrack1
+
+	ldx #<CDBGST1
+	ldy #<CDBGEN1
+NotTrack1
+	stx CDBSPTR
+	sty CDBEPTR
+
+	ldx #<CHDRBUF		;;; start of the GCR encoded 1st part headers
+	stx BPOFFS			;;; pointer to last converted byte in buffer
+
+		;;; TRACK0 already loaded into A
+	jsr PrepareHeaderBuffer
+
+
+
+
+
+
+	lda CMDBUF_DEMAGNET	; get bump value
+; always clear the whole track for the time beeing
+;	beq NoDemagnetize
+
+;	jsr TRACK_FF	; overwrite track with $ff (enables write mode)
+;	jsr TRACK_55	; overwrite track with $55
+
+NoDemagnetize
+
+
+RestartFormatting
+
+.ifdef DebugFormat
+; this implementation is only for counting
+; the no. of writes and remembering the GAPs
+	ldy DBGBPTR
+	lda TRACK0
+	sta DebugFormatBuffer,Y
+	lda GAPLEN
+	sta DebugFormatBuffer+1,Y
+; this is the "real" Restart:
+.endif
+
+	lda #$ce	;;; switch to write mode
+	sta DC_PCR			; $1c0c
+	lda #$ff
+	sta DC_DATADDR
+
+
+	lda SECTOR0
+	sta SECTCNT	; sector counter
+
+
+	lda #<CHDRBUF
+	sta HEADCNT	; save the pointer to the compressed header buffer
+
+	clc ; initialize the Carry for the block loop writers
+
+	; start with writing a data block without header, so that there
+	; cannot be found a SYNC mark within the overlap area
+
+; FIXME: This doesn't work under certain circumstances. With the ZERO
+;        format pattern, the 1571 disk drive gets problems to find the
+;        first header of the track within the probing routine! So we
+;        have to write a more regular pattern
+;
+;        New tests showed that this doesn't depend on the pattern that
+;        is written here first
+; jsr TRACK_FF	; overwrite track with $ff (enables write mode)
+; doesn't fix anything
+
+
+	; write a dedicated modulo-3-pattern as track start
+	ldx #$80
+Mod3pattern
+
+;	lda #%11011011
+	lda #%01001001
+;	lda #%01111110
+;	lda #%01001001
+	bvc *
+	clv
+	sta DC_DATA
+
+;	lda #%01101101
+	lda #%00100100
+;	lda #%01111110
+;	lda #%11111111
+	bvc *
+	clv
+	sta DC_DATA
+
+;	lda #%10110110
+	lda #%10010010
+;	lda #%01111110
+;	lda #%10010010
+	bvc *
+	clv
+	sta DC_DATA
+
+	dex
+	bpl Mod3pattern
+	jmp InterceptionalStart
+
+
+
+
+FullBlockLoop
+	ldy CDBSPTR				;       (from loop)   +3
+eatCycles 7
+	jsr BufferedWrite		; out:  16      in: +6+8=34
+	lda #$3e				;       +2              ****
+	sta CDBICNT				;       +3
+eatCycles 4					;        +4(=41)##########
+
+DataBlockLoop
+	ldy #<CDBGIMT			;       +2                            +2
+	jsr BufferedWrite		; in: +6+8=37   out: 16   in(loop): +6+8=40
+.if 0;.ifdef StretchTiming
+;	dec CDBICNT
+	.byte $ce, CDBICNT, $00 ;                    +6(=41)##########
+.else
+	dec CDBICNT				;         ****       +5                 ****
+.endif
+	bpl DataBlockLoop		;                    +3/2
+
+	checkPageCrossing DataBlockLoop
+
+	ldy CDBEPTR				;                    +3
+	jsr BufferedWrite		;              in: +6+8=40     out:  16
+InterceptionalStart
+	dec SECTCNT				;                      ****          +5
+
+	bmi BlockloopExit		;                                    +2(/3)
+
+.if 0;.ifdef StretchTiming
+;	lda GAPLEN				;                                    +4=(41)########
+	.byte $ad, GAPLEN, $00
+.else
+	lda GAPLEN				;                                    +3
+.endif
+	jsr WriteGAPnSYNC       ; out:  14                    in:  +6+8=40
+	ldy HEADCNT				;       +3                             ****
+eatCycles 10				;      +10(=41)##########
+	jsr BufferedWrite		; in: +6+8=31   out:  16
+	sty HEADCNT				;         ****        +3
+	ldy #<CHDR2ND			;                     +2
+eatCycles 6					;                     +6(=41)##########
+	jsr BufferedWrite		; out:   16     in: +6+8=35
+	lda #$09*2				;        +2             ****
+eatCycles 9					;        +3(=41)##########
+	jsr WriteGAPnSYNC       ; in:  +6+8=35  out:  14
+	jmp FullBlockLoop		;          ****       +3	(unconditional)
+;	bcc FullBlockLoop		;          ****       +3	(unconditional)
+;	checkPageCrossing FullBlockLoop
+
+BlockloopExit				;                                      =24
+	syncBR	; wait for last byte latched into register      in:  +2=26
+	clv		;                                           +2
+
+; Regs on BlockloopExit (exit values from BufferedWrite):
+;    A=$ff, X=arbitrary, Y=[CDBEPTTR]+4
+
+		; Y = -1; this is the marker that the GAP is too big
+	tay		; save the $ff value from the last          +2
+			; BufferedWrite operation into the
+			; index register for the next steps
+
+.ifndef DontWaitForDummy
+	sbc #$01	; substract two (Carry is cleared) the compensate
+	clc			; for the additionaly two "GAP nibbles" delay
+
+	syncBR	; wait for last byte to be shifted out and written to disk
+	clv		; this improves the timing, but costs two opcodes
+.endif
+
+		; put DC into read mode again, must not change the Y register
+	jsr KILL				;                          +28
+
+;##############################################################################
+	ldy DBGBPTR
+.if 1
+NSFY
+	bvc WBRWS	;                       +2=36
+	clv
+
+	lda DC_DATA
+	sta DebugFormatBuffer,y
+	iny
+
+WBRWS
+	ldx DC_SETTINGS
+	bmi NSFY
+
+
+	rts
+.endif
+
+
+
+	lda GAPLEN	; run the first loop with preserving part of the
+				; track tail GAP as inter sector GAP
+
+	; Y = -1, A = GAPLEN
+
+NoSYNCfoundYet
+	bvc WaitByteReadyWithSYNC	;                       +2=36
+	; clv	; not needed since the following SBC perfectly clears out
+			; the overflow flag (if A is not in the range of $80..$82)
+
+	sbc #$02
+
+	bcs WaitByteReadyWithSYNC
+
+		; Carry is already cleared
+		; A contains either $fe or $ff, dependent from the oddity of
+		; SECTOR0. This effectively implements a fixed point based
+		; division:
+		;  If  SECTOR0  is odd, one time  SECTOR0/2  number of bytes
+		;  are substracted, the other round  SECTOR0/2+1  bytes
+	adc SECTOR0
+		; since A was  $fe  or  $ff  and since  SECTOR0  is always
+		; greater than 2, the Carry is set now again.
+
+	iny	; Increase the GAP adjustment counter, if SECTOR0 number of
+		; GAP nibbles (half a GAP byte) fit into the track tail GAP
+
+nop ; for test purposes (ensuring the timing)
+;
+; FIXME: Write an appropriate routine for the following exit
+;
+;	bmi	VerifyError				; Prevent an endless loop, if no SYNC
+								; can be found, this jump is done, after
+								; $80*SECTOR0/2 >= $40*17 = 1088 bytes
+								; were read without a SYNC
+WaitByteReadyWithSYNC
+	ldx DC_SETTINGS
+	bmi NoSYNCfoundYet
+
+	sty GAPMODV	; remember the additional GAP we want to add
+
+
+;;; The following is an unreleased idea for taking the first half of
+;;; the first SYNC byte into account for the track tail GAP calculation
+.if 0
+	tay	; preserve the half GAP byte counter
+
+	; read out DC_DATA, the byte that was taken in, when the SYNC
+	; signal appeared
+	; lda DC_DATA	; unlock the buffer latch
+	; lda DC_DATA	; read the first SYNC byte
+
+
+		; check if that byte (part of the SYNC) contains some
+		; 0-Bits at positions 2..6. If so, add a "half GAP"
+		; value to the counter
+	ora #$C0	; treat $3f and $7f as Full-SYNC bytes also
+	eor #$ff	; map $3f/$7f/$ff to $00, anything else to bigger values
+	cmp #$01	; clear Carry, if value was $00, set it otherwise
+	rol			; multiply the byte counter by 2 and shift the Carry
+				; into, a non-Full-SYNC byte is counted as Half-GAP
+	; clc ; not needed, since the shifted in bit 7 is always 0
+
+	; now the Carry tells, if half GAP byte more has to be taken into
+	; account, recalculate X and the former A
+.endif
+
+
+; since we are now inmid of reading the SYNC, there's at least
+; 4*26 cycles time for doing some stuff
+
+
+.ifdef DebugFormat
+
+	tax
+
+	tya
+	ldy DBGBPTR					; save the result of:
+	sta DebugFormatBuffer+2,y	;       (TailGAP - GAPLEN) / SECTOR0
+
+	txa							; save the remainder complementary of:
+	sta DebugFormatBuffer+3,y	;       SECTOR0 - (TailGAP - GAPLEN) % SECTOR0
+
+	tya							; advance the debug log pointer
+	clc			; this is needed due to the SBC in the probing routine
+	adc #$04	; OUCH, the V-Flag is set sometimes, do a clv later!!!
+	sta DBGBPTR
+.endif
+
+
+.if 0
+	;;; Wait a dedicated number of SYNCs, so that the second header
+	;;; is checked, not the first one. This is needed as a fix for
+	;;; the 1571 disk drive and the 1541C, whose electronic circuits
+	;;; (PLL and saddle canceller) need some time to swing in.
+
+; Wait for end of SYNC, the first byte coming in
+	clv
+	bvc *
+; Wait for next SYNC (the one of the data start block)
+NoSYNCfoundYet_2
+	ldx DC_SETTINGS
+	bmi NoSYNCfoundYet_2
+
+; Wait for end of SYNC, the first byte coming in
+	clv
+	bvc *
+; Wait for next SYNC (the one of the data start block)
+NoSYNCfoundYet_3
+	ldx DC_SETTINGS
+	bmi NoSYNCfoundYet_3
+.endif
+
+
+
+	; Now check, if the _right_ header block is following the SYNC mark
+	; Since we only want to check, if the header of the first sector is
+	; not overwritten by the track tail, it is sufficient, to compare
+	; the first part of the header only (5 GCR bytes)
+
+	ldx #$04			; read 5 GCR bytes
+	
+	ldy #<CHDRBUF		; get pointer to the compressed header buffer,
+;	ldy #<(CHDRBUF+5)	; get pointer to the compressed header buffer,
+						; 2nd header ($019c), doing the second one is a
+						; fix for the 1571 and 1541C, the PLL and saddle
+						; canceller needs some more time after having
+						; switched to read mode
+
+
+	clv			; allow for accounting the next byte
+	lda DC_DATA	; clear the value from the buffer, unlock tha buffer latch
+
+Compare1stHeader
+	; wait for the first after-SYNC byte
+	syncBR						;  +2=22
+	clv							;   2
+	lda DC_DATA					;  +4
+	eor CHDRBUF&$ff00, y		;  +4
+	beq ProceedHdrCmp			;  +3
+
+.ifdef DebugFormat
+
+Debug_1571SYNCError = 1			; when applying the "Zero-Format"
+.ifdef Debug_1571SYNCError
+
+	; A contains the compared value (DC_DATA EOR Buffer)
+	; Y contains the pointer value into the buffer
+
+	eor CHDRBUF&$ff00, y
+	tax		; save the originally read value
+
+	tya
+	pha		; save the buffer pointer
+.endif
+
+	ldy DBGBPTR					; save the result of the SYNC check
+	dey							; because we already did advance the pointer
+	lda DebugFormatBuffer,y
+	ora #$40					; mark bit 6 of the remainder
+	sta DebugFormatBuffer,y		; complementary
+
+.ifdef Debug_1571SYNCError
+	iny	; proceed to a new 4-byte block again
+
+
+	txa							; get the originally read value
+	sta DebugFormatBuffer+1,y	; store it to position two
+
+	pla							; get the buffer pointer
+	sta DebugFormatBuffer,y		; store it to position two
+
+	tax
+	lda CHDRBUF&$ff00, x		; read the original buffer value
+	sta DebugFormatBuffer+2,y	; store it to position three
+
+	lda #$40					; again mark bit 6, but of the track marker
+	sta DebugFormatBuffer+3,y	; store it to position two
+
+	tya							; advance the debug log pointer
+	clc			; this is needed due to the SBC in the probing routine
+	adc #$04	; OUCH, the V-Flag is set sometimes, do a clv later!!!
+	sta DBGBPTR
+
+rts
+
+.endif
+
+.endif	; .ifdef DebugFormat
+
+	lda GAPLEN			; the following SYNC was overwritten, so make
+	lsr					; the new GAP a lot smaller (divide by two)
+	bne StoreGAP
+	lda #MinGAPn		; if it got zero, load the MinGAP value
+StoreGAP
+; FIXME: See FIXME note below at the other "sta GAPLEN"
+;
+	sta GAPLEN			; store the new value and reformat this track
+	jmp RestartFormatting
+
+ProceedHdrCmp
+	iny							;  +2
+	dex							;  +2
+	bpl Compare1stHeader		;  +3
+
+	checkPageCrossing Compare1stHeader
+
+	sty HEADCNT	; save the pointer to the compressed header buffer
+				; for the later verify process
+
+	lda GAPMODV		; GAP changes in the range from $ff to $20 and more
+
+		; this should maybe omitted, so that the new track's GAP is
+		; decreased by one GAP nybble, which leads to better stability
+		; on belt driven drives
+	beq	NoChange	; definetly no change, don't apply the following
+					; GAP size decrease
+	tay
+
+	clc
+	adc GAPLEN		; after here, the Carry is set
+
+	sbc #$00		; substract one, make increases less aggressive and let
+					; decrease the $ff change once more, this is especially
+					; a fix for belt-driven drives with greater RPM
+					; fluctuations
+
+	cpy #Security	; don't apply any change to GAPLEN, if the change is within
+					; the discriminating window from $00..Security-1
+
+	bcs StoreGAP	; if the GAP change was bigger than 3, reformat the track
+
+					; if the GAP change was only 0, 1 or 2, apply it for the
+					; next track only, don't reformat the current track
+	sta GAPLEN		; store the new GAP (was +2, now +1) for the next track format
+
+; FIXME: Aggregate this "sta GAPLEN" with the one from above at
+;        "RestartFormatting". Maybe this also needs to replace the "jmp"
+;        by a branch. But then the core format-loop must be put into a
+;        subroutine, so that the branch can be done within a $80 range.
+;        This would also be a good thing for a better code structure.
+
+
+NoChange
+		; Proceed with verify!
+	rts
+
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+
+	; speedzone masks for setting the correct data rate
+SpdMask	.byte $0,$20,$40,$60
+
+	; inter sector gap for every speedzone
+;SpdGAP	.byte 9,12,17,8
+
+	; the differences in the inter sector gap for every speed zone
+	; relative to the speed zone before
+	; as carry is alway set when this add is performed,
+	; we subtract 1 from every value
+;SpdADD	.byte -3-1, -5-1,9-1,0-1
+	; GAP value differencies now precalculated for GAP nybbles
+	;	(means: double the number 354 of full GCR block bytes)
+	;
+	;                 spzc_1
+	;  spzqa_x  =  ( -------- - 1 ) * 354 * 2
+	;                 spzc_2
+	;
+	;  zone | tracks | spzc | spzqa (ISGz3) | delta          | relaxed
+	; ----------------------|---------------|--------------------------
+	;   3   |  1-17  |  273 |      0        |              0 |    0
+	;   2   | 18-24  |  266 |     18.632    | +18.632 ~= +19 |  +19
+	;   1   | 25-30  |  270 |      7.867    | -10.765 ~= -11 |  -12
+	;   0   | 31-40  |  272 |      2.603    | - 5.264 ~=  -5 |   -6
+	;
+	;
+;SpdADD	.byte -5-1, -11-1, +19-1, +0-1
+;
+; calculated GAPs for a new speed zone are better too small than too
+; big, because the probing can correct this easily. These values have
+; been tested extensively.
+; SpdADD	.byte -6-1, -12-1, +19-1, +0-1
+
+; Track 01 dependant values
+SpdADD	.byte +1-1, +7-1, +19-1, <(+0-1)
+
+
+	; the tracks at which each zone starts
+SpdTrk	.byte 31, 25, 18, 1
+
+
+
+
+.ifdef DebugFormat
+	* = $0700
+
+DebugFormatBuffer
+
+	.byte 0		; track number beeing formatted
+	.byte 0		; initial inter sector GAP size beeing used
+	.byte 0		; probed track tail GAP
+	.byte 0		;   ? verify ?
+
+	; these 4 byte blocks are counted up for every track (round)
+	; beeing formatted
+.endif

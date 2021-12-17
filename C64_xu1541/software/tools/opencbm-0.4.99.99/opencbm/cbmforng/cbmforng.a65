@@ -1,0 +1,539 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; Copyright (C) 1999      Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; Copyright (C) 2005      Spiro Trikaliotis
+; Copyright (C) 2005,2006 Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; cbmforng   - 6502 based fast formatting routine with probing for
+;              the Commodore 1541 floppy disk drive and compatibles
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+;
+; This next generation formatter routine for OpenCBM is a nearly complete
+; rewrite of the formatting routine that comes with cbm4win 0.1.0a, which
+; is an adaption of Joe Forster/STAs <sta(at)c64(dot)org>  formatter
+; for  The Star Commander.  While most of the main program and parts of
+; the outermost job code loop have been preserverd, the rest was created
+; from scratch.
+; This way a completely new format pattern creation algorithm was
+; implemented as well as a technique for creating inter sector GAPs with
+; a granularity of half a byte (nybble based GAP sizes as well as a
+; nybble based track tail GAP probing).
+; The core idea of Spiro Trikaliotis' probing algorithm was taken over,
+; but reimplemented for calculating with nybble based GAPs instead of
+; byte based ones.
+; Michael Klein's progress indicator code had to be removed, it isn't
+; compatible to the way error handling is done and that the DOS ROM's job
+; processor is used for doing retries on errors.
+; 
+; Special Note: The Carry flag is "free running" all the time, which
+;               means there a no explicit CLC or SEC instruction all
+;               over the code. These filigree optimizations could be
+;               done, because all calculations and loops were carefully
+;               compensated for set or unset Carry conditions.
+;               Watch out for the Carry flag, when doing further
+;               modifications to this code or the subroutines and
+;               macros.
+
+DebugFormat      = 1    ; write debugging and status output to $0700,
+                        ; copied over to $0500 on success
+
+DontWaitForDummy = 1    ; on the last sector, don't wait for the last
+                        ; byte written to disk, since it is a filler
+
+FlipLEDbyTrack   = 1    ; do some fancy flashing (costless)
+
+; The following are some really ugly macro definitions, so that a
+; structural storage declaration can be shared between the ca65
+; assembler and ANSI-C. The structural declaration is made within
+; the interface definition header file named cbmforng.idh, it
+; contains several macro calls which are defined here.
+
+.define _CMT(str1)
+.define _BEGINSTRUCT(parm)          .struct .mid(1, .tcount({parm})-2, {parm})
+.define _ENDSTRUCT  (parenthesises) .endstruct
+.define _OCTETARRAY (name, size)    .mid(1, .tcount({name})-1, {name}) .res  .mid(0, .tcount({size})-1, {size})
+.define _OCTETDECL  (name)          .mid(1, .tcount({name})-2, {name}) .byte
+
+.include "cbmforng.idh"
+
+
+JOB_BUMP    = $C0 ; bump the head
+JOB_EXEC0   = $E0 ; execute after drive runs
+
+CMDNUM_NEW  = $0B ; command number for "NEW" command
+MAXNOSECTR  = $15 ; maximum number of sectors per track
+
+
+JOB0    = $00   ; job code for buffer 0
+TRACK0  = $06   ; track for buffer 0 ($0300-$03ff)
+SECTCNT = $07   ; sector counter for current track (sector for buffer 0)
+
+HDRID1  = $16   ; 1st character of disk ID
+HDRID2  = $17   ; 2nd character of disk ID
+DRVTRK  = $22   ; Track currently under R/W head on drive #0
+
+BUFPTR  = $30   ; pointer to the currently active buffer
+BPOFFS  = $34   ; offset into the currently active buffer
+
+HBID    = $39   ; Header block ID ($08)
+CHKSUM  = $3A   ; storage for data or header checksum
+
+MAXSECT = $43   ; maximum number of sectors for the current track
+
+CVTBBF  = $52   ; 4 BIN bytes into GCR conversion
+
+DOSRTRY = $6A   ; number of read attempts for the DOS job processor
+
+; several reused high level DOS storage areas within the job code routine
+; $86-$8a       ; temporary storage
+; $8b-$8e       ; temporary calculation values (mainly REL files)
+; $8f-$92       ; accumulator for calculations (mainly REL files)
+
+.ifdef DebugFormat
+    DBGBPTR = $86   ; page pointer into buffer with debug informations
+.endif
+
+HEADCNT = $8b   ; 1st header block counter in the fmt loop
+CDBICNT = $8c   ; compressed data block intermediate section counter
+CDBSPTR = $8d   ; pointer to compressed data block begin pattern
+CDBEPTR = $8e   ; pointer to compressed data block end pattern
+
+ERREXCP = $8f   ; marker for error exception handling
+GAPLEN  = $90   ; real inter sector GAP value for current track
+BASEGAP = $91   ; virtual absolute drive dependent inter sector GAP
+GAPMODV = $92   ; GAPLen modification value
+
+
+FILDRV  = $E2   ; default flag, drive # (all 0 on 1541)
+JOBNUM  = $F9   ; current job number
+CMDNUM  = $22A  ; command code number
+FILTBL  = $27B  ; ???
+
+CPRMBUF     = $0200  - .sizeof(FormatParameters)
+CGCRBUF     = CPRMBUF - 21*5    ; up to 21 first part sector header blocks
+
+CMDBUF      = $0200
+BUFFER0     = $0300
+BUFFER1     = $0400
+BUFFER2     = $0500
+BUFFER4     = $0700
+
+
+DC_SETTINGS = $1C00
+DC_DATA     = $1C01
+DC_DATADDR  = $1C03
+DC_PCR      = $1C0C
+
+ERROUT      = $C1C8
+TAGCMD      = $C1EE
+ONEDRV      = $C312
+SETDRIVENUM = $C388
+INITDR      = $D042
+DOJOB       = $D58C
+WRITEBAM    = $EE40
+CNV4T5      = $F6D0
+ERRR        = $F969
+STPIN       = $FA63
+TRACK_FF    = $FDA3
+READMODE    = $FE00
+ZONESCT     = $FED1
+ZONEBND     = $FED7
+SLOWS       = $FEF3
+
+    ; The MinGAPn parameter now determines the number of GAP nybbles
+    ; written to disk beside the number of GAP bytes with the former
+    ; parameter MinGAP, this parameter must not be bigger than 129
+    ; for the current implementation
+MinGAPn = 5*2   ; standard, 6 (*2) less than the least useful GAP size
+
+    ; Upper margin for the discriminating window of the probing routine
+    ; This value is nybble based, as all other GAP based parameters too
+    ; A value of 2 may lead to a somewhat better sector distribution,
+    ; but then track format reruns are more likely to happen.
+    ; Allowed (useful) value range:  2, ( 3 ), 4, 5
+Security = 3
+
+
+;##############################################################################
+
+
+    ; Get all the macro definition, where bigger parts
+    ; of code were collected and structured
+
+.include "cbmfmacs.i65"
+
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+    * = BUFFER0
+
+    jmp JobRoutine
+
+; here is the program entry
+; the command-line has the following format:
+;        M-E<StartLow><StartHigh>0:<Name>,<ID1><ID2>
+; Byte:  012    3         4      56 7..x x  x    x
+;                                        +  +    +
+;                                        1  2    3
+;
+
+Start
+    lda #CMDNUM_NEW ; set the command number for "new" command
+    sta CMDNUM  ; 
+
+    jsr TAGCMD
+    jsr ONEDRV
+    lda FILDRV
+    jsr SETDRIVENUM
+
+    ; set the header id into appropriate zp locations
+    ldy FILTBL
+    lda CMDBUF,y
+    sta HDRID1
+    lda CMDBUF+1,y
+    sta HDRID2
+
+.ifdef DebugFormat
+    lda #$00
+    sta DBGBPTR     ; initialise pointer into debug buffer
+    tax
+FillDebugBuffer
+    sta DebugFormatBuffer&$ff00,X
+    inx
+    bne FillDebugBuffer
+.endif
+
+    ; start with a gap which is most likely too small
+.ifdef FlipLEDbyTrack
+    lda #MinGAPn-8
+.else
+    lda #MinGAPn
+.endif
+    sta BASEGAP
+
+
+    lda CPRMBUF+FormatParameters::P_RETRY
+    sta DOSRTRY ; set the Retry parameter (DOS job processor)
+
+        ; set track number to start with in buffer #0
+    lda CPRMBUF+FormatParameters::P_STRCK
+    sta TRACK0
+
+    ldx #$00
+    stx JOBNUM
+
+    ; execute bump if it was given on the command line
+    lda CPRMBUF+FormatParameters::P_DOBMP   ; get bump value
+    beq NoBump  ; if 0, do not execute a bump
+    lda #JOB_BUMP
+    jsr DOJOB   ; execute the job in A
+
+    ; execute program in buffer #0
+NoBump
+    lda #JOB_EXEC0
+    jsr DOJOB
+
+.ifdef DebugFormat
+    ldx #$00
+CopyDebugBuf
+    lda DebugFormatBuffer,x
+    sta $0500,x
+    inx
+    bne CopyDebugBuf
+.endif
+
+        ; don't do any special error handling, since this seems to
+        ; be done from the job loop processor automatically
+    jsr INITDR      ; @@@
+    jmp WRITEBAM    ; write BAM and quit
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+
+    ; Get all the subroutines right here, ensure that the error handler
+    ; is declared at the end of that file
+    ; The subroutines file contains code that is called more than once
+
+.include "cbmfsubs.i65"
+
+
+;##############################################################################
+
+; This is the IRQ routine
+JobRoutine
+
+    __PrepareTrackParameters
+
+;##############################################################################
+
+    __SwitchToWriteMode
+
+    lda CPRMBUF+FormatParameters::P_DEMAG   ; get demagnetize value
+    beq NoDemagnetize
+    jsr TRACK_FF    ; overwrite track with $ff (enables write mode)
+
+NoDemagnetize
+    __ComposeTrackFormat    ; this is the heart of the formatter, the
+                            ; track format pattern sequencer
+
+    __syncBR        ; wait for last byte                   in:  +2=22
+    clv             ; latched into register                out: +2
+
+;##############################################################################
+
+; Regs on BlockloopExit (exit values from __ComposeTrackFormat):
+;    A=$ff, X=arbitrary, Y=[CDBEPTTR]+5, Carry=0
+
+        ; Y = -1; this is the marker that the GAP is too big
+    tay     ; save the $ff value from the last BufferedWrite    +2
+            ; operation into the index register for the next steps
+
+    lda #$80    ; set error handler to SYNC failure for         +2
+    sta ERREXCP ; all the following SYNC and header checks      +3
+
+.ifndef DontWaitForDummy
+    __syncBR    ; wait for last byte to be shifted out and written to disk
+    clv         ; this improves the timing, but costs two opcodes
+.endif
+
+        ; put DC into read mode again, must not change the Y register
+    jsr READMODE            ;                                  +28
+
+;##############################################################################
+
+    lda GAPLEN  ; run the first loop with preserving part       +3
+                ; of the track tail GAP as inter sector GAP
+
+.ifndef DontWaitForDummy
+    sbc #$02    ; Substract two. The fact that the Carry is cleared
+                ; before is compensated by the first round of the
+                ; following probing routine
+        ; This is done to virtually increase the track tail GAP by
+        ; two nibbles. This should prevent reformatting this track,
+        ; if the track tail GAP is only two nibbles less then the
+        ; inter sector GAP size
+.endif
+
+    ; Y = -1, A = GAPLEN
+
+    jsr WaitForSYNCwithProbing
+    sty GAPMODV ; remember the additional GAP we want to add
+
+
+; since we are now inmid of reading the SYNC, there's at least
+; 4*26 cycles time for doing some stuff
+
+.ifdef DebugFormat
+
+    tax
+
+    tya
+    ldy DBGBPTR                 ; save the result of:
+    sta DebugFormatBuffer+2,y   ;       (TailGAP - GAPLEN) / MAXSECT
+
+    txa                         ; save the remainder complementary of:
+    sta DebugFormatBuffer+3,y   ;       MAXSECT - (TailGAP - GAPLEN) % MAXSECT
+
+    tya                         ; advance the debug log pointer
+                ; The Carry flag is set from out of the probing routine,
+    adc #$03    ; so adding 3 means an increase by 4
+                ; The Carry state can be left undetermined, because the
+                ; following wait-only operation doesn't rely on it
+    sta DBGBPTR
+.endif
+
+
+    ;;; Wait a dedicated number of SYNCs, so that the second header
+    ;;; is checked, not the first one. This is needed as a fix for
+    ;;; the 1571 disk drive and perhaps some models of the 1541C,
+    ;;; whose electronic circuits (PLL and saddle canceller) need
+    ;;; some time to lock into the detected signal.
+
+    jsr WaitForNextSYNC         ; wait for data block SYNC
+    jsr WaitForNextSYNC         ; wait for 2nd header SYNC
+
+    ldy #<(CGCRBUF+5)
+                        ; get pointer to the compressed header buffer,
+                        ; 2nd header ($019c), doing the second one is a
+                        ; fix for the 1571 and 1541C, the PLL and saddle
+                        ; canceller needs some more time after having
+                        ; switched to read mode
+
+    jsr BufferedCompare     ;  out: 14
+    sty HEADCNT             ;       +3
+                ; save the pointer to the compressed header buffer
+                ; for the later verify process
+    ldy #<CPRMBUF+FormatParameters::CHDR2ND
+                            ;       +2
+    jsr BufferedCompare     ; in: +6+4=29      out: 14
+
+
+;##############################################################################
+
+    dec MAXSECT     ; reuse the prepared variable for verify
+
+    lda GAPMODV     ; GAP changes in the range from $ff to $20 and more
+
+        ; The following branch should maybe omitted, so that the new
+        ; track's GAP is decreased by one GAP nybble, which leads to
+        ; even more better stability on belt driven drives
+    beq NoChange    ; definetly no change, don't apply the following
+                    ; GAP size decrease
+    tay
+
+    adc BASEGAP     ; The Carry was set from WaitForNextSYNC, which is
+                    ; compensated by the following SBC (Carry cleared)
+
+    sbc #$01        ; Substract one to make increases less aggressive,
+                    ; but let the $ff change as it is (Carry set then)
+                    ; This is especially a fix for belt-driven drives
+                    ; with greater RPM fluctuations
+
+    cpy #Security   ; Don't reformat on a change to BASEGAP, if the
+                    ; change is within the discriminating window from
+                    ; $00..Security-1
+
+    sta BASEGAP     ; Store the new GAP (was +2, now +1) for the next
+                    ; track format.
+                    ; If the GAP change was only 0, 1 or 2, apply it
+    bcc NoChange    ; for the next track only, don't reformat the
+                    ; current track
+
+                    ; If the GAP change was bigger than 3, do reformat
+    lda #$03        ; Return with "SYNC not found" from the job loop
+    .byte $ae       ; Eat up the following operation
+Return_OK
+    lda #$01        ; Return with no error from the job loop
+    jmp ERRR
+
+
+;##############################################################################
+
+
+    __VerifyTrackFormat NoChange
+
+
+;##############################################################################
+
+    inc TRACK0  ; Increment track number
+    lda TRACK0
+    cmp CPRMBUF+FormatParameters::P_ETRCK
+    bcs Return_OK               ; end track reached
+
+IncrementTrack
+    ; increment the track
+    inc DRVTRK  ; increment track number
+
+    ; advance to next track
+    ldy #$02    ; advance for 2 half-tracks
+AdvTrk
+    jsr STPIN   ; advance one half-track to the inner of the disk
+
+    ; wait for R/W head to react
+    ldx #$80
+Delay
+    jsr SLOWS
+    dex
+    bne Delay
+
+    dey
+    bne AdvTrk
+
+    
+    jmp JobRoutine
+
+
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+;##############################################################################
+
+
+    ; Nybbles based (double the number of bytes) GAP value offsets for
+    ; the 4 different speed zones of a Commodore 1541 disk
+    ;
+    ;                 spzc_1
+    ;  spzqa_x  =  ( -------- - 1 ) * 354 * 2
+    ;                 spzc_2
+    ;
+    ;  zone | tracks | spzc | spzqa (ISGz3) | relaxed | cushioning *1)
+    ; ----------------------|---------------|------------------------
+    ;   3   |  1-17  |  273 |      0        |    0    |      0
+    ;   2   | 18-24  |  266 |     18.632    |  +19    |    +19
+    ;   1   | 25-30  |  270 |      7.867    |   +8    |     +8
+    ;   0   | 31-40  |  272 |      2.603    |   +3    |     +2
+    ;
+    ; *1) When the cushioning function is used on increasing the GAP
+    ;     values, the following GAP values lead to better results on
+    ;     the first track of a new speed zone
+    ;
+
+.ifndef FlipLEDbyTrack
+
+        ; for X=0, the Carry is set
+        ; omit the last byte since it is contained in the next field
+    SpdADD:     .byte +2-1, +8, +19     ; , +0
+
+        ; speedzone masks for setting the correct data rate
+    SpdMask:    .byte $00,$20,$40,$60
+
+.else
+        ; compensate for the constant add of 8 to
+        ; preserve the one byte saving
+    SpdADD:     .byte 8+2-1, 8+8, 8+19      ; , 8+0
+    SpdMask:    .byte $08,$28,$48,$68
+.endif
+
+;##############################################################################
+
+.ifdef DebugFormat
+    * = $0700
+
+DebugFormatBuffer
+
+    ; byte 1   --   track number beeing formatted
+    ; byte 2   --   initial inter sector GAP size beeing used
+    ; byte 3   --   inter sector GAP size adjustment value
+    ; byte 4   --   tail GAP complementary remainder value
+
+    ; these 4 byte blocks are counted up for every track (round)
+    ; beeing formatted
+.endif
+
+;##############################################################################

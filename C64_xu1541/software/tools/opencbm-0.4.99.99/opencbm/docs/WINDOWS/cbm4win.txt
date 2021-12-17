@@ -1,0 +1,21 @@
+ cbm4win 0.1.0 Users Guide
+
+Sorry, currently, there is no dedicated documentation available. For your
+convenience, to have at least some documentation, I added the documentation of
+the latest cbm4linux package. As cbm4linux and cbm4win are almost identical,
+from the user's point of view, this should help you out.
+
+Differences of cbm4win to cbm4linux:
+
+1. Installation:
+   (this is not handled in cbm4linux.txt)
+   See INSTALL file
+
+2. "2.1.1. Actions"
+   Here, the given example in the descriptions of "cbmctrl status device", 
+   "cbmctrl command device cmdstr" does not work
+   on Windows.
+
+3. "2.1.2. cbmctrl Examples"
+   These examples do not work, either.
+

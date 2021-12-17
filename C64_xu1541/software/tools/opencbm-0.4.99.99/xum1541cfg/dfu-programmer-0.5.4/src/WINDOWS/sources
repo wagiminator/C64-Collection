@@ -1,0 +1,19 @@
+TARGETNAME=dfu-programmer
+TARGETPATH=../../../../bin
+TARGETTYPE=LIBRARY
+
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../../WINDOWS
+
+SOURCES=../arguments.c ../atmel.c ../commands.c \
+        ../dfu.c ../intel_hex.c ../util.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1
+
+C_DEFINES = $(C_DEFINES) /DNOC99

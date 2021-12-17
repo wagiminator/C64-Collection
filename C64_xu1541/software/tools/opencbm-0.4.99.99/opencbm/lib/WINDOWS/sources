@@ -1,0 +1,27 @@
+TARGETNAME=opencbm
+TARGETPATH=../../../bin
+TARGETTYPE=DYNLINK
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib \
+           $(SDK_LIB_PATH)/winmm.lib    \
+           ../../../bin/*/libmisc.lib      \
+           ../../../bin/*/arch.lib         
+
+USE_MSVCRT = 1
+
+DLLBASE=0x70000000
+
+INCLUDES=../../include;../../include/WINDOWS;../../lib/plugin/xa1541/WINDOWS/;../;../../libmisc/
+
+C_DEFINES = $(C_DEFINES)
+
+SOURCES=../cbm.c \
+	../detect.c \
+	../detectxp1541.c \
+	../petscii.c \
+	../gcr_4b5b.c \
+	../upload.c \
+	configuration_name.c \
+	archlib.c \
+	opencbm.rc

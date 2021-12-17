@@ -1,0 +1,23 @@
+BOOTLOADER_ADDRESS = 1800
+BOOTLOADER_EXT_ADDRESS = 1700
+BOOTLOADER_BIOSTABLE = 1ff0
+BOOTLOADER_DATA = 00800360
+
+FIRMWARE_FIRMWARETABLE = 16f0
+
+COMMON_SECTIONS=--section-start=.textbiostable=$(BOOTLOADER_BIOSTABLE),--section-start=.textfirmwaretable=$(FIRMWARE_FIRMWARETABLE)
+
+LDFLAGS_BOOTLOADER = -Wl,$(COMMON_SECTIONS),--section-start=.textadd=$(BOOTLOADER_EXT_ADDRESS),--section-start=.text=$(BOOTLOADER_ADDRESS),--section-start=.data=$(BOOTLOADER_DATA)
+
+OBJECTS = biostable.o main.o
+
+XU1541_INCLUDE=../include/
+
+.S.o:
+	$(COMPILE.c) -x assembler-with-cpp $(DUSBVERSION) -c $< -o $@
+# "-x assembler-with-cpp" should not be necessary since this is the default
+# file type for the .S (with capital S) extension. However, upper case
+# characters are not always preserved on Windows. To ensure WinAVR
+# compatibility define the file type manually.
+
+

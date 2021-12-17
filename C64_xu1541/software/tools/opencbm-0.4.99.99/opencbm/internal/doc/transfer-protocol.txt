@@ -1,0 +1,251 @@
+-ATN   +                                                                      +----------+
+       |                                                                      |          |
+       +----------------------------------------------------------------------+          +--
+
+-DATA         +----------------------------------------+ +--+ +-------+           +------+
+              |                                       *| | *| |       |           |      |
+       -------+                                        +-+  +-+       +-----------+      +--
+
+-CLK        +---+        +-+  +-+  +-+  +-+  +-+  +-+  +-+  +-+
+            |   |        |1|  |2|  |3|  |4|  |5|  |6|  |7|  |8|
+       -----+   +--------+ +--+ +--+ +--+ +--+ +--+ +--+ +--+ +-----------------------------
+ 
+         T1    T3        T5   T5   T5   T5   T5   T5   T5   T5            T8        T10
+       <----> <->        <->  <->  <->  <->  <->  <->  <->  <->       <------->   <------>
+            <-> <--------> <--> <--> <--> <--> <--> <--> <--> <------->       <--->
+            T2      T4      T6   T6   T6   T6   T6   T6   T6      T7            T9(old)
+
+
+T1 = 949 us
+T2 =  84 us
+T3 =  13 us
+T4 = 929 us
+T5 =  19-22 us (nom.: 20 us)
+T6 =  71-75 us (nom.: 70 us)
+T7 =  80 us
+T8 = 130 us
+T9old =  44 us (is T8 now!)
+T10=  83 us
+
+*: 1 us before the falling edge of CLK
+
+
+
+---------------------------------------------------------------------------------
+
+Programmed Timing (send):
+
+ATN  +--------------------------------------------------------------------+
+     |////////////////////////////////////////////////////////////////////|
+     +--------------------------------------------------------------------+----------
+
+DATA  +      +--                                                          +----------
+      |      |                                                            |
+      +------+                                                            +
+
+CLK   +---                                                                -----+
+      |                                                                        |
+      +                                                                        +-----
+
+        T9          T11                  SendByte                           T13
+      <------>     <--->           <-------------------------------->     <---->
+             <----->   <----------->                                <----->    <---->
+               T10      WaitListener                                  T12        T14
+
+                   <------------------------------------------------------>
+                      FOR EACH BYTE
+
+T9: Wait for DATA IN high; if not: STATUS_NO_SUCH_DEVICE
+T10: Wait (for beginning of BYTE)
+T11: Wait (after it, DATA should be high, else, STATUS_NO_SUCH_DEVICE)
+T12: inter-byte-space
+T13: only if we sent a TALK; else, DATA and CLK are not changed at all
+T14: Wait after all is ready
+
+
+
+WaitListener:
+
+
+DATA  ---o---------+            ---o------+   +----+
+                   |                      |   |    |
+                   +----    or            +---+    +---
+
+CLK   ----+         +---        ----+               +--
+          |         |               |               |
+          +---------+               +---------------+
+
+
+            Twait                    Twait
+          <-------->            <-------------->
+
+
+o ASSERT(DATA == HIGH)
+Twait: Wait for DATA getting active (one *or* two times)
+
+
+SendByte:
+
+
+DATA           +---+        +----
+               |///|        |
+      --1------+---+--------+
+
+CLK   ----------+  +-------------
+                |  |
+                +--+
+
+          T15          T17
+        <------>   <-------->
+                <-->
+                T16
+
+        <---------->
+          REPEAT 8x
+
+1: block IRQ
+
+T17: Wait for DATA = HIGH (as byte ack)
+
+
+
+
+---------------------------------------------------------------------------------
+
+Programmed Timing (read):
+
+DATA  -----+        +----+    +2---
+      /////|        |////|    |
+      -----+--------+----+---3+2
+                                         
+CLK   ---\     /-----\   /---------
+         |     |     |   |
+         \1----/     \---/
+
+
+       T1         T5       3
+      <-->      <---->   <---->
+         <----->     <--->    <---->
+           T2         T6        T7
+
+                <-------->
+                 every bit
+
+      <---------------------------->
+            for every byte
+
+
+1: block IRQ
+2: release IRQ
+3: If everything was ok, set DATA=HIGH
+
+T1(s): No timeout, but granu: Wait until this happens, or CANCELLED
+T2: Wait for CLK=HIGH again; 
+    if not: assume EOI
+      extra EOI processing:
+      - SET DATA
+      - wait T3
+      - RELEASE DATA, 
+      - wait for CLK=HIGH with T4
+T5: Wait for CLK=LOW; then, immediately sample DATA and shift it to the result buffer;
+    if not, "BREAK OUT OF BIT-LOOP"
+T6: Wait for CLK=HIGH again
+T7(s/-): Give some time before the next byte
+
+legend: (s): scheduled timeout
+        (s/-): every 256 times, this is a scheduled timeout; else, not
+
+
+
+---------------------------------------------------------------------------------
+
+C64:
+
+Serial Port    CIA #2 (DD00-DDFF)
+RESET 6
+DATA  5        o< PA5 OUT, IN: PA7 (ohne Inverter)
+CLK   4        o< PA4 OUT, IN: PA6 (ohne Inverter)
+ATN   3        o< PA3 OUT, IN: -
+GND   2
+SRQIN 1        CIA #1
+
+
+1541:
+
+Serial Port    VIA  UC3
+
+RESET 6
+DATA  5        IN: >o PB0        OUT: >o PB1, >O - (-ATN 4 XOR PB4) (Wired OR or AND?)
+CLK   4        IN: >o PB2        OUT: >o PB3 
+ATN   3        IN: >o PB7, CA1   OUT: -
+GND   2
+SRQIN 1        -
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------
+
+Programmed Timing (Send):
+
+
+
+ATN     +--------------------------------------------------------------+
+        |//////////////////////////////////////////////////////////////|      1
+      --1--------------------------------------------------------------+------0----
+                                                               1      1
+DATA  ----+    /2----------345-----\  /--\         +---+      /1------2------------
+      ////|    |                   |  |  |         |///|      |    
+      ----+----/                   \7-/  \8--------+---+------/
+                                                        1                   1
+CLK   ---+--------------------+            +-9------+  +0------------9------3+
+      ///|                    6            |        |  |                     |
+      ---+                    +------------+        +--+                     +-----
+
+           T9          T11                           T16         T12           T14
+          <---->      <--->                         <-->        <--->         <--->
+                <---->                        <--->     <----->         <--->
+                  T10                          T15         T17           T13
+
+                                               each bit
+                                              <-------->
+                                       For each byte
+                    <----------------------------------------------->
+                           <---------------><------------------>
+                             WaitListener         SendByte
+
+ 1 - if ATN, then set ATN
+ 2 - if not high until timeout, STATUS_NO_SUCH_DEVICE ("no devices found"); RELEASE CLK & ATN
+ 3 - if not high, STATUS_NO_SUCH_DEVICE ("device not present")
+ 4 - WaitForListener: ASSERT(DATA == HIGH)
+ 5 - allow interrupts
+ 6 - tell the other side: We're waiting for you
+ 7 - if no EOI, "jump" to 8
+ 8 -
+ 9 - block IRQ
+10 - release IRQ
+11 - if not DATA=HIGH, ACK = false
+12 - set DATA_OUT (only if TALK was sent); if not, ATN=LOW and goto 13
+13 - 
+
+T9: Wait for DATA == HIGH
+T10: Just wait
+T11: Just wait
+T15: Just wait
+T16: Just wait
+T17: Just wait
+T12: Just wait
+T13: Just wait
+T14: Just wait
+
+
+Legend: +    - changes *we* do
+        \, / - changes we expect from the other side

@@ -1,0 +1,11 @@
+#include <windows.h>
+
+#include <ntverp.h>
+
+#define VER_FILETYPE                VFT_DLL
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "OPENCBM Interface plugin DLL for xu1541"
+#define VER_INTERNALNAME_STR        "opencbm-xu1541.dll"
+
+#include "version.common.h"
+#include "common.ver"

@@ -1,0 +1,33 @@
+#! /bin/bash
+
+if [ "$1" == "" ]; then
+	echo "Call this script with the version number as argument!"
+	echo "Example:  $0 0.1.0.72"
+	exit 1
+fi
+
+VERSION=$1
+
+for A in amd64 ia64 i386; do
+	(
+	cd $A
+	mkdir pdb exe
+
+	mv *.exe exe/
+	mv *.sys exe/
+	mv *.dll exe/
+	mv *.pdb pdb/
+	
+	mv opencbm.lib exe/
+
+	chmod 600 exe/opencbm.lib
+	chmod 600 pdb/*.pdb
+
+	zip ../opencbm-$VERSION-$A.zip exe/*
+	zip ../opencbm-$VERSION-$A-pdb.zip pdb/*
+
+	mv pdb/* .
+	mv exe/* .
+	rmdir pdb/ exe/
+	)
+done

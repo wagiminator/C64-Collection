@@ -1,0 +1,11 @@
+--- configure.bak	2010-01-19 11:42:16.000000000 +0100
++++ configure	2010-08-15 23:04:09.340625000 +0200
+@@ -7211,7 +7211,7 @@
+ ac_cr=''
+ ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
+ if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
+-  ac_cs_awk_cr='\\r'
++  ac_cs_awk_cr='\r'
+ else
+   ac_cs_awk_cr=$ac_cr
+ fi

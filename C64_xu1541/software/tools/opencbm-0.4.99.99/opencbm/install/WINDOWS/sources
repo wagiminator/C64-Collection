@@ -1,0 +1,21 @@
+
+TARGETNAME=instcbm
+TARGETPATH=../../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=../../../bin/*/arch.lib         \
+           ../../../bin/*/libmisc.lib      \
+           $(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../include;../../include/WINDOWS;../../lib;../../lib/WINDOWS;../../lib/plugin/xa1541/WINDOWS/;../../arch/windows
+
+SOURCES=../instcbm.c \
+        ../plugin.c \
+        instcbm.rc
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

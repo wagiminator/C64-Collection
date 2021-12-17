@@ -1,0 +1,2 @@
+DIRS= dfu-programmer-0.5.4 \
+      WINDOWS

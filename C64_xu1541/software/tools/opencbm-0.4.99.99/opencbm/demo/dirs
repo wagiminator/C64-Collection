@@ -1,0 +1,4 @@
+DIRS= \
+	rpm1541 \
+	flash \
+	morse

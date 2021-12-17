@@ -1,0 +1,532 @@
+--- configure.orig	2010-06-16 22:03:53.000000000 +0200
++++ configure	2010-08-24 21:46:01.003000000 +0200
+@@ -5365,67 +5365,8 @@
+   HAS_attiny2313_FALSE=
+ fi
+ 
+-
+-
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny2313a"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny2313a" >&5
+-$as_echo_n "checking if ${CC} has support for attiny2313a... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny2313a=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_attiny2313a" = "xyes"; then
+-  HAS_attiny2313a_TRUE=
+-  HAS_attiny2313a_FALSE='#'
+-else
+   HAS_attiny2313a_TRUE='#'
+   HAS_attiny2313a_FALSE=
+-fi
+ 
+ 
+ 
+@@ -5491,65 +5432,9 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny24a"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny24a" >&5
+-$as_echo_n "checking if ${CC} has support for attiny24a... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny24a=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+ 
+- if test "x$HAS_attiny24a" = "xyes"; then
+-  HAS_attiny24a_TRUE=
+-  HAS_attiny24a_FALSE='#'
+-else
+   HAS_attiny24a_TRUE='#'
+   HAS_attiny24a_FALSE=
+-fi
+ 
+ 
+ 
+@@ -5677,65 +5562,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny261a"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny261a" >&5
+-$as_echo_n "checking if ${CC} has support for attiny261a... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny261a=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_attiny261a" = "xyes"; then
+-  HAS_attiny261a_TRUE=
+-  HAS_attiny261a_FALSE='#'
+-else
+   HAS_attiny261a_TRUE='#'
+   HAS_attiny261a_FALSE=
+-fi
+ 
+ 
+ 
+@@ -5801,65 +5629,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny4313"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny4313" >&5
+-$as_echo_n "checking if ${CC} has support for attiny4313... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny4313=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_attiny4313" = "xyes"; then
+-  HAS_attiny4313_TRUE=
+-  HAS_attiny4313_FALSE='#'
+-else
+   HAS_attiny4313_TRUE='#'
+   HAS_attiny4313_FALSE=
+-fi
+ 
+ 
+ 
+@@ -5925,65 +5696,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny44a"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny44a" >&5
+-$as_echo_n "checking if ${CC} has support for attiny44a... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny44a=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_attiny44a" = "xyes"; then
+-  HAS_attiny44a_TRUE=
+-  HAS_attiny44a_FALSE='#'
+-else
+   HAS_attiny44a_TRUE='#'
+   HAS_attiny44a_FALSE=
+-fi
+ 
+ 
+ 
+@@ -6483,65 +6197,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=attiny861a"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for attiny861a" >&5
+-$as_echo_n "checking if ${CC} has support for attiny861a... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_attiny861a=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_attiny861a" = "xyes"; then
+-  HAS_attiny861a_TRUE=
+-  HAS_attiny861a_FALSE='#'
+-else
+   HAS_attiny861a_TRUE='#'
+   HAS_attiny861a_FALSE=
+-fi
+ 
+ 
+ 
+@@ -11350,65 +11007,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=atmega32hvb"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for atmega32hvb" >&5
+-$as_echo_n "checking if ${CC} has support for atmega32hvb... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_atmega32hvb=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_atmega32hvb" = "xyes"; then
+-  HAS_atmega32hvb_TRUE=
+-  HAS_atmega32hvb_FALSE='#'
+-else
+   HAS_atmega32hvb_TRUE='#'
+   HAS_atmega32hvb_FALSE=
+-fi
+ 
+ 
+ 
+@@ -11970,65 +11570,8 @@
+ 
+ 
+ 
+-    old_CC=${CC}
+-    old_CFLAGS=${CFLAGS}
+-    CFLAGS="-mmcu=atmega644pa"
+-    CC=`echo "${CC}" | sed 's/-mmcu=avr.//'`
+-    { $as_echo "$as_me:$LINENO: checking if ${CC} has support for atmega644pa" >&5
+-$as_echo_n "checking if ${CC} has support for atmega644pa... " >&6; }
+-    cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-_ACEOF
+-rm -f conftest.$ac_objext
+-if { (ac_try="$ac_compile"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+-$as_echo "$ac_try_echo") >&5
+-  (eval "$ac_compile") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest.$ac_objext; then
+-  has_dev_support=yes
+-else
+-  $as_echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	has_dev_support=no
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+-    if test "x$has_dev_support" = "xyes"
+-    then
+-      HAS_atmega644pa=yes
+-    fi
+-    { $as_echo "$as_me:$LINENO: result: $has_dev_support" >&5
+-$as_echo "$has_dev_support" >&6; }
+-    CC=${old_CC}
+-    CFLAGS=${old_CFLAGS}
+-
+-
+- if test "x$HAS_atmega644pa" = "xyes"; then
+-  HAS_atmega644pa_TRUE=
+-  HAS_atmega644pa_FALSE='#'
+-else
+   HAS_atmega644pa_TRUE='#'
+   HAS_atmega644pa_FALSE=
+-fi
+ 
+ 
+ 

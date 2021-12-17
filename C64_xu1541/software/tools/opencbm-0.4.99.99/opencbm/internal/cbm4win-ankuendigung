@@ -1,0 +1,128 @@
+Hallo,
+
+hiermit gebe ich bekannt, dass cbm4win, Version 0.1.0, freigegeben ist.
+
+
+Was ist cbm4win?
+
+   cbm4win ist eine Portierung von cbm4linux [1] auf Windows. Es
+   ermöglicht den Zugriff auf ein VIC 1540, 1541, 1570, 1571, oder sogar
+   1581 Floppylaufwerk von einem PC unter Windows NT, 2000 und XP.
+
+
+Welche Betriebssysteme werden unterstützt?
+
+   Momentan werden Windows NT 4.0, Windows 2000, Windows XP, und Windows
+   2003 Server unterstützt. Frühere Versionen von NT wurden nicht
+   getestet, aber könnten trotzdem funktionieren.
+   
+
+Wird Windows 95, 98 or Me unterstützt?
+
+   Nein, momentan gibt es keine Unterstützung für diese
+   Windows-Versionen. Jedoch ist Unterstützung für Windows 98 Second
+   Edition und Me geplant. Ich bezweifle allerdings, dass es ohne großen
+   Aufwand möglich ist, cbm4win auf Windows 98 First Edition zu
+   portieren.
+
+
+Was kann man mit cbm4win machen?
+
+   Das wichtigstes was man damit machen kann ist das Kopieren von D64
+   oder D71 images von einem echten Laufwerk auf den PC, oder vom PC auf
+   ein echtes Laufwerk mit Hilfe von d64copy. Weiterhin kann man auch
+   einzelne Dateien in beiden Richtungen kopieren. Einige weitere Tools
+   (z.B.  cbmctrl) sind auch dabei.
+
+
+Gibt es Unterstützung von dritter Seite für cbm4win?
+
+   VICE [2] wird in der nächsten Version Unterstützung für cbm4win
+   enthalten. Weiterhin gibt es eine interne Version von YAPE [3], die
+   auch cbm4win unterstützt. Auch andere Leute haben schon Interesse
+   bekundet, in ihren Produkten cbm4win zu unterstützen.
+
+
+Wie ist der Entwicklungsstand von cbm4win?
+
+   Dies ist die erste öffentliche Ankündigung von cbm4win. Deswegen ist
+   es sehr wahrscheinlich, dass es immer noch einige Fehler gibt.
+
+
+Welche Hardware braucht man um cbm4win zu benutzten?
+
+   Natürlich braucht man einen PC mit Windows NT, 2000, XP, or 2003.
+   Weiterhin braucht man ein echtes Laufwerk, wie die VIC 1540, 1541,
+   1570, 1571, oder 1581 (1581 nicht vollständig unterstützt). Dann
+   braucht man noch ein XA1541, XM1541, XAP1541 oder XMP1541 Kabel um
+   das Laufwerk mit dem PC zu verbinden.
+
+
+Acknowledgements and Thanks
+
+  Cbm4win basiert stark auf cbm4linux [1] von Michael Klein.
+  Cbm4linux selbst wiederum basiert teilweise auf dem Star Commander [4]
+  von KOVÁCS Balázs a.k.a. "Joe Forster". Hiermit danke ich beiden für
+  ihre stete Hilfe und ihre Geduld.
+
+  Weiterhin möchte ich folgenden Personen danken:
+  - Michael Klein für cbm4linux und viele Diskussionen. Ich weiß nicht
+    ob ich dieses Projekt ohne dies überhaupt gestartet hätte.
+  - KOVÁCS Balázs a.k.a. "Joe Forster" für den Star Commander, seine
+    Unterstützung, und für die freundliche, kostenlose Überlassung von
+    Kabeln;
+  - Wolfgang Moser für zahlreiche Diskussionen, seien unermüdlichen
+    Einsatz mit Tests und Fehlerreports, und für das Bereitstellen
+    weiteren Equipments;
+  - allen meinen testers für ihre Tests, Reports, und Diskussionen.
+
+
+Kontact, Download, Weitere Informationen:
+
+  cbm4win kann auf
+
+        http://www.trikaliotis.net/cbm4win [5]
+
+  weitergeladen werden.
+
+  Weiterhin gibt es eine Projektseite auf Sourceforge:
+ 
+        http://sf.net/projects/cbm4win/ [6]
+
+  Ich wäre sehr dankbar, wenn Fehlerberichte in das
+  Fehlernachverfolgungssystem ("Bug Tracking System") dort eingepflegt
+  würden [7]. Weiterhin gibt es zwei Mailinglisten für Ankündigungen [8]
+  und Diskussionen von Benutzern [9].
+
+  Falls ihr mich direkt erreichen wollt, schreibt an
+  cbm4win(at)trikaliotis(dot)net, oder folgt den Kontaktinformationen auf
+  meiner Homepage http://www.trikaliotis.net/.
+
+
+Hinweise, Anregungen und dergleichen sind natürlich willkommen!
+
+Viel Spaß beim Übertragen,
+   Spiro.
+
+
+[1] http://www.lb.shuttle.de/puffin/cbm4linux/
+
+[2] http://www.viceteam.org/
+
+[3] http://yape.plus4.net/
+
+[4] http://sta.c64.org/sc.html
+
+[5] http://www.trikaliotis.net/cbm4win
+
+[6] http://sf.net/projects/cbm4win/
+
+[7] http://sf.net/tracker/?group_id=122047&atid=692219
+
+[8] http://lists.sourceforge.net/lists/listinfo/cbm4win-announce
+
+[9] http://lists.sourceforge.net/lists/listinfo/cbm4win-user
+
+-- 
+Spiro R. Trikaliotis
+http://www.trikaliotis.net/

@@ -1,0 +1,178 @@
+                            HOW TO COMPILE OpenCBM
+
+1. INTRODUCTION
+
+This file describes how you can set up your own build environment for cbm4win.
+You need this one if you plan on working on cbm4win and its tools. You do not
+need to read this is you only want to use cbm4win. You do not need to read this
+if you want to build some 3rd party tools which utility cbm4win. If you want
+this, look at that 3rd party tool for build instructions.
+
+cbm4win consists of a device driver (actually, there are two different one) and
+some tools which use the device driver. Device drivers are something different
+from ordinary "user mode" programs, and you need a special environment for
+building these.
+
+The Windows DDK ("device/driver development kit") is the environment you need to
+build drivers for Windows systems. The DDK comes in different flavors, there are
+different DDKs for Windows 95, 98, Me, NT, 2000, XP, and 2003. Fortunately, most
+of these DDK are backward compatible, that is, you can build drivers for older
+systems with a newer DDK.
+
+cbm4win was built with the Windows 2003 DDK. Theoretically, you should be able
+to use the XP DDK, too. Unfortunately, there is a bug in the XP DDK, which
+prevents using that one for building cbm4win. Furthermore, cbm4win makes use
+of the so-called "cancel-safe queues" (CSQ), which are not available before the
+XP DDK, so, any DDK before XP will not work.
+
+
+2. PREREQUISITES
+
+I highly recommend you get the Windows 2003 DDK (or anything later) from
+Microsoft. Although it is not free, MS gives it away for shipping (at the time
+of this writing, this is $15 in the U.S., $25 to Germany), and you do not have
+any problems with that one. The DDK contains the complete toolchain you need,
+that is, compiler, linker, build tool, debugging tools, documentation, and so
+on.
+
+Update:  With the beta test phase for Microsoft Vista (version next to Windows
+XP), Microsoft annouced the "Architecture of the Windows Driver Foundation
+(WDF)" development model for drivers. It includes the Kernel-Mode Driver
+Framework (KMDF) which includes the Windows 2003 SP 1 DDK. Actually the KDMF
+will replace the DDK in the future. The current KDMF 1.0 can be downloaded from
+Microsoft's website as an ISO image of 262 MiB. See more at:
+
+    http://www.microsoft.com/whdc/driver/wdf/KMDF_pkg.mspx
+    http://www.microsoft.com/whdc/driver/WDF/KMDF_pkgdwn.mspx?
+    http://www.microsoft.com/whdc/driver/wdf/default.mspx
+    http://www.microsoft.com/whdc/driver/wdf/wdf-arch.mspx
+
+Anyway, if you do not plan to modify the driver itself, but only to work on the
+"user mode" portion of the driver, the DDK is not needed. Although I built every
+official release of cbm4win with the DDK, you can use an ordinary compiler for
+any user-mode tools. In fact, the cbm4win source package even contains a project
+file for MS VC++ 6.0, which works flawlessly.
+
+Furthermore, if you own MS VC++ 6 (version 5 might work, too) and the DDK, you
+might want to use DDKBUILD, which helps you use the DDK build tools from the MS
+VC++ IDE.
+
+
+3. BUILDING OpenCBM
+
+The steps to build the files highly depend on your scenario, that is, if you use
+the DDK, DDK + DDKBUILD + MS VC, or MS VC only. Because of this, I show you how
+to build the tools in every scenario.
+
+  A. Using the DDK only
+
+  This is very easy:
+  - Unzip the cbm4win source package into a directory.
+  - Install the DDK on your machine. Make sure the install the Win 2000 build
+    environment.
+  - Select DDK/Build Environments/Win 2000 Checked Build (or Win 2000 Free Build
+    Environment) in the start menu.
+  - Change to the cbm4win source directory
+  - Type "build -cZ", and press enter.
+  - After compilation has finished, you can get the compiled files in the
+    bin\i386 directory.
+
+  B. Using the DDK, DDKBUILD, and MSVC:
+
+  This is the recommended way to compile cbm4win.
+  
+  DDKBUILD is a tool which helps you compiling drivers using the MS VC++ IDE.
+  DDKBUILD is available in two different versions, from OSR
+  (http://www.osronline.com/article.cfm?article=43), or from Hollistech
+  (http://www.hollistech.com/Resources/ddkbuild/ddkbuild.htm). It was written by
+  Mark Roddy, who was associated with OSR, but is now with Hollistech. Anyway,
+  personally, I only used the DDKBUILD version from OSR (version 5.3). The
+  version from Hollistech might need some adjustments.
+
+  Now, do the following to compile using the DDK, DDKBUILD, and MSVC.
+
+  - Make sure you have a MS Visual C++ IDE installed (I have tested Version 6,
+    but version 5 should work, too, as well as the MS .NET IDE)
+  - Install the DDK on your machine. Make sure the install the Win 2000 build
+    environment.
+  - Get DDKBUILD from the OSR
+    (http://www.osronline.com/article.cfm?article=43), or the version from
+    Hollistech (http://www.hollistech.com/Resources/ddkbuild/ddkbuild.htm).
+    Personally, I prefer the Hollistech version.  Install ddkbuild.bat into a
+    directory which is in the search path.
+  - Unzip the cbm4win source package into a directory.
+  - Copy the file WINDOWS/ddkbuild_local.bat.sample into the directory *above*
+    (!) the cbm4win directory. That is, if you unpacked cbm4win into
+    X:\somedir\cbm4win, copy it into X:\somedir. Rename the file by removing
+    the .sample suffix, and adjust the directories in there.
+  - Start the cbm4win.dsw file from the WINDOWS/ subdirectory, and compile the
+    "all" project. To compile the AMD64 version, compile the "allamd64"
+    project. To compile the iA64 version, compile the "allia64" project.
+  - After compilation has finished, you can get the compiled files in the
+    bin\i386 directory (for the i386 version), in the bin\amd64 directory (for
+    the AMD64 version), or in the bin\ia64 version (for the iA64 version).
+
+  C. Using MSVC:
+
+  If you do not have the DDK, you can compile most of cbm4win with MSVC only. I
+  only tested MSVC 6, but other versions might work, too. Anyway, no drivers
+  will be built, only the user tools can be compiled this way. You cannot build
+  AMD64 or iA64 versions with MSVC, either.
+
+  Now, do the following to compile using MSVC only.
+
+  - Make sure you have a MS Visual C++ IDE installed (I have tested Version 6,
+    but version 5 should work, too, as well as the MS .NET IDE)
+  - Unzip the cbm4win source package into a directory.
+  - Start the cbm4win.dsw file from there, and compile the "allvs" project.
+  - After compilation has finished, you can get the compiled files in the
+    Debug/ directory (or in the Release/ directory if you have performed a
+    release build).
+
+  NOTES:
+    For B., DDKBUILD_START.BAT some parameters. The format is:
+
+    DDKBUILD_START <PLATFORM> <chk|fre> <build parameters>
+
+    That is, <PLATFORM> selects on of the platforms to compile. It may be
+    either be empty, in which case the i386 version is compiled, or one of the
+    following:
+      * -amd64    - create a build for the AMD64 platform
+      * -ia64     - create a build for the iA64 platform
+ 
+    The next parameter describes if you want to perform a free build ("release
+    build"), or a checked build ("debug build"):
+    understands the following optional parameters:
+      * fre       - create the free build (i386)
+      * chk       - create the checked build (i386)
+
+    The build parameters are optional parameters which will be given verbatim
+    to the BUILD.EXE tool from the DDK. A possible parameter for rebuilding
+    everything is:
+      * -cefZ     - recommended additional DDK switches
+
+
+4. BUILDING THE ASSEMBLER FILES
+
+Intentionally, I left one step out in the discussion above. If you want to
+change the drive code, that is, the 6502 assembler files, these files are NOT
+automatically recompiled.
+
+To be able to compile them, you need:
+
+- the CC65 package (http://www.cc65.org/)
+- a cygwin install, or a unix box. In particular, you need a "bash" shell, as
+  well as the "od" and "sed" tools
+
+Just install the CC65 package and run the buildinc bash script from the cbm4win
+source directory to recompile all assembler files. Make sure you have adjusted
+the ddkbuild_local.bat file, as described in B. above. Make sure you provide
+the paths to the cc65 tools, bash, od and sed.
+
+
+If you manage to compile cbm4win with another compiler, feel free tell me.
+
+Happy compiling!
+
+Spiro Trikaliotis, 27.11.2004
+Wolfgang Moser, 2006-03-05 (Updates regarding DDK/KMDF)

@@ -1,0 +1,115 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "CBM4WINGUI", "CBM4WINGUI.vbproj", "{B947C312-854F-4640-90EA-1AC01307A03A}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "GUI4CBM4WINSetup", "GUI4CBM4WINSetup\GUI4CBM4WINSetup.vdproj", "{A733EC0F-2A71-4B0E-A715-12A9F8A2C63C}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C75D2DB7-CD73-4A70-8EAB-9311204B354F}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		CBM4WINGUI.vsmdi = CBM4WINGUI.vsmdi
+		GUI4CBM4WINSetup\CustomAction_NoImpersonate.js = GUI4CBM4WINSetup\CustomAction_NoImpersonate.js
+		localtestrun.testrunconfig = localtestrun.testrunconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCBMInstallHelper", "..\OpenCBMInstallHelper\OpenCBMInstallHelper.csproj", "{644E01A5-846D-433D-984E-9FE486303D10}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaytonByrd_ProcessConfiguration", "..\PaytonByrd_ProcessConfiguration\PaytonByrd_ProcessConfiguration.csproj", "{C6749793-18FF-4FC2-AAF3-C7C8A4B042EF}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaytonByrd_ProcessConfigurationTests", "..\PaytonByrd_ProcessConfigurationTests\PaytonByrd_ProcessConfigurationTests.csproj", "{8AC42231-4EA4-4816-BFF3-F29421FC6F19}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaytonByrd_GenericHelpers", "..\PaytonByrd_GenericHelpers\PaytonByrd_GenericHelpers.csproj", "{E7A5AE06-FE34-4BB6-80F3-AFAD3E2C5BFA}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaytonByrd_GenericHelpersTests", "..\PaytonByrd_GenericHelpersTests\PaytonByrd_GenericHelpersTests.csproj", "{3FE68D24-9128-45AB-925C-A077C1E50CE7}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MozBar", "..\MozBar\MozBar.csproj", "{180E4B12-A45B-4091-8A6F-91031C28DA3D}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileListBoxControl", "..\FileListBoxControl\FileListBoxControl.csproj", "{F53E17FC-7576-44C4-B999-274B9F10B9CE}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B947C312-854F-4640-90EA-1AC01307A03A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B947C312-854F-4640-90EA-1AC01307A03A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B947C312-854F-4640-90EA-1AC01307A03A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B947C312-854F-4640-90EA-1AC01307A03A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A733EC0F-2A71-4B0E-A715-12A9F8A2C63C}.Debug|Any CPU.ActiveCfg = Debug
+		{A733EC0F-2A71-4B0E-A715-12A9F8A2C63C}.Debug|Any CPU.Build.0 = Debug
+		{A733EC0F-2A71-4B0E-A715-12A9F8A2C63C}.Release|Any CPU.ActiveCfg = Release
+		{A733EC0F-2A71-4B0E-A715-12A9F8A2C63C}.Release|Any CPU.Build.0 = Release
+		{644E01A5-846D-433D-984E-9FE486303D10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{644E01A5-846D-433D-984E-9FE486303D10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{644E01A5-846D-433D-984E-9FE486303D10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{644E01A5-846D-433D-984E-9FE486303D10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6749793-18FF-4FC2-AAF3-C7C8A4B042EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6749793-18FF-4FC2-AAF3-C7C8A4B042EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6749793-18FF-4FC2-AAF3-C7C8A4B042EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6749793-18FF-4FC2-AAF3-C7C8A4B042EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AC42231-4EA4-4816-BFF3-F29421FC6F19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AC42231-4EA4-4816-BFF3-F29421FC6F19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AC42231-4EA4-4816-BFF3-F29421FC6F19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AC42231-4EA4-4816-BFF3-F29421FC6F19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7A5AE06-FE34-4BB6-80F3-AFAD3E2C5BFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7A5AE06-FE34-4BB6-80F3-AFAD3E2C5BFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7A5AE06-FE34-4BB6-80F3-AFAD3E2C5BFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7A5AE06-FE34-4BB6-80F3-AFAD3E2C5BFA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FE68D24-9128-45AB-925C-A077C1E50CE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FE68D24-9128-45AB-925C-A077C1E50CE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FE68D24-9128-45AB-925C-A077C1E50CE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FE68D24-9128-45AB-925C-A077C1E50CE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{180E4B12-A45B-4091-8A6F-91031C28DA3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{180E4B12-A45B-4091-8A6F-91031C28DA3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{180E4B12-A45B-4091-8A6F-91031C28DA3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{180E4B12-A45B-4091-8A6F-91031C28DA3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F53E17FC-7576-44C4-B999-274B9F10B9CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F53E17FC-7576-44C4-B999-274B9F10B9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F53E17FC-7576-44C4-B999-274B9F10B9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F53E17FC-7576-44C4-B999-274B9F10B9CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

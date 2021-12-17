@@ -1,0 +1,20 @@
+TARGETNAME=xum1541cfg
+TARGETPATH=../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib \
+           */libusb.lib \
+           $(TARGETPATH)/*/dfu-programmer.lib
+
+INCLUDES=../dfu-programmer-0.5.4/src;$(XUM1541DIR)
+
+SOURCES=../main.c ../util.c \
+        getopt.c \
+        $(TARGETNAME).rc
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

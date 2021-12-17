@@ -1,0 +1,114 @@
+#! /bin/sh
+
+SYMSTORELOC=\\\\sieg\\transfer\\symstore
+
+if [ "$3" = "" ]; then
+	echo "Usage: $0 MAJORVER MINORVER SUBVER [DEVELVER [chk|fre]]"
+	exit 1
+fi
+
+MAJORVER=$1
+MINORVER=$2
+SUBVER=$3
+
+if [ "$4" = "" ]; then
+	DEVELVER=0
+else
+	DEVELVER=$4
+fi
+
+
+if [ "$DEVELVER" = "0" ]; then
+	TAGVERSION=v$MAJORVER\_$MINORVER\_$SUBVER
+	VERSION=$MAJORVER.$MINORVER.$SUBVER
+else
+	TAGVERSION=v$MAJORVER\_$MINORVER\_$SUBVER\_$DEVELVER
+	VERSION=$MAJORVER.$MINORVER.$SUBVER.$DEVELVER
+fi
+
+TAGVERSIONSRC=$TAGVERSION-src
+
+if [ "$5" = "" ]; then
+	CHKFRE=chk
+	CHECKEDFREE=checked
+else
+	case "$5" in
+	chk|check|checked)
+		CHKFRE=chk
+		CHECKEDFREE="checked"
+		;;
+	fre|free)
+		CHKFRE=fre
+		CHECKEDFREE="free"
+		;;
+	*)
+		echo "Specify either chk or fre, please"
+		exit 1
+		;;
+	esac
+fi
+
+echo MAKING RELEASE $VERSION, Tag $TAGVERSION
+
+sleep 10
+
+if [ -d /tmp/make-cbm4win ]; then
+	echo "/tmp/make-cbm4win already exists, before we generated it!"
+	exit 1
+fi
+
+mkdir /tmp/make-cbm4win/
+
+if [ ! -d /tmp/make-cbm4win ]; then
+	echo "COULD NOT GENERATE /tmp/make-cbm4win/"
+	exit 1
+fi
+cd /tmp/make-cbm4win/
+cvs co -r cbm4win-$TAGVERSION cbm4win
+cd cbm4win
+
+./WINDOWS/buildinc
+
+cmd /c WINDOWS\\ddkbuild_start $CHKFRE -cZ
+
+cd bin/i386/
+
+mkdir exe
+mkdir exe/exe
+mkdir pdb
+cp -p *.exe *.sys *.dll exe/exe/
+cp -p *.pdb pdb/
+cp -p ../../COPYING exe/
+cat >> exe/README.TXT <<+
+  cbm4win $VERSION - for documentation, look into the DOC directory.
++
+
+cd exe/
+zip -r ../../../../../cbm4win-$VERSION.zip *
+cd ..
+zip -r ../../../../cbm4win-$VERSION-pdb.zip pdb/*
+
+# Now, check in the pdbs into the symbol store
+cd pdb
+/cygdrive/c/Programme/Debugging\ Tools\ for\ Windows/symstore add /r /f \*.pdb /s $SYMSTORELOC /t "cbm4win" /v "$VERSION $CHECKEDFREE" /c "Import $VERSION $CHECKEDFREE"
+cd ..
+
+rm -r exe/
+rm -r pdb/
+
+cd ../..
+
+cvs export -d cbm4win-$VERSION -r cbm4win-$TAGVERSION cbm4win
+(cd cbm4win-$VERSION; ./WINDOWS/buildinc)
+zip -r ../../cbm4win-$VERSION-src.zip cbm4win-$VERSION/*
+cd cbm4win-$VERSION/
+zip -r -u ../../../cbm4win-$VERSION.zip docs/*
+cd ..
+rm -r cbm4win-$VERSION/
+
+cd ..
+cvs release -d cbm4win
+cd ..
+rmdir make-cbm4win/
+
+mv /tmp/cbm4win-*.zip //sieg/transfer/cbm/cbm4win-bin

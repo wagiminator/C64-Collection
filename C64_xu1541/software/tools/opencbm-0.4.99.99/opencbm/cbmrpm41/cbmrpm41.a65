@@ -1,0 +1,474 @@
+; Copyright (C) 2006 Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; cbmrpm41   - 6502 based high precision 1541 rpm measurement
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+;##############################################################################
+
+; The following are some really ugly macro definitions, so that a
+; structural storage declaration can be shared between the ca65
+; assembler and ANSI-C. The structural declaration is made within
+; the interface definition header file named cbmrpm41.idh, it
+; contains several macro calls which are defined here.
+
+.define _CMT        (str1)
+.define _CONSTDECL  (name,value)    .mid(1, .tcount({name})-1, {name}) =  .mid(0, .tcount({value})-1, {value})
+.define _BEGINSTRUCT(name)          .struct .mid(1, .tcount({name})-2, {name})
+.define _ENDSTRUCT  (parenthesises) .endstruct
+.define _OCTETARRAY (name, size)    .mid(1, .tcount({name})-1, {name}) .res  .mid(0, .tcount({size})-1, {size})
+.define _OCTETDECL  (name)          .mid(1, .tcount({name})-2, {name}) .byte
+
+; define the command vector with adress symbols stored to
+; enum symbols UA...UO
+; a dedicated scope definition is not useful here, so don't use parm
+.define _BEGINENUM  (name)          .enum .mid(1, .tcount({name})-2, {name})
+.define _ENDENUM    (parenthesises) .endenum
+.define _ENUMENTRY  (name,value)    .mid(1, .tcount({name})-1, {name}) =  .mid(0, .tcount({value})-1, {value})
+.define _BEGIN_UXT  (name)          .enum
+.define _UX_EENTRY  (asym,no,name)  .mid(1, .tcount({asym})-1, {asym}) =  .mid(0, .tcount({name})-1, {name})
+
+.define _BEGINMACRO (name)          .macro  .mid(1, .tcount({name})-2, {name})
+.define _ENDMACRO   (parenthesises) .endmacro
+.define _BEGLSCOPE  (name)          .mid(1, .tcount({name})-2, {name}): .scope .mid(1, .tcount({name})-2, {name})
+.define _ENDLSCOPE  (impl)          .endscope
+.define _TAGLJUMP   (name)          jmp     .mid(1, .tcount({name})-2, {name})
+.define _TAGSTRUCT  (label, type)   .mid(1, .tcount({label})-1, {label})  .tag    .mid(0, .tcount({type})-1, {type})
+.define _TAGOCTET   (label, value)  .mid(1, .tcount({label})-1, {label}): .byte   .mid(0, .tcount({value})-1, {value})
+.define _TAGSHORT   (label, value)  .mid(1, .tcount({label})-1, {label}): .word   .mid(0, .tcount({value})-1, {value})
+
+.include "cbmrpm41.idh"
+
+;##############################################################################
+
+JOB_READTS  = $80   ; reading a block from track and sector (into current buffer !)
+
+JOB_SEEKTS  = $B0   ; search for a decent track and sector
+JOB_BUMP    = $C0   ; bump the head
+JOB_EXEC0   = $E0   ; execute after drive runs
+
+
+JOB0        = $00   ; job code for buffer 0
+TRACK0      = $06   ; track  for buffer 0 ($0300-$03ff)
+SECTOR0     = $07   ; sector for buffer 0 ($0300-$03ff)
+
+DRIVENUMBER = $7F
+JOBNUM      = $F9   ; current job number
+CMDSTRBUF   = $0200 ; command string buffer
+CSEPARATOR  = $0279 ; command string parsing separator
+
+HIBYTES_A2H = $0280 ; up to 5 high bytes from the ascii to hex conversion
+LOBYTES_A2H = $0285 ; up to 5 low  bytes from the ascii to hex conversion
+
+PROGBUF     = cbmDev_StartAddress
+
+BC_T2L      = $1808
+BC_T2H      = $1809
+BC_ACR      = $180B
+
+DC_SETTINGS = $1C00
+DC_DATA     = $1C01
+DC_DATADDR  = $1C03
+DC_T2L      = $1C08
+DC_T2H      = $1C09
+DC_SR       = $1C0A
+DC_ACR      = $1C0B
+DC_PCR      = $1C0C
+
+LED_ON      = $C100
+FINISHCMD   = $C194
+ASCII2HEX   = $CCA1
+EXECUTE_JOB = $D58C
+PREPERROR   = $E60A
+SHDR_N_SYNC = $F50A         ; search for block header and the following SYNC
+SEARCHHEADR = $F510         ; search for block header
+FINISHJOBLP = $F969         ; finish the job loop with given error code in A
+
+
+
+STORECMD_DC = $D57D
+VERIFY_EXEC = $D599
+
+.ifndef T2LowValue
+    .out "T2LowValue symbol not defined externally, setting to default value: 187-2"
+    .define T2LowValue 187-2        ; 187 fulfills a couple of criteria
+.endif
+
+;##############################################################################
+
+; define the program start before including the header, this way
+; the subroutine entry user command table can be shared between
+; a65 and C
+
+    ; * = PROGBUF
+    .org PROGBUF
+
+        ExecBuffer_MemoryLayout     ; job vector, timer stores, Ux commands
+
+;##############################################################################
+
+U1_UA_Uservector:
+U2_UB_Uservector:
+U3_UC_Uservector:
+U4_UD_Uservector:
+U5_UE_Uservector:
+U6_UF_Uservector:
+U7_UG_Uservector:
+U8_UH_Uservector:
+U9_UI_Uservector:
+Ux_UJ_Uservector:
+Ux_UK_Uservector:
+Ux_UL_Uservector:
+Ux_UM_Uservector:
+Ux_UN_Uservector:
+Ux_UO_Uservector:
+
+;##############################################################################
+
+T2_23Bit_ShootSample:   ; this is the not timing compensated
+                        ; variant, on exit some jitter gets added
+        php             ; don't do a cli but restore the old state
+        sei             ; ensure no breaks in timer read out
+
+        ldy DC_T2L      ; get VIA2 timer 2 low value
+
+;;; Timer 2 rollover fix (for shift register mode)
+        iny             ; fix timer 2 shift register roll over
+        tya
+        sta Timer24BitGroup + Timer24bitValues::V2T2__LOW
+
+        ldy BC_T2H      ; get VIA1 timer 2 high value
+        lda BC_T2L      ; get VIA1 timer 2 low value
+                        ; store low value
+        sta Timer24BitGroup + Timer24bitValues::V1T2__LOW
+
+        bpl no_T2H_reload   ; no timing equalization done
+        ldy BC_T2H      ; get VIA1 timer 2 high value
+no_T2H_reload:
+        sty Timer24BitGroup + Timer24bitValues::V1T2_HIGH
+        plp             ; if interrupts were enabled before, to
+waste:  rts             ; enable them again
+
+;##############################################################################
+
+MeasurementJobCode:
+        lda DC_SETTINGS
+        ora #$08        ; switch LED to on
+        sta DC_SETTINGS
+.if 0
+        jsr SEARCHHEADR ; search block header, without timesync to SYNC
+.else
+        jsr SHDR_N_SYNC ; search block header and wait for data block SYNC
+        bvc *           ; 2       wait for data block marker byte
+        clv             ; 2 =  4
+        ldx DC_DATA     ; 4 =  8
+        cpx #$55        ; 2 = 10  GCR encoded data block marker byte ($07)
+                        ;         this is not perfect, because the plain
+                        ;         byte could be $0f instead of $07
+                        ;         but we know for sure, that no other header
+                        ;         block is following
+        bne lNoDBlock   ; 2 = 12
+            ; since the last Byte Ready SYNC, we have a distance in
+            ; time between 12 and 14 cycles, because of jitter
+.endif
+        jsr waste       ;12 = 24...26
+
+        bvs synced      ; 2 = 26...28   ; when a byte ready SYNC gets
+        bvs synced      ; 2 = 28...30   ; in, jump forward
+        bvs synced      ; 2 = 30...32   ; this sequence results in a
+        bvs synced      ; 2 = 32        ; +1-jitter only
+        bvs synced      ; only needed as a fixed jump with +3 timing
+synced:
+        jsr T2_23Bit_ShootSample
+                        ; the SYNC timing is destroyed now
+
+;###########
+        lda #$01        ; do not report a job error
+        .byte $2c
+lNoDBlock:
+        lda #$04        ; 22, READ ERROR
+lExit:  jmp FINISHJOBLP
+
+;##############################################################################
+
+ResetVIA2ShiftRegConfig:
+        lda #$e3        ; mask out the shift register bits
+        sei
+        and DC_ACR      ; get the DC_ACR, auxiliary control register
+                        ; set shift register mode 000, disable it
+        sta DC_ACR      ; push back the DC_ACR
+        cli
+        rts
+
+Init23_BitTimersStd:
+        lda #T2LowValue ; load value, mostly (187 - 2)
+
+        sta DC_T2L      ; into timer 2 low and its latch
+            ; don't initialise DC_T2H, doesn't matter
+
+            ; configure VIA 2 shift register and with it timer 2
+        lda #$e3        ; mask out the shift register bits
+        sei
+        and DC_ACR      ; get the DC_ACR, auxiliary control register
+
+.if 1
+        ora #$04        ; set shift register mode 001, shift _in_
+                        ; under T2 control, this seems to work on
+                        ; different models ('41, '71), different
+                        ; revisions as well as VIA chip revisions
+        sta DC_ACR      ; push back the DC_ACR
+.elseif 0
+            ; doesn't work with older 1541 models, maybe because of
+            ; chip revision differencies that results in another
+            ; behaviour of the shift register
+        ora #$10        ; set shift register mode 100, shift out
+                        ; free-running under T2 (low) control
+        sta DC_ACR      ; push back the DC_ACR
+
+        lda #$ff        ; select Read mode to
+        sta DC_SR       ; configure the shift register
+.else
+            ; does not work in general, due to chip revision differencies
+        ora #$14        ; set shift register mode 101, shift out under T2
+        sta DC_ACR      ; push back the DC_ACR
+.endif
+
+        
+            ; configure VIA 1 timer 2
+        lda #$EF        ; mask out the Timer 2 Control bit
+        and BC_ACR      ; get the DC_ACR, auxiliary control register
+        sta BC_ACR      ; push back the DC_ACR
+        cli
+
+        rts
+
+;##############################################################################
+
+ExecuteJobInBuffer:
+
+.if 1   ; this is better to handle from different hosts
+
+            ; maybe parse input for additional parameters
+            ; after the Ux command itself. Just the same
+            ; as with the standard U1 and U2 commands
+            ; ($cd5f, $cd97), but only for selecting a
+            ; track (part of $cc6f)
+            ; maybe for selecting track and sector, then
+            ; the routine at $cca1 could be used
+        ldy #$03                ; Ux 34567890
+        jsr ASCII2HEX           ; convert the number(s) beginning at $0200,Y
+            ; the last LO-Byte also comes in Accu, HI-Byte in $72
+        sta TRACK0 + 2 * JOB0   ; track number for jobcode 0
+
+        ldy CSEPARATOR          ; get last interpreted digit
+        iny                     ; get to next number, skip space
+        jsr ASCII2HEX           ; and convert it
+            ; the last LO-Byte comes in Accu, HI-Byte in $72
+        sta SECTOR0 + 2 * JOB0  ; as sector number
+
+.else    ; this one is shorter in code size
+        lda CMDSTRBUF+2         ; get track as directly encoded byte
+        sta TRACK0 + 2 * JOB0   ; track number for jobcode 0
+        lda CMDSTRBUF+3         ; get sector as directly encoded byte
+        sta SECTOR0 + 2 * JOB0  ; as sector number
+.endif
+
+        lda #$00
+        sta JOBNUM
+
+        lda #JOB_EXEC0          ; execute jobcode in buffer
+
+.if 1   ; this allows usage on tracks beyond 35
+        ora DRIVENUMBER
+        ldx JOBNUM
+            ; set job code without checking parameters
+            ; for illegal track or sector
+        jsr STORECMD_DC         ; store job code as command
+        jsr VERIFY_EXEC         ; wait for end of job
+.else
+        jsr EXECUTE_JOB
+.endif
+
+        cmp #$01
+        bne lError
+        jmp FINISHCMD           ; 00,OK,00,00
+
+;#######
+
+lError: jmp PREPERROR           ; give out error code
+
+;##############################################################################
+;
+; Appendix A
+;
+;##############################################################################
+;
+; Extract from the VIA investigations regarding the shift register:
+;
+; When using timer 2 as clock "driver" for the shift register, then
+; the lower 8 bits of this timer can be programmed to a decent count
+; overflow value with a latch. The upper 8 bits of timer 2 don't
+; have got such a latch, for each underflow of T2L (lower 8 bits of
+; timer 2), T2H (upper 8 bits) is decremented and "rolls" through
+; all values from 255 to 0 and further to 255 again.
+;
+; The latch programmable (only when used for the shift register) T2L
+; behaves somewhat weird, well, the VIA is full of little bugs...
+; The counter first counts down to 0, then rolls over to 255 (!) and
+; is then reprogrammed to the value stored into the latch. Beginning
+; with this value it then again counts down to 0. Same examples will
+; show the nuts and bolts of this:
+;
+;   T2L programmed value (written into the latch):  7
+;   Count sequence: ...,3,2,1,0,255,7,6,5,4,3,2,1,0,255,7,6,5,4,3,...
+;   So actually _9_ counting steps are done for a full rollover!
+;
+;   T2L programmed value (written into the latch):  0
+;   Count sequence: ...,0,255,0,255,0,255,0,255,0,255,...
+;   Steps to do for a full rollover: 2
+;
+;   T2L programmed value (written into the latch):  1
+;   Count sequence: ...,0,255,1,0,255,1,0,255,1,0,255,1,0,255,1,...
+;   Steps to do for a full rollover: 3
+;
+;
+; The next following examples are very critical, because it is
+; difficult to decide, where exactly the rollover happens:
+;
+;   T2L programmed value (written into the latch):  255
+;   Count sequence: ...,2,1,0,255,255,254,253,...
+;   Steps to do for a full rollover: 257
+;
+; The value 255 is seen two times. But only when the second 255 is
+; seen, the true rollover happens and this is also the point in time
+; where T2H gets decremented by one.
+;
+;   T2L programmed value (written into the latch):  254
+;   Count sequence: ...,2,1,0,255,254,253,...
+;   Steps to do for a full rollover: 256
+;
+; This is in fact not very critical, but difficult to handle since
+; you have to obey that the true rollover happens between the value
+; 255 and 254.
+;
+;
+; Compensation methods and remarks:
+;
+;	1)  All in all it may always be the best to increase the value
+;	  read from T2L by one before it is stored and/or analysed
+;	  anywhere. This you can at least compensate for the "correct"
+;	  rollover limits.
+;	2)  The latch of T2L should always be programmed to a value of
+;	  two less than the number of ticks you want to get for a full
+;	  rollover of T2L. This implies that you cannot have T2L count
+;	  less than 2 ticks for a full rollover.
+;	3)  You should not program the latch of T2L to a value of 255,
+;	  it would be much too difficult to get something useful out
+;	  of the count values of T2L
+;	4)  You can have T2H decrease on each underflow of T1L. But
+;	  T2H cannot be programmed to load a decent value on an
+;	  underflow, it just counts from 255 to 0, rolls over to 255
+;	  and again counts down to 0. Please take note that T2H counts
+;	  down one tick, when T1L wraps from 255 to the value
+;	  programmed into its T1L latch. For serious calculations you
+;	  desperately should compensate T2L by obeying 1)
+;
+;
+; Regarding the shift mode to use best for our task in getting a
+; "latchable" timer 2 (since timer 1 of VIA 1 and timer 1 of VIA 2
+; are not available anymore):
+;
+;	* In the MOS datasheet for the 6522 there is a note (Note 1)
+;	  in the timing diagram for shifting mode 101, "Shift out under
+;	  Control of T2". This note says that when shifting is not
+;	  started yet by writing a value into the shift register ($0A),
+;	  or when all bits were shifted out, then the state of the shift
+;	  output line is determined by the Peripheral Control Register
+;	  (PCR). Just the same as if the shift register would not have
+;	  been enabled.
+;
+;	  (!) This note seems not to be true or the datasheet is only
+;         valid for some dedicated production runs of the VIA 6522.
+;         In the 1541 disk drive, where CB2 (shift out) is connected
+;         to the Read/Write Mode selection line, the drive couldn't
+;         be controlled the normal way, when the shift register was
+;         enabled, but no value was programmed into it. Thus CB2
+;         could _not_ be controlled the normal way via the PCR.
+;
+;     I couldn't find any datasheets that claimed that note beeing
+;     wrong. Other suppliers for the 6522 did not mention similar
+;     behaviour in their chips. The concrete behaviour of 1541 disk
+;     drives seems not to be deterministic. While on one drive, a
+;     disk gets overwritten and destroyed unintentionally, another
+;     drive cannot write to disk (format it), when the shift register
+;     is enabled and set to mode 101.
+;
+;	* It seems to be best to do the following to actively set the
+;	  drive either into Read or Write mode by programming the shift
+;	  register accordingly:
+;
+;	    1) Write 0xFF or 0x00 into the shift register (SR, $0A) to
+;	       get the drive into Read or Write mode.
+;          (!) It will normally be of no use to switch the drive
+;	           into Write mode. It may only increase the probability
+;	           to destroy disks because of unintentional disk writes!
+;	           Take care!
+;       2) Program the shift register via ACR to mode 100, "Shift
+;	       out free-running at T2 rate". Here the shift register
+;	       does not stop shift operation, shifted out bits are
+;	       re-circulated back into the register. By having
+;	       programmed either of the values above, the CB2 output
+;	       line is held at a constant level.
+;       3) To make the drive fully operational again, switch of the
+;	       shift register again, so that CB2 falls under control of
+;	       the PCR again.
+;
+;	  (!) Tests showed that shift register mode 100 also can _not_
+;         be used on some 1541 disk drive models. Although the shift
+;         register was programmed correctly the drive unintentionally
+;         wrote some stuff to the disk and destroyed it that way.
+;
+;	* Alternatively to the scheme above, maybe the shift register
+;	  could be programmed into mode 001, "Shift in under control of
+;	  T2". In case of the 1541 Mode line (CB2), it would of
+;	  interest on which level the Mode line does fall, if CB2 is
+;	  switched from output to input and not actively driven anymore.
+;
+;	  (v) A matrix test on a couple of different disk drives and disk
+;         drive models showed that shift register mode 001 can safely
+;         be used for getting Timer 2 into 8 bit latched mode.
+;         The Read/Write mode selection signals seems to be Active
+;         Low; if the CB2 pins is programmed to input (via shift
+;         register mode 001), then the Read/Write mode signal remains
+;         at High level and put the drive into Read mode.
+;         In the end, the Timer 2 8 bit latch technique can only be
+;         used, when the drive only needs to be used with read mode.
+;
+;##############################################################################

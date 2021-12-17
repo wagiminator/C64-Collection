@@ -1,0 +1,230 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+;Entry points of inter-unit functions
+;WARNING: Must be maintained so that functions, that are compiled in separate
+;  units and then patched together into one drive program, can call each
+;  other properly!
+;BASE.A65
+prBaseStart	= $0300
+prProcessFile	= prBaseStart+$0070
+prProcessChain	= prBaseStart+$0090
+prStartProcess	= prBaseStart+$00B0
+prEndProcess	= prBaseStart+$00E0
+prEndProcNoBAM	= prBaseStart+$00E2
+prEndProcBAMChg	= prBaseStart+$00F3
+
+;Macros
+
+;Align code of next routine to start at a given address
+;  Input : Address: address to align code to
+.macro AlignCodeToAddr Address
+	.if * <= Address		;If program counter below or equal to
+		.res Address-*		; address, fill area, otherwise
+	.else				; generate error
+		.error "ERROR: Previous routine too long, cannot align next!"
+	.endif
+.endmacro
+
+;Special constants
+
+;Boolean values
+False		= 0
+True		= 1
+;Machine codes, for hiding instructions and for patching code
+mcBIT_Abs	= $2C
+mcBIT_ZP	= $24
+mcJMP_Abs	= $4C
+
+;Constants
+
+DummyByte	= 0			;Byte to return on transmission errors
+BAMSector	= 0			;Sector num of BAM sector on dir track
+DoWriteBAM	= $00			;Do write changed BAM to disk
+DefLEDPulseSpd	= 2			;Default LED pulse speed
+Buffers0and1	= $03			;Allocation bits for buffers #0 and #1
+DefMotorOffDel	= 5			;Default drive motor off delay
+DiskIDLen	= 5			;Length of disk ID's
+DiskNameLen	= 16			;Length of disk names
+SecPerExtTrack	= 17			;Num of sectors on tracks 36-40 (1541)
+DontWriteBAM	= $40			;Don't write changed BAM to disk
+MotorSpinDelay	= $80			;High byte for motor spinup delay
+BAMDiskNameOfs	= $90			;Offset of disk name in BAM sector
+BAMDiskIDOfs	= $A2			;Offset of disk ID in BAM sector
+LowGCRBuffer	= $01BA			;Address of low-memory GCR buffer
+;Serial bus lines
+sbClear		= $00			;Empty values
+sbDataIn	= $01			;DATA in
+sbDataOut	= $02			;DATA out
+sbClkIn		= $04			;CLOCK in
+sbClkOut	= $08			;CLOCK out
+sbAtnAOut	= $10			;ATNA out
+sbAtnIn		= $80			;ATN in
+;Data directions
+ddAllInput	= $00			;All lines input
+ddAllOutput	= $FF			;All lines output
+;Drive controls
+drClear		= $00			;Empty values
+drDriveMotor	= $04			;Drive motor control
+drDriveLED	= $08			;Drive LED control
+drWriteProt	= $10			;Write protection sense
+drDensityMask	= $60			;Bit mask for density control
+;Job command codes
+jcSeek		= $B0			;Seek to track and read into a header
+jcSeekAndExec	= $E0			;Seek to track and execute program
+;Job status codes
+jsChangeTrack	= $00			;Change track
+jsOK		= $01			;Finished, no errors, end of file
+jsError		= $02			;Minimum value for errors
+;File attributes
+faAny		= $00			;Match files of any type
+faDeleted	= $00			;Deleted file
+faSequential	= $01			;Sequential file
+faProgram	= $02			;Program file
+faUser		= $03			;User file
+faRelative	= $04			;Relative file
+faTypeMask	= $07			;Bit mask for file type
+faWriteProt	= $40			;Write-protected flag
+faClosed	= $80			;Closed flag
+faFlagMask	= $C0			;Bit mask for flags
+;Disk commands
+dcScratch	= $0A			;Scratch, delete files
+dcNew		= $0B			;New, format disk
+;Offsets in directory entry
+deAttribOfs	= $00			;Attributes
+deTrackOfs	= $01			;Track number of first data sector
+deSectorOfs	= $02			;Sector number of first data sector
+deNameOfs	= $03			;File name
+deSideTrackOfs	= $13			;Track number of first side sector
+deSideNumberOfs	= $14			;Sector number of first side sector
+
+;Memory addresses
+
+;Zero page registers
+JobControls	= $00			;Job control registers
+TrackNum	= $06			;Track number for buffer #0
+SectorNum	= $07			;Sector number for buffer #0
+TrackNumBuf1	= $08			;Track number for buffer #1
+TrackNumBuf2	= $0A			;Track number for buffer #2
+SectorNumBuf2	= $0B			;Track number for buffer #2
+TransferByte	= $10			;Buffer for byte transfer
+TransferByte2	= $11			;Buffer #2 for byte transfer
+HeaderTrackNum	= $18			;Track number in sector header
+HeaderSectorNum	= $19			;Sector number in sector header
+DiskChanged	= $1C			;Disk change flag (unit #0)
+DiskChanged2	= $1D			;Disk change flag (unit #1)
+SectorPerTrack	= $43			;Num of sectors on track
+GCRDecodeBuf	= $52			;Buffer for four GCR-decoded bytes
+BAMFuncTrkNum	= $80			;Track number for BAM functions
+BAMFuncSecNum	= $81			;Sector number for BAM functions
+FileDelCount	= $86			;Counter of deleted files
+TempReg0	= $90			;Temporary register #1
+TempReg1	= $91			;Temporary register #2
+TempReg2	= $92			;Temporary register #3
+TempReg3	= $93			;Temporary register #4
+DirEntryPtr	= $94			;Pointer to current directory entry
+FileLengthLo	= $B5			;Low byte for current file length
+FileLengthHi	= $BB			;High byte for current file length
+CmdUnitNumber	= $E2			;Unit number from command line
+BufferNumber	= $F9			;Current buffer number
+	.ifdef Drive1581
+BufferPtr	= $40			;Pointer to sector buffer (1581)
+UploadAddr	= $40			;Current upload address (1581)
+UploadSize	= $42			;Remaining upload size (1581)
+	.else
+BufferPtr	= $30			;Pointer to sector buffer (1541/70/71)
+UploadAddr	= TempReg0		;Current upload address (1541/70/71)
+UploadSize	= TempReg1		;Remaining upload size (1541/70/71)
+	.endif
+
+;Page #2 registers
+CommandLine	= $0200			;Command line
+CmdParam	= $0205			;Command line parameters for "M-E"
+DiskCommand	= $022A			;Disk command from command line
+BufferAlloc	= $024F			;Buffer allocation status register
+CmdDiskNameOfs	= $027A			;Offset of disk name in command line
+CmdDiskIDOfs	= $027B			;Offset of disk ID in command line
+SearchFileType	= $0296			;Type of files to search for in dir
+WriteChangedBAM	= $02F9			;Disk update on BAM changes flag
+
+;Data buffers
+BAMSectorBuffer	= $0700			;Buffer for BAM sector
+
+;Periphery chip registers
+
+;VIA #1, serial bus access
+	.ifdef Drive1581
+SerialPort	= $4001			;Serial bus port (1581)
+	.else
+SerialPort	= $1800			;Serial bus port (1541/70/71)
+ParallelPort	= $1801			;Parallel data port (1541/70/71 only)
+ParallelPortDDR	= $1803			;Parallel port DDR (1541/70/71 only)
+	.endif
+
+;VIA #2, disk access
+DriveCtrlPort	= $1C00			;Drive control port
+DriveDataPort	= $1C01			;Disk read/write port
+
+;ROM constants
+DirTrack	= $FE85			;Track number of directory track
+MaxTracks	= $FED7			;Maximum number of tracks + 1
+
+;ROM routines
+	.ifdef Drive1581
+IdleLoop	= $FF00			;DOS idle loop (1581)
+	.else
+IdleLoop	= $C194			;DOS idle loop (1541/70/71)
+ProcessCmdLine	= $C1EE			;Process command line
+PresUnitNumber	= $C312			;Preserve unit number
+GetUnitNumbers	= $C320			;Get unit numbers from command line
+UnitLEDOn	= $C388			;Turn LED of unit on
+GetFileType	= $C398			;Get file type from command line
+OpenDirectory	= $C3CA			;Open directory, go to first entry
+NextDirEntry	= $C48B			;Read next directory entry
+FirstDirEntry	= $C49D			;Read first directory entry
+MsgDelFileNum	= $C872			;Create message with num of del files
+DelFileAttr	= $C8B6			;Change attr of current file to del
+ChangeFileAttr	= $C8B9			;Change attributes of current file
+SetJobCommand	= $D57D			;Set job command
+WaitJobCommand	= $D599			;Wait for the finish of job command
+WriteBAMToDisk	= $EDA8			;Write BAM back onto the disk
+ClearBAM	= $EEB7			;Clear BAM, free all sectors in it
+WrChgBAMToDisk	= $EEFF			;Write BAM back onto disk, if changed
+FindSecBAMBit	= $EFCF			;Find sector's BAM bit
+BAMSectorNone	= $EF06			;Empty BAM function
+BAMSectorFree	= $EF62			;Free sector in BAM function
+SetBAMChanged	= $EF88			;Set BAM changed flag
+BAMSectorAlloc	= $EF96			;Allocate sector in BAM function
+ReadBAM		= $D042			;Load BAM into memory
+FindSector	= $F50A			;Find sector, read header
+GCRQuartDecode	= $F7E8			;Decode five GCR bytes into four bytes
+EndDriveJob	= $F969			;End drive job, specifying job status
+	.endif

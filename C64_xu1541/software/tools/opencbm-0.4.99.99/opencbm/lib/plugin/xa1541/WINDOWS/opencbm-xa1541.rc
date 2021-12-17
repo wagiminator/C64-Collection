@@ -1,0 +1,11 @@
+#include <windows.h>
+
+#include <ntverp.h>
+
+#define VER_FILETYPE                VFT_DLL
+#define VER_FILESUBTYPE             VFT2_UNKNOWN
+#define VER_FILEDESCRIPTION_STR     "Interface plugin DLL for OPENCBM Parallel Port Driver"
+#define VER_INTERNALNAME_STR        "opencbm-xa1541.dll"
+
+#include "version.common.h"
+#include "common.ver"

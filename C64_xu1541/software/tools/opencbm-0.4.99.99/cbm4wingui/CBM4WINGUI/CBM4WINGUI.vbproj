@@ -1,0 +1,259 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <MyType>WindowsForms</MyType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B947C312-854F-4640-90EA-1AC01307A03A}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <AssemblyName>GUI4CBM4WIN</AssemblyName>
+    <OutputType>WinExe</OutputType>
+    <StartupObject>GUI4CBM4WIN.My.MyApplication</StartupObject>
+    <AssemblyMajorVersion>0</AssemblyMajorVersion>
+    <AssemblyMinorVersion>4</AssemblyMinorVersion>
+    <AssemblyRevisionNumber>1</AssemblyRevisionNumber>
+    <GenerateRevisionNumber>False</GenerateRevisionNumber>
+    <AssemblyCompanyName>opencbm.sf.net</AssemblyCompanyName>
+    <StartWithIE>False</StartWithIE>
+    <ApplicationIcon>CBM4WINGUI.ico</ApplicationIcon>
+    <RootNamespace>GUI4CBM4WIN</RootNamespace>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>.\bin\</OutputPath>
+    <DocumentationFile>GUI4CBM4WIN.xml</DocumentationFile>
+    <DebugSymbols>True</DebugSymbols>
+    <DefineDebug>True</DefineDebug>
+    <DefineTrace>True</DefineTrace>
+    <DefineConstants>Win32=True</DefineConstants>
+    <PlatformTarget>x86</PlatformTarget>
+    <NoWarn>42016,42017,42018,42019,42032</NoWarn>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>.\bin\</OutputPath>
+    <DocumentationFile>GUI4CBM4WIN.xml</DocumentationFile>
+    <DebugSymbols>False</DebugSymbols>
+    <DefineDebug>False</DefineDebug>
+    <DefineTrace>True</DefineTrace>
+    <DefineConstants>Win32=True</DefineConstants>
+    <PlatformTarget>x86</PlatformTarget>
+    <NoWarn>42016,42017,42018,42019,42032</NoWarn>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic.Compatibility">
+      <Name>Microsoft.VisualBasic.Compatibility</Name>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data">
+      <Name>System.Data</Name>
+    </Reference>
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.XML">
+      <Name>System.XML</Name>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="Microsoft.VisualBasic.Compatibility" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Data" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Drawing" />
+    <Import Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="CbmDevices.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CbmDevices.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="frmConfiguration.Designer.vb">
+      <DependentUpon>frmConfiguration.vb</DependentUpon>
+    </Compile>
+    <Compile Include="frmConfiguration.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Constants.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GUI.Designer.vb">
+      <SubType>Code</SubType>
+      <DependentUpon>GUI.vb</DependentUpon>
+    </Compile>
+    <Compile Include="GUI.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="INIRoutines.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Installer1.Designer.vb">
+      <DependentUpon>Installer1.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Installer1.vb">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Application.myapp</DependentUpon>
+    </Compile>
+    <Compile Include="en\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Prompt.Designer.vb">
+      <SubType>Code</SubType>
+      <DependentUpon>Prompt.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Prompt.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="WaitforDir.Designer.vb">
+      <SubType>Code</SubType>
+      <DependentUpon>WaitforDir.vb</DependentUpon>
+    </Compile>
+    <Compile Include="WaitforDir.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <EmbeddedResource Include="frmConfiguration.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>frmConfiguration.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GUI.resX">
+      <DependentUpon>GUI.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="en\Resources.resx">
+      <SubType>Designer</SubType>
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Prompt.resX">
+      <DependentUpon>Prompt.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="WaitforDir.resX">
+      <DependentUpon>WaitforDir.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Content Include="CBM4WINGUI.ico" />
+    <Content Include="license.txt" />
+    <Content Include="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </Content>
+    <None Include="lib\cbmcopy.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\cbmctrl.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\cbmformat.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\cbmforng.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\d64copy.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\flash.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\instcbm.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\morse.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\rpm1541.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\cbm4nt.sys">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\cbm4wdm.sys">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\opencbm.lib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="CbmDevices.xsc">
+      <DependentUpon>CbmDevices.xsd</DependentUpon>
+    </None>
+    <None Include="CbmDevices.xsd">
+      <SubType>Designer</SubType>
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>CbmDevices.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="CbmDevices.xss">
+      <DependentUpon>CbmDevices.xsd</DependentUpon>
+    </None>
+    <None Include="lib\opencbm-0.4.0.tar.gz" />
+    <None Include="lib\opencbm.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\OpenCbmVDD.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="lib\opencbmvice.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="My Project\Settings.settings">
+      <CustomToolNamespace>My</CustomToolNamespace>
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileListBoxControl\FileListBoxControl.csproj">
+      <Project>{F53E17FC-7576-44C4-B999-274B9F10B9CE}</Project>
+      <Name>FileListBoxControl</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MozBar\MozBar.csproj">
+      <Project>{180E4B12-A45B-4091-8A6F-91031C28DA3D}</Project>
+      <Name>MozBar</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>

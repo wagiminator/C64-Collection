@@ -1,0 +1,30 @@
+#
+# AVR-GCC toolchain prerequisite files description resource,
+# formatted as table with 3 colums delimited by tabulators:
+#
+# sha256sum <space> <space or star> local path <tabulator> download path <tabulator> filename
+#
+27499f59e7e2d8c1dedfabdd0a9ec9aa243ba3a2e72eee0fa21375e054938e9f *./packages/	http://nongnu.askapache.com/avr-libc/	avr-libc-1.7.0.tar.bz2
+81501b63d5b8699874d00c9eca42837b85695bc0820ba9843b17f573ce38be5e *./packages/	http://mirror.lihnidos.org/GNU/savannah/avrdude/	avrdude-5.10.tar.gz
+71d37c96451333c5c0b84b170169fdcb138bbb27397dc06281905d9717c8ed64 *./packages/	http://ftp.gnu.org/gnu/binutils/	binutils-2.20.1.tar.bz2
+b57b37a83840b134572b042f170d7a9429863ba0308b56b403b35de6f0e0526a *./packages/	http://ftp.gnu.org/gnu/gcc/gcc-4.5.1/	gcc-core-4.5.1.tar.bz2
+a5349ea8d531aa0a248484f426513e5d05b12915e5412d332c278f65d272ce48 *./packages/	http://ftp.gnu.org/gnu/gcc/gcc-4.5.1/	gcc-g++-4.5.1.tar.bz2
+# gdb
+#
+#
+# patches for the packages maintained by the WinAVR project
+29cf7008874a084065c6ccede78fff83885c0d574434f4dc39210d9f896db961 *./patches/binutils/	http://winavr.cvs.sourceforge.net/viewvc/winavr/patches/binutils/2.19/	30-binutils-2.19-avr-size.patch
+93eea4a4432a8203df62a698b7399b27ec03e3fd5a5c4975c74009ce5723f816 *./patches/gcc/	http://winavr.cvs.sourceforge.net/viewvc/winavr/patches/gcc/4.3.2/	20-gcc-4.3.2-libiberty-Makefile.in.patch
+
+# private patches not maintained by WinAVR (yet)
+d04d9f4b0a506645a04c7ecbaaa6e0a932853f50069c32f1154e49213f696f01 *./patches/private/	NOT_PUBLICALLY_AVAILABLE	10100-avr-libc-1.7.0-carriage-return.patch
+# fix a line ending detection bug in autoconf for cygwin systems
+9509ab3199c8e6a857a2551d524c3a1dce3e80d8e388b417037fb68bb7a5891a *patches/private/	NOT_PUBLICALLY_AVAILABLE	10500-avrdude-5.10_carriage-return.patch
+# Introduce USB VID/PID support for all USB programmers to the configuration file and let USBAsp recognise these
+ea5d8916ef97c0fb79516ccc6a9ddb26f0405d1fb0b614f5fdf52fd8b2f398c4 *patches/private/	NOT_PUBLICALLY_AVAILABLE	10501-avrdude-5.10_usbVidPid_support.patch
+# remove an architecture independent implementation of usleep since it is already available through unistd.h
+e0d5bb5f505a3efd584e28b64abaf0aa1d8c8f92bf8ddb2aa08f0086eb303d59 *patches/private/	NOT_PUBLICALLY_AVAILABLE	10502-avrdude-5.10_disabled_usleep.patch
+# modified new-sections patch for binutils-2.20
+5753c1af98586d1a044642e1e2b888f96fd88b48a35ab0064fdf90f07d491483 *./patches/private/	NOT_PUBLICALLY_AVAILABLE	32-binutils-2.20-new-sections.patch
+# add missing MCU devices to GCC to match up the MCU list in bintuils
+ca88337fc6693307d3d5c4a7bee04b918b2f9552ed04737a03d849d0283c96a0 *./patches/private/	NOT_PUBLICALLY_AVAILABLE	54-gcc-4.5.1-new-devices.patch

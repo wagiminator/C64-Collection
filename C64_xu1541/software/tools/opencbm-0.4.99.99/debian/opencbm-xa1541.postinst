@@ -1,0 +1,27 @@
+#! /bin/sh
+# postinst script for opencbm-xa1541
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+if [ "$1" = "configure" ]; then
+
+#	# from lirc:
+#	[ -x /usr/sbin/update-devfsd ] && /usr/sbin/update-devfsd >&2
+
+	db_get opencbm-xa1541/install_device
+	if $RET; then
+		if [ ! -e /dev/cbm ]; then
+			mknod /dev/cbm c 10 177
+			chown root.users /dev/cbm
+			chmod 660 /dev/cbm
+		fi
+	fi
+
+	/usr/lib/opencbm/install_plugin.sh install xa1541
+fi
+
+#DEBHELPER#
+
+exit 0

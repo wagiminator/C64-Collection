@@ -1,59 +1,47 @@
 # Commodore C64 Collection
 Collection of cartridges, adapters and replacements for the Commodore C64.
 
-# SD2IEC LP
+# [SD2IEC LP](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
+C64 SD-card adapter and floppy disk drive emulator based on the design by [Lars Pontoppidan](https://larsee.com/blog/2007/02/the-mmc2iec-device/) with cassette port plug. Copy C64 games and programs to SD-card on your PC, put the SD-card in your SD2IEC and load games and programs on your C64!
 
-C64 SD-card adapter and floppy disk drive emulator based on the LarsP-design (https://larsee.com/blog/2007/02/the-mmc2iec-device/) with cassette port plug. For more information visit https://www.sd2iec.de.
+![C64_SD2IEC_LP_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_SD2IEC_LP/documentation/C64_SD2IEC_LP_pic1.jpg)
 
-![IMG_20191208_124215_x.jpg](https://image.easyeda.com/pullimage/qJaJaefLPbym2Xr0pGQITwmtaWunRjclIwgd0WJJ.jpeg)
+# [Tapuino](https://github.com/wagiminator/C64-Collection/tree/master/C64_Tapuino)
+Commodore Datasette Emulator based on the design and firmware by [Sweetlilmre](https://github.com/sweetlilmre/tapuino). Put your TAP-files on an SD-Card and plug the device in your good old Commodore!
 
-# Tapuino
+![C64_Tapuino_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic1.jpg)
 
-C64 Tape Emulator based using an Atmega328p based on the design and firmware by Sweetlilmre (https://github.com/sweetlilmre/tapuino). Put your TAP-files on an SD-Card and plug the device in your good old Commodore.
+# [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
+Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541).
 
-![IMG_20200818_185237_x.jpg](https://image.easyeda.com/pullimage/KNt2mD6XZ4jyFXfjP4JhYUnld9KVl93xVO71qzal.jpeg)
+![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
 
-# xu1541
+# [C64 Keyboard Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
+C64 keyboard to USB adapter based on the design and firmware by [Mikkel Holm Olsen](https://symlink.dk/projects/c64key/). Use the original keyboard with you favourite emulator!
 
-1541 floppy disk drive to USB adapter based on the designs by Till Harbaum and Spiro R. Trikaliotis. For more information visit https://spiro.trikaliotis.net/xu1541.
+![C64_Keyboard_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Keyboard_Adapter/documentation/C64_Keyboard_Adapter_pic1.jpg)
 
-![IMG_20190922_142917_x.jpg](https://image.easyeda.com/pullimage/l8MtCiZPMbMxL7CWLkzLqELqHSdJ6z3hjQT1tnmF.jpeg)
+# [SwinSID nano](https://github.com/wagiminator/C64-Collection/tree/master/C64_SwinSID_nano)
+Replacement board for the legendary SID soundchip of the Commodore C64 based on the design by [Swinkels](http://www.swinkels.tvtom.pl/swinsid/).
 
-# Keyboard Adapter
+![C64_SwinSID_nano_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_SwinSID_nano/documentation/C64_SwinSID_nano_pic1.jpg)
 
-C64 keyboard to USB adapter based on the design by Mikkel Holm Olsen (https://symlink.dk/projects/c64key/).
+# [C64 8k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_8k)
+Simple 8k cartridge for C64.
 
-![IMG_20191124_123415_x.jpg](https://image.easyeda.com/pullimage/nWXlBtxYOt5ghOzE1v0RtGL0PdquqEzoX1irJ39m.jpeg)
+![C64_Cartridge_8k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_8k/documentation/C64_Cartridge_8k_pic1.jpg)
 
-# SwinSID nano
+# [C64 64k/256k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_64k_256k)
+MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of multiple PRG-files!
 
-Replacement board for the legendary soundchip of the Commodore C64 based on the design by Swinkels. For more information visit http://www.swinkels.tvtom.pl/swinsid/ and https://www.forum64.de/index.php?thread/36481-swinsid-atmega88/.
+![C64_Cartridge_64k_256k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_64k_256k_pic1.jpg)
 
-Project Video: https://youtu.be/UqjzCAr04dE
+# [C64 512k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_512k)
+512k MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of even more PRG-files!
 
-![IMG_20191027_143731_x.jpg](https://image.easyeda.com/pullimage/pSJpJqUH2JhHG7IeqL9Pchzhtv8opgAGlQ0MtI53.jpeg)
-![IMG_20191130_133713_x.jpg](https://image.easyeda.com/pullimage/UGbd6wxr0Xs3GjYgJ0a49a94Zua4gGWiOodWjakG.jpeg)
+![C64_Cartridge_512k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_512k/documentation/C64_Cartridge_512k_pic1.jpg)
 
-# 8k Cartridge
+# [C64 FreeLoad Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_FreeLoad)
+The FreeLoad cartridge is a simple clone of an Epyx Fastload cartridge, offering a system reset button, a file access activity LED and a disable switch. Load 5x faster from your floppy disk drive, your SD2IEC or your Pi1541!
 
-Simple 8k Cartridge for C64.
-
-![IMG_20191208_100343_x.jpg](https://image.easyeda.com/pullimage/U7bKcCj4dY1KkAmjMmqLuMQ6czTh1UKQ71JaqfYI.jpeg)
-
-# 64k/256k Cartridge
-
-MagicDesk compatible Cartridge for Commodore C64 based on the work of Marko Šolajić (https://github.com/msolajic/c64-magic-desk-512k) and Zzarko (https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/).
-
-![IMG_20191208_100443_x.jpg](https://image.easyeda.com/pullimage/pdNL0Ath56DzKmNPIwaamhQH2sEIEXLz52vHW2wE.jpeg)
-
-# 512k Cartridge
-
-512k MagicDesk compatible Cartridge for Commodore C64 based on the work of Marko Šolajić (https://github.com/msolajic/c64-magic-desk-512k) and Zzarko (https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/).
-
-![IMG_20191208_100641_x.jpg](https://image.easyeda.com/pullimage/D1TMImvsnRsivqUBxVTciN7S3knzc93y1cHGMNka.jpeg)
-
-# FreeLoad Cartridge
-
-The FreeLoad cartridge is a simple clone of an Epyx Fastload cartridge, offering a system reset button, a file access activity LED and a disable switch. For more information visit http://www.sys64738.net/ddifl/ddifl.htm.
-
-![IMG_20200101_124103_x.jpg](https://image.easyeda.com/pullimage/X9u6VdHgzlNgzM45Hh3yhnWlxbxxhOeX3uzZM8Np.jpeg)
+![C64_Cartridge_FreeLoad_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_FreeLoad/documentation/C64_Cartridge_FreeLoad_pic1.jpg)

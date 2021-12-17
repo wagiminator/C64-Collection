@@ -1,0 +1,21 @@
+
+TARGETNAME=libmisc
+TARGETPATH=../../../bin
+TARGETTYPE=LIBRARY
+
+INCLUDES=../;../../include;../../include/WINDOWS
+
+SOURCES= \
+	../configuration.c \
+	dynlibusb.c        \
+	formaterrormessage.c \
+	getpluginaddress.c \
+	perfeval.c \
+	registry.c \
+	../statedebug.c \
+	../libstring.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

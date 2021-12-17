@@ -1,0 +1,63 @@
+#!/bin/sh
+# cbmget 1.0
+# This program is a frontend to the cbm4linux cbmctrl program by Michael Klein.
+# Cbm4linux is available from www.lb.shuttle.de/puffin/cbm4linux.
+# This program (cbmget) makes it easier to copy a file from Linux to a Commodore
+# drive connected to the parallel port via an XM1541 cable.
+# Written 5-01-2001 by John Cirillo  (cirillo(at)purdue(dot)edu)
+# Enjoy!
+#
+if [ "$1" = "" ] 
+then 
+echo ""
+echo "cbmget 1.0 by John Cirillo"
+echo "This script is a frontend to the cbm4linux cbmctrl utility written by Michael Klein."
+echo "Cbmget makes it easier to copy a file to Linux from a Commodore drive connected" 
+echo "to the parallel port via an XM-1541 cable."
+echo ""
+echo "usage: cbmget filename [drive]  (defaults to 8)"
+echo ""
+exit 1
+fi
+text=$1
+if [ "$2" = "" ]
+then 
+drive="8"
+else 
+drive=$2
+fi
+if [ $drive != "8" ] && [ $drive != "9" ] && [ $drive != 10 ] && [ $drive != 11 ]
+then
+echo "Valid drive numbers are 8 through 11."
+exit 1
+fi
+if  [ -f "$text" ]
+then
+echo "file $text already exists"
+exit 1
+fi
+
+# ** Enable this if you want to test whether the cbm module is loaded **
+#/sbin/lsmod|grep cbm > /dev/null
+#if [ $? -ne 0 ]
+#then
+#echo "I guess the cbm module is not loaded. Please make sure the cbm module is loaded."
+#exit 1
+#fi
+
+echo "Initializing drive"
+cbmctrl command $drive I0:
+utext=`echo $text | awk '{print toupper($0)}'`
+#above converts the filename to all uppercase
+cbmstr="open "$drive" 2 "$utext",P,R"
+cbmctrl $cbmstr
+cbmctrl talk $drive 2
+announce="Copying $text from CBM drive $drive"
+echo $announce
+cat /dev/cbm > $text 2>> /dev/null
+cbmctrl untalk
+cbmctrl close $drive 2
+cbmctrl status $drive
+
+exit 0
+

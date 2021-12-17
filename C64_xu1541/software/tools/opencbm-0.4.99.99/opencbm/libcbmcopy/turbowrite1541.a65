@@ -1,0 +1,202 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+; 1541 Turbo write
+
+	*=$0500
+	
+	buf = $f9
+	drv = $7f
+	cnt = $8c
+	bufx2  = $71
+	
+	dbufptr    = $31
+	n_sectors  = $43
+	retry_mode = $6a
+	bump_cnt   = $8d
+	retry_flag = $90
+
+	errbuf     = $02d5
+	do_write   = $0400
+	do_retry   = $0465
+
+	init       = $0680
+	chkerr     = $0683
+	noerr	   = $0686
+	get_byte   = $0689
+
+	jmp main	; to job routine
+
+	jsr init	; custom I/O init
+	ldy #$64	; copy 
+i0	lda $f574,y	; ROM
+	sta do_write-1,y; routines
+	dey
+	bne i0
+	ldy #$36
+i1	lda $d5f8,y	; job retry
+	sta do_retry,y	; ROM routine
+	dey
+	bpl i1
+	lda #$60	; == RTS
+	sta do_write+$64; patch
+	sta do_retry+$37
+	ldx drv
+	lda $feca,x	; led
+	sta $026d	; mask
+	lda #$01
+	sta $1c,x
+	sta $82		; channel
+	sta $83		; sec addr
+	jsr $df93	; get buffer number
+	asl
+	tax
+	stx bufx2
+	lda $06,x	; start
+	sta $0a		; track
+	sta $80
+	lda $07,x	; and
+	sta $0b		; sector
+	sta $81
+
+	lda #$40
+	sta $02f9
+
+copy	lda #$00
+	sta retry_flag
+	lda #$02
+	sta bump_cnt
+exec	ldx #$02
+	stx buf		; exec prog in buffer 2
+	lda #$e0	; execute buffer
+	jsr $d57d	; set job parameters
+	lda $00,x	; wait until
+	bmi *-2		; job has finished
+check	cmp #$01
+	bcs error
+	lda cnt
+	bne copy
+	sta $1800
+	cli
+	jmp $db23
+error	beq abort1
+	cmp #$08
+	beq abort2
+	sta retry_flag
+	jsr $d6a6
+	bcc check
+	bit retry_mode
+	bvs noht
+	jsr do_retry
+	bcc check
+noht	bit retry_mode	; bump head?
+	bmi abort2	; no -> skip
+	dec bump_cnt
+	beq abort2
+	lda #$c0	; bump head
+	jsr $d57d
+	jsr $d599
+	bne exec
+abort2	ldx $f9
+	jmp $e60a
+abort1	sta $1800
+	jmp $c194
+
+main	lda retry_flag
+	bne isretry
+main2	jsr get_byte	; get byte count
+	beq empty
+	sta cnt
+
+	ldy #$01
+rcv	iny
+	beq more
+	jsr get_byte	; block data
+	sta $0300,y
+	dec cnt
+	bne rcv
+	beq last
+
+more	jsr chkerr
+	lda $02
+	pha
+	lda #$01
+	sta $02
+	jsr $f11e
+	pla
+	sta $02
+	ldy $81
+	lda $80
+	jmp m1
+empty	ldy #$01
+last	jsr chkerr
+	lda #$00
+	sta $80
+m1	sta $0300
+	sty $0301
+
+isretry	lda #$03
+	sta $31
+
+	lda $026d	; flash
+	eor $1c00	; led
+	sta $1c00
+	
+	lda bufx2
+	clc
+	adc #$06
+	sta $32
+	
+	jsr do_write
+	sty $50
+	jsr noerr
+	ldx $82
+	inc $b5,x
+	bne nobcinc
+	inc $bb,x
+nobcinc	lda #$02
+	sta bump_cnt
+
+	ldx bufx2
+	lda $81
+	sta $07,x
+	sta $0b
+	lda $80
+	cmp $06,x
+	sta $06,x
+	sta $0a
+	beq main2
+
+	lda #$00	; no error
+	.byte $2c
+full	lda #$01
+	jmp $f969	; terminate job
+

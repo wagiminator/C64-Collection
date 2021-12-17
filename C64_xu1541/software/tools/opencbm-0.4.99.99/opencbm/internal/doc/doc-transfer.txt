@@ -1,0 +1,281 @@
+Transfer times for 1571 ROM ($8000-$FFFF):
+- s1: 48s --> approx. 680 B/s
+- s2: crashes 
+- pp:  5s --> approx. 6.5 KB/s
+
+
+get_ts ($0700, gts):
+	ret: A - scratch	(pp, s1, s2)
+	ret: X - first byte	(pp, s1, s2)
+	ret: Y - second byte	(pp, s1, s2)
+	ret: Z = 1
+
+get_byte ($0703, gbyte):
+	ret: A - return	(pp, s1, s2)	(last command: TXA or LDA, thus, Z, and N are correctly set!)
+	ret: X - work area	(pp, s1, s2)
+	ret: Y - save	(pp, s1, s2)
+	
+get_block ($0706, gblk):
+	Y - start: where to start to transfer (until $00)	(pp, s1, s2)
+	$30: pointer: Where to store the data	(pp, s1, s2)
+	ret: A - work area, last byte read	(pp, s1, s2)
+	ret: X - save	(pp, s1, s2)
+	ret: Y - 0	(pp, s1, s2)
+
+send_byte ($0709, sbyte):
+	A: Byte to be send	(pp, s1, s2)
+	ret: A - work area 	(pp, s1, s2)
+	ret: X - work area	(s1, s2; save on pp)
+	ret: Y - save	(pp, s1, s2)
+	
+send_block ($070c, sblk):
+	$30: pointer: from where to send the data	(pp, s1, s2)
+	y: start from which to send data (until $00)	(pp, s1, s2)
+	ret: A - work area, last byte send	(pp, s1, s2)
+	ret: X - work area	(s1, s2; save on pp)
+	ret: Y - 0	(pp, s1, s2)
+
+set_data ($070f, data_1):
+	ret: A - work area (pp, s1, s2)
+	ret: X - save (pp, s1, s2)
+	ret: Y - save (pp, s1, s2)
+
+
+Implementation 1: (61 byte)
+
+	; Init transfer routine
+start: (17 byte)
+	jsr get_byte
+	cmp #0	; execute?
+	beq execute_cmd
+	cmp #1	; write memory?
+	beq writemem_cmd
+	cmp #2	; read memory?
+	beq readmem_cmd
+	bne command_error (quit?)
+
+execute_cmd (10 byte):
+	jsr get_ts
+	stx $30
+	sty $31
+	jmp ($0030)
+
+writemem_cmd (17 byte):
+	jsr get_ts
+	stx $30
+	sty $31
+	jsr get_byte
+	tay
+	jsr get_block
+	jmp start
+
+readmem_cmd (17 byte)
+	jsr get_ts
+	stx $30
+	sty $31
+	jsr get_byte
+	tay
+	jsr send_block
+	jmp start
+
+
+
+Implementation 2 (57 byte):
+
+	; Init transfer routine
+start: (17 byte)
+	jsr get_byte
+	cmp #0	; execute?
+	beq execute_cmd
+	cmp #1	; write memory?
+	beq writemem_cmd
+	cmp #2	; read memory?
+	beq readmem_cmd
+	bne command_error (quit?)
+
+ts (8 byte):
+	jsr get_ts
+	stx $30
+	sty $31
+	rts
+
+execute_cmd (6 byte):
+	jsr ts
+	jmp ($0030)
+
+writemem_cmd (13 byte):
+	jsr ts
+	jsr get_byte
+	tay
+	jsr get_block
+	jmp start
+
+readmem_cmd (13 byte)
+	jsr ts
+	jsr get_byte
+	tay
+	jsr send_block
+	jmp start
+
+
+
+
+Implementation 3 (57 byte):
+
+	; Init transfer routine
+start: (17 byte)
+	jsr get_byte
+	cmp #0	; execute?
+	beq execute_cmd
+	cmp #1	; write memory?
+	beq writemem_cmd
+	cmp #2	; read memory?
+	beq readmem_cmd
+	bne command_error (quit?)
+
+ts (8 byte):
+	jsr get_ts
+	stx $30
+	sty $31
+	rts
+
+tslen (8 byte):
+	jsr ts
+	jsr getbyte
+	tay
+	rts
+	
+execute_cmd (6 byte):
+	jsr ts
+	jmp ($0030)
+
+writemem_cmd (9 byte):
+	jsr tslen
+	jsr get_block
+	jmp start
+
+readmem_cmd (9 byte)
+	jsr ts
+	jsr get_byte
+	tay
+	jsr send_block
+	jmp start
+
+
+
+Implementation 4 (56 byte):
+
+	; Init transfer routine
+start: (17 byte)
+	jsr get_byte
+	cmp #0	; execute?
+	beq execute_cmd
+	cmp #1	; write memory?
+	beq writemem_cmd
+	cmp #2	; read memory?
+	beq readmem_cmd
+	bne command_error (quit?)
+
+ts (8 byte):
+	jsr get_ts
+	stx $30
+	sty $31
+	rts
+
+execute_cmd (6 byte):
+	jsr ts
+	jmp ($0030)
+
+readmem_cmd (25 byte):
+writemem_cmd:
+	pha
+	jsr ts
+	jsr getbyte
+	tay
+	pla
+	cmp #2	; read memory
+	beq readmem
+	jsr get_block
+	jmp start
+
+readmem:
+	jsr send_block
+	jmp start
+
+
+
+Implementation 5 (44 byte; 11 byte can be temporarily overwritten):
+
+ptr = $30
+
+readmem (5 byte):
+	jsr send_block
+	beq start	; uncond
+
+execute_cmd (6 byte):
+	jsr ts
+	jsr (ptr)
+
+	; Init transfer routine
+start: (7 byte)
+	jsr get_byte
+	cmp #0	; execute?
+	beq execute_cmd
+
+readmem_cmd (18 byte):
+writemem_cmd:
+	pha
+	jsr ts
+	jsr getbyte
+	tay
+	pla
+	cmp #2	; read memory?	; can be omitted if 0 is "read memory", AND if PLA sets the flags
+	beq readmem
+	jsr get_block
+	beq start	; uncond
+
+ts (8 byte):
+	jsr get_ts
+	stx ptr
+	sty ptr+1
+	rts
+
+
+
+Implementation 6 (WoMo's help)
+	(40 byte; 11 byte can be temporarily overwritten):
+
+ptr = $30
+CMD_EXECUTE = $80
+CMD_READMEM = $1
+CMD_WRITEMEM = $0
+
+readmem (5 byte):
+	jsr send_block
+	beq start	; uncond
+
+execute_cmd (6 byte):
+	jsr ts
+	jsr (ptr)
+
+	; Init transfer routine
+start: (5 byte)
+	jsr get_byte
+	bmi execute_cmd
+
+readmem_cmd (16 byte):
+writemem_cmd:
+	pha
+	jsr ts
+	jsr getbyte
+	tay
+	pla
+	bne readmem	; read memory, then execute that
+	jsr get_block
+	beq start	; uncond
+
+ts (8 byte):
+	jsr get_ts
+	stx ptr
+	sty ptr+1
+	rts

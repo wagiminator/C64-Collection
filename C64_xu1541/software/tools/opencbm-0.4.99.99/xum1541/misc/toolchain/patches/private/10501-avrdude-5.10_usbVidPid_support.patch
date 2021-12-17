@@ -1,0 +1,250 @@
+diff -Nur avrdude.conf.in avrdude.conf.in
+--- avrdude.conf.in	2010-01-19 11:39:11.000000000 +0100
++++ avrdude.conf.in	2010-09-17 10:47:50.265750000 +0200
+@@ -13,25 +13,29 @@
+ # Possible entry formats are:
+ #
+ #   programmer
+-#       id       = <id1> [, <id2> [, <id3>] ...] ;  # <idN> are quoted strings
+-#       desc     = <description> ;                  # quoted string
+-#       type     = par | stk500 | stk500v2 | stk500pp | stk500hvsp | stk500generic |
+-#                  stk600 | stk600pp | stk600hvsp |
+-#                  avr910 | butterfly | usbasp |
+-#                  jtagmki | jtagmkii | jtagmkii_isp | jtagmkii_dw |
+-#                  jtagmkII_avr32 | jtagmkii_pdi |
+-#                  dragon_dw | dragon_jtag | dragon_isp | dragon_pp |
+-#                  dragon_hvsp | dragon_pdi | arduino; # programmer type
+-#       baudrate = <num> ;                          # baudrate for avr910-programmer
+-#       vcc      = <num1> [, <num2> ... ] ;         # pin number(s)
+-#       reset    = <num> ;                          # pin number
+-#       sck      = <num> ;                          # pin number
+-#       mosi     = <num> ;                          # pin number
+-#       miso     = <num> ;                          # pin number
+-#       errled   = <num> ;                          # pin number
+-#       rdyled   = <num> ;                          # pin number
+-#       pgmled   = <num> ;                          # pin number
+-#       vfyled   = <num> ;                          # pin number
++#       id         = <id1> [, <id2> [, <id3>] ...] ;     # <idN> are quoted strings
++#       desc       = <description> ;                     # quoted string
++#       type       = par | stk500 | stk500v2 | stk500pp | stk500hvsp | stk500generic |
++#                    stk600 | stk600pp | stk600hvsp |
++#                    avr910 | butterfly | usbasp |
++#                    jtagmki | jtagmkii | jtagmkii_isp | jtagmkii_dw |
++#                    jtagmkII_avr32 | jtagmkii_pdi |
++#                    dragon_dw | dragon_jtag | dragon_isp | dragon_pp |
++#                    dragon_hvsp | dragon_pdi | arduino; # programmer type
++#       baudrate   = <num> ;                             # baudrate for avr910-programmer
++#       usbvid     = <num> ;                             # USB vendor ID
++#       usbpid     = <num> ;                             # USB product ID
++#       usbvendor  = <string> ;                          # USB optional manufacturer string
++#       usbproduct = <string> ;                          # USB optional product ID string
++#       vcc        = <num1> [, <num2> ... ] ;            # pin number(s)
++#       reset      = <num> ;                             # pin number
++#       sck        = <num> ;                             # pin number
++#       mosi       = <num> ;                             # pin number
++#       miso       = <num> ;                             # pin number
++#       errled     = <num> ;                             # pin number
++#       rdyled     = <num> ;                             # pin number
++#       pgmled     = <num> ;                             # pin number
++#       vfyled     = <num> ;                             # pin number
+ #     ;
+ #
+ #   part
+@@ -41,7 +45,7 @@
+ #       has_debugwire    = <yes/no> ;             # part has debugWire i/f
+ #       has_pdi          = <yes/no> ;             # part has PDI i/f
+ #       has_tpi          = <yes/no> ;             # part has TPI i/f
+-#       devicecode       = <num> ;            # deprecated, use stk500_devcode
++#       devicecode       = <num> ;                # deprecated, use stk500_devcode
+ #       stk500_devcode   = <num> ;                # numeric
+ #       avr910_devcode   = <num> ;                # numeric
+ #       signature        = <num> <num> <num> ;    # signature bytes
+@@ -418,6 +422,28 @@
+   id    = "usbasp";
+   desc  = "USBasp, http://www.fischl.de/usbasp/";
+   type  = usbasp;
++  usbvid     = 0x16C0;          /* VOTI */
++  usbpid     = 0x05DC;          /* Obdev's free shared PID */
++  usbvendor  = "www.fischl.de";
++  usbproduct = "USBasp";
++;
++
++programmer
++  id    = "usbasppre";
++  desc  = "USBasp, preliminary version, http://www.fischl.de/usbasp/";
++  type  = usbasp;
++  usbvid     = 0x03EB;          /* ATMEL */
++  usbpid     = 0xC7B4;          /* (unoffical) USBasp */
++  usbvendor  = "www.fischl.de";
++  usbproduct = "USBasp";
++;
++
++programmer
++  id    = "xu1541asp";
++  desc  = "USBasp on xu1541 BIOS, http://opencbm.trikaliotis.net/";
++  type  = usbasp;
++  usbvid     = 0x0403;          /* FTDI */
++  usbpid     = 0xC632;          /* USBasp on top of XU1541 BIOS */
+ ;
+ 
+ programmer
+diff -Nur config_gram.y config_gram.y
+--- config_gram.y	2010-01-19 11:39:11.000000000 +0100
++++ config_gram.y	2010-09-17 10:11:36.422000000 +0200
+@@ -152,6 +152,10 @@
+ %token K_USBTINY
+ %token K_BUTTERFLY
+ %token K_TYPE
++%token K_USBPID
++%token K_USBPRODUCT
++%token K_USBVENDOR
++%token K_USBVID
+ %token K_VCC
+ %token K_VFYLED
+ 
+@@ -597,6 +601,34 @@
+     }
+   } |
+ 
++  K_USBVID TKN_EQUAL TKN_NUMBER {
++    {
++      current_prog->usbvid = $3->value.number;
++    }
++  } |
++
++  K_USBPID TKN_EQUAL TKN_NUMBER {
++    {
++      current_prog->usbpid = $3->value.number;
++    }
++  } |
++
++  K_USBVENDOR TKN_EQUAL TKN_STRING {
++    {
++      strncpy(current_prog->usbvendor, $3->value.string, PGM_USBSTRINGLEN);
++      current_prog->usbvendor[PGM_USBSTRINGLEN-1] = 0;
++      free_token($3);
++    }
++  } |
++
++  K_USBPRODUCT TKN_EQUAL TKN_STRING {
++    {
++      strncpy(current_prog->usbproduct, $3->value.string, PGM_USBSTRINGLEN);
++      current_prog->usbproduct[PGM_USBSTRINGLEN-1] = 0;
++      free_token($3);
++    }
++  } |
++
+   K_RESET  TKN_EQUAL TKN_NUMBER { free_token($1); 
+                                   assign_pin(PIN_AVR_RESET, $3, 0); } |
+   K_SCK    TKN_EQUAL TKN_NUMBER { free_token($1); 
+diff -Nur lexer.l lexer.l
+--- lexer.l	2010-01-19 11:39:11.000000000 +0100
++++ lexer.l	2010-09-17 10:12:29.047000000 +0200
+@@ -197,6 +197,10 @@
+ stk600hvsp       { yylval=NULL; return K_STK600HVSP; }
+ stk600pp         { yylval=NULL; return K_STK600PP; }
+ type             { yylval=NULL; return K_TYPE; }
++usbpid           { yylval=NULL; return K_USBPID; }
++usbproduct       { yylval=NULL; return K_USBPRODUCT; }
++usbvendor        { yylval=NULL; return K_USBVENDOR; }
++usbvid           { yylval=NULL; return K_USBVID; }
+ vcc              { yylval=NULL; return K_VCC; }
+ vfyled           { yylval=NULL; return K_VFYLED; }
+ 
+diff -Nur pgm.c pgm.c
+--- pgm.c	2010-01-19 11:39:11.000000000 +0100
++++ pgm.c	2010-09-17 10:13:43.500125000 +0200
+@@ -83,6 +83,11 @@
+   pgm->lineno = 0;
+   pgm->baudrate = 0;
+ 
++  pgm->usbvid = 0;
++  pgm->usbpid = 0;
++  pgm->usbvendor[0] = 0;
++  pgm->usbproduct[0] = 0;
++
+   for (i=0; i<N_PINS; i++)
+     pgm->pinno[i] = 0;
+ 
+diff -Nur pgm.h pgm.h
+--- pgm.h	2010-01-19 11:39:11.000000000 +0100
++++ pgm.h	2010-09-17 10:14:32.453250000 +0200
+@@ -36,6 +36,7 @@
+ #define PGM_DESCLEN 80
+ #define PGM_PORTLEN PATH_MAX
+ #define PGM_TYPELEN 32
++#define PGM_USBSTRINGLEN 256
+ 
+ typedef enum {
+   EXIT_VCC_UNSPEC,
+@@ -60,6 +61,8 @@
+   int ppidata;
+   int ppictrl;
+   int baudrate;
++  int usbvid, usbpid;
++  char usbvendor[PGM_USBSTRINGLEN], usbproduct[PGM_USBSTRINGLEN];
+   double bitclock;    /* JTAG ICE clock period in microseconds */
+   int ispdelay;    /* ISP clock delay */
+   union filedescriptor fd;
+diff -Nur usbasp.c usbasp.c
+--- usbasp.c	2010-01-19 11:39:11.000000000 +0100
++++ usbasp.c	2010-09-17 10:30:25.703250000 +0200
+@@ -184,30 +184,18 @@
+ 
+ static int usbasp_open(PROGRAMMER * pgm, char * port)
+ {
++  char *vendorId = (pgm->usbvendor[0] == 0) ? NULL : pgm->usbvendor;
++  char *productId = (pgm->usbproduct[0] == 0) ? NULL : pgm->usbproduct;
+   usb_init();
+-
+-  if (usbOpenDevice(&PDATA(pgm)->usbhandle, USBASP_SHARED_VID, "www.fischl.de",
+-		    USBASP_SHARED_PID, "USBasp") != 0) {
+-
+-    /* check if device with old VID/PID is available */
+-    if (usbOpenDevice(&PDATA(pgm)->usbhandle, USBASP_OLD_VID, "www.fischl.de",
+-		      USBASP_OLD_PID, "USBasp") != 0) {
+-
+-      /* no USBasp found */
+-      fprintf(stderr,
+-	      "%s: error: could not find USB device "
+-	      "\"USBasp\" with vid=0x%x pid=0x%x\n",
+-  	      progname, USBASP_SHARED_VID, USBASP_SHARED_PID);
+-      exit(1);
+-
+-    } else {
+-
+-      /* found USBasp with old IDs */
+-      fprintf(stderr,
+-	      "%s: Warning: Found USB device \"USBasp\" with "
+-	      "old VID/PID! Please update firmware of USBasp!\n",
+-  	      progname);
+-    }
++
++  if (usbOpenDevice(&PDATA(pgm)->usbhandle, pgm->usbvid, vendorId,
++		    pgm->usbpid, productId) != 0) {
++    /* no USBasp found */
++    fprintf(stderr,
++            "%s: error: could not find USB device type "
++            "\"USBasp\" with vid=0x%x pid=0x%x vendor=\"%s\" product=\"%s\"\n",
++            progname, pgm->usbvid, pgm->usbpid, pgm->usbvendor, pgm->usbproduct);
++    exit(1);
+   }
+ 
+   return 0;
+diff -Nur usbasp.h usbasp.h
+--- usbasp.h	2010-01-19 11:39:11.000000000 +0100
++++ usbasp.h	2010-09-17 10:16:09.703250000 +0200
+@@ -24,13 +24,6 @@
+ 
+ #include "avrpart.h"
+ 
+-/* USB identifiers */
+-#define	USBASP_SHARED_VID   0x16C0  /* VOTI */
+-#define	USBASP_SHARED_PID   0x05DC  /* Obdev's free shared PID */
+-
+-#define	USBASP_OLD_VID      0x03EB  /* ATMEL */
+-#define	USBASP_OLD_PID	    0xC7B4  /* (unoffical) USBasp */
+-
+ /* USB function call identifiers */
+ #define USBASP_FUNC_CONNECT    1
+ #define USBASP_FUNC_DISCONNECT 2

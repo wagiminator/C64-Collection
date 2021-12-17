@@ -1,0 +1,23 @@
+ToDo before doing the alpha version release:
+
+I) Extension of the fill pattern creation:
+
+	If "-o" is not set, uniformly filled sectors are created.
+	  If "-f" is not specified a fill pattern of 0x00 is used, otherwise
+	  the value given by "-f".
+	
+	
+	If "-o" is set, original pattern creations are used
+	   If "-f" is not set, the original Commodore 1541 disk format is used
+	     (with track 1 special)
+	
+	   f=1: SpeedDOS format
+	   f=2: Dolphin-DOS format, if extended tracks, then the header fill
+	                            pattern is changed also
+	   f=... ???
+
+
+II) Done: Test script... : cbmftest.cmd
+
+
+III) Reintroducing the progress bar (difficult !)

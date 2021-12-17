@@ -1,0 +1,126 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper. 
+# GNU copyright 1997 by Joey Hess.
+#
+# This version is for a hypothetical package that builds an
+# architecture-dependant package, as well as an architecture-independent
+# package.
+
+#
+# Much in this file has been stolen from the mga_vid package
+#   -- nip@c64.org, Sun, 31 Aug 2003 19:56:29 +0200
+#
+
+# Uncomment this to turn on verbose mode. 
+#export DH_VERBOSE=1
+
+REV=$(shell expr $(KDREV) : '[0-9]*:\(.*\)' 2>/dev/null)
+ifeq ($(REV),)
+REV=$(KDREV)
+endif
+
+ifeq ($(KVERS),)
+	KVERS=$(shell uname -r)
+endif
+
+ifeq ($(KSRC),)
+	KSRC=/lib/modules/$(KVERS)/build
+endif
+
+ifneq (,$(findstring 2.4.,$(KVERS)))
+MODNAME=cbm.o
+else
+MODNAME=cbm.ko
+endif
+
+ARCH=$(shell dpkg --print-architecture)
+PKG_VERSION=$(EPOCH)$(VERSION)+$(REV)
+
+VERSION=$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)
+
+CHFILE=$(KSRC)/../opencbm-xa1541-module-$(KVERS)_$(PKG_VERSION)_$(ARCH).changes
+
+# This target verifies that we've got the needed variables passed to us.
+# If the user is using make-kpkg (like he should), it won't be a problem.
+# But - some may have a funny preference of using debian/rules directly,
+# so here it is. It's ripped from the lm-sensors rules file, so if I ever
+# meet you, David Z Maze, I'll buy you a beer. :-)
+check:
+	@if [ -z "$(KSRC)" ] ; then \
+		echo "I need KSRC! Please set it on the command line." >&2; \
+		exit 1; \
+	elif [ ! -d "$(KSRC)/include" ] ; then \
+		echo "KRSC is set to $(KRSC), but it does not have a include/" >&2; \
+		echo "subdirectory! Please fix this." >&2; \
+		exit 1; \
+	elif [ -z "$(KVERS)" ] ; then \
+		echo "KVERS is unset, please set it at the command line." >&2; \
+		exit 1; \
+	fi
+
+# This target cleans the source tree and the debian/ subdir. Also moves the
+# original debian/control template back to it's original position (thus
+# overwriting the generated one.
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean
+	
+	if [ -f debian/control.backup ]; then \
+		mv -f debian/control.backup debian/control; \
+	fi
+
+	-make -C $(KSRC) SUBDIRS=$(PWD) clean
+#	rm -f *.ko *.o cbm.mod.* build-stamp
+
+# This target builds the kernel module.
+build: build-stamp
+build-stamp: check clean
+	dh_testdir
+	dh_testroot
+	make -C $(KSRC) SUBDIRS=$(PWD) modules
+	touch build-stamp
+
+# This target installs the module to the temporary install directory.
+install:
+	dh_testdir
+	dh_testroot
+	install -m 644 -D $(MODNAME) debian/opencbm-xa1541-module-$(KVERS)/lib/modules/$(KVERS)/misc/$(MODNAME)
+
+# To conform with Debian policy.
+binary: binary-arch binary-indep
+
+# Generate a control file, and build the Debian package.
+binary-arch: check build install
+	dh_testdir
+	dh_testroot
+
+	rm -f debian/control.backup
+	mv debian/control debian/control.backup
+	sed 's/KERNEL_VERSION/$(KVERS)/g' debian/control.backup > \
+		debian/control
+	
+	dh_installdirs lib/modules/$(KVERS)/misc
+	dh_installdocs
+	dh_installmodules
+	dh_installchangelogs
+	dh_gencontrol -- -v$(PKG_VERSION)
+	dh_fixperms
+	dh_compress
+	dh_installdeb
+	dh_md5sums
+	dh_builddeb
+
+# No architecture-independent files to build.
+binary-indep:
+
+kdist_image: binary clean
+
+kdist: clean binary
+	dpkg-genchanges -b -e"$(KMAINT) <$(KEMAIL)>" -u"$(KSRC)/.." > $(CHFILE)
+	debian/rules clean
+
+kdist_configure:
+kdist_clean: clean
+
+.PHONY: check clean build install binary binary-arch binary-indep kdist_image kdist kdist_configure kdist_clean

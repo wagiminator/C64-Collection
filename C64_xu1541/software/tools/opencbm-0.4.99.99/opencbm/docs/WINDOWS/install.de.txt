@@ -1,0 +1,199 @@
+INSTALLATION VON OpenCBM
+
+WARNUNG! Wenn du schon eine ältere Version von OpenCBM auf deinem Rechner
+installiert hast, musst du diese unbedingt erst deinstallieren, bevor du eine
+neue Version installierst. Dafür gehe in das Verzeichnis, wo die alte Version
+installiert ist, und gebe instcbm --remove ein.
+
+
+Beachte: Wenn ich dir erzähle, dass du einen Befehl "ABC" eingeben sollst,
+heißt das, dass du ABC ohne die umgebenden Anführungszeichen eingeben sollst.
+
+
+
+Zuallererst muss Windows über den Treiber Bescheid wissen. Dafür müssen wir ihn
+installieren. Mache folgendes:
+
+
+- Vergewissere dich, dass ein unterstütztes Betriebssystem geladen ist und
+  läuft.
+
+- Du brauchst Administrator-Rechte auf dem Windows-Rechner, um die folgenden
+  Aktionen durchzuführen.
+
+- Zuerst musst du dich vergewissern, dass die benötigte Hardware bereitsteht.
+  Mache folgendes:
+
+  - Hole dir dein VIC 15xx Laufwerk (aus dem Keller, oder wo immer es sich
+    befindet)!
+
+  - Das Umstecken des Kabels bei eingeschalteten Geräten kann deinen PC und/oder
+    das Laufwerk beschädigen, also sei vorsichtig!
+
+  - Also schalte nun deinen PC und dein VIC 15xx Laufwerk aus!
+
+  - Verbinde dein XA1541 oder XM1541 Kabel mit deinem PC. Wenn du ein
+    Parallelkabel (XP1541) hast, schließe auch dieses an.
+
+  - Verbinde das Kabel mit deinem VIC 15xx Laufwerk.
+
+  - Schalte den PC ein.
+
+- Lade einfach das Binär-Paket herunter und entpacke es in ein beliebiges
+  Verzeichnis.
+
+- Ruf eine Kommando-Konsole auf und wechsel in das Verzeichnis, wo du die
+  Treiber entpackt hast.
+
+- Tippe "cd exe" ein.
+
+- Tippe "instcbm" ein und verfolge die Bildschirmausgaben. Deren letzte Zeile
+  sollte wie "No problems found in current configuration" lauten. Das Programm
+  könnte einen Neustart vorschlagen, den du befolgen solltest. Wenn es ihn nicht
+  vorschlägt, keine Angst: instcbm versucht das, wenn möglich, zu verhindern.
+
+- Eventuell möchtest du einen Blick auf die möglichen Optionen von instcbm
+  werfen. Sie sind abrufbar, indem du "instcbm --help" eintippst.
+
+- Wenn wir im vorigen Schritt neustarten mussten, mache folgendes:
+
+  - Öffne die Konsole und wechsel erneut in das Verzeichnis, wo du die Treiber
+    entpackt hast.
+
+  - Tippe "cd exe" ein.
+
+  - Tippe "instcbm --check" ein. Es sollte keine weitere Empfehlung für einen
+    Neustart erscheinen. Falls doch, fahre nicht fort sondern kontaktiere mich
+    stattdessen.
+
+- Wenn du eine andere Schnittstelle als LPT1 benutzen möchtest, musst du das dem
+  Treiber mitteilen. Ich nehme an, du möchtest LPTX verwenden, wobei X der
+  richtige Wert ist, dann tippe ein:
+  "instcbm --lpt=X --update"
+
+
+
+An dieser Stelle ist die Installation abgeschlossen. Trotzdem ist es ratsam
+zu überprüfen, ob die Installation wie erwartet funktioniert. Dafür mache
+Folgendes:
+
+- Nun ist es an der Zeit das Diskettenlaufwerk einzuschalten. Abhängig von der
+  Art des Kabels, das du benutzt (XA1541 oder XM1541), und dem Parallelport
+  deines PCs könnte sich dieses Laufwerk nun unaufhörlich drehen, weil es
+  andauernd resetted wird.
+
+- Tippe nun "cbmctrl reset" ein und drücke Enter. Die rote Laufwerks-LED sollte
+  aufleuchten, wenn sie es nicht sowieso schon tut, und das Laufwerk sollte
+  anfangen sich zu drehen. Nach ungefähr einer Sekunde sollte die rote LED wieder
+  ausgehen und das Laufwerk aufhören sich zu drehen.
+
+- Tippe nun "cbmctrl status 8" ein, um den Status-(Fehler-)Code des
+  angeschlossenen Diskettenlaufwerks zu bekommen. Wenn alles richtig funktioniert,
+  sollte dein Laufwerk mit seinem Identifikations-String antworten. Bei einer 1541
+  ist das in etwa "73,cbm dos v2.6 1541,00,00", während es bei einer 1571 wie "73,cbm
+  dos v3.0 1571,00,00" aussehen sollte. Die Zeile kann auch leicht variieren,
+  abhängig von der Firmware deines Laufwerks.
+
+- Tippe "cbmctrl status 8" ein, um den Status-(Fehler-)Code deines
+  Diskettenlaufwerks zu bekommen. Nachdem nun die Einschaltmeldung gelesen wurde,
+  sollte dein Laufwerk mit einem 00,ok,00,00-String antworten.
+
+- Tippe "cbmctrl detect" ein. Dieser Befehl versucht, den Typ des Laufwerks zu
+  erkennen, das mit dem Kabel verbunden ist. Du solltest das Laufwerk sehen, das
+  du besitzt.
+
+- Nun wollen wir überprüfen, ob wir irgendetwas an das Diskettenlaufwerk senden
+  können. Entferne jegliche Diskette aus dem Laufwerk und tippe "cbmctrl open 8 15
+  I0" ein. (Vergewissere dich, dass das "I" ein großgeschriebenes "I" ist. Ein
+  kleingeschriebenes "i" wird nicht funktionieren!)
+  Dieser Befehl versucht die Diskette zu initialisieren. Da wir aber keine
+  Diskette im Laufwerk haben, wird ein Fehler auftreten. Du solltest das Laufwerk
+  sich drehen hören und im Falle eines 1541, sollte der Schreib-/Lesekopf anfangen
+  zu rattern. Nach ein paar Sekunden beginnt die rote LED zu blinken, um damit
+  anzuzeigen, dass ein Fehler auftrat.
+
+- Nun tippe erneut "cbmctrl status 8" ein, um den Status-(Fehler-)Code des
+  Diskettenlaufwerks zu bekommen. Da vorher ein Fehler auftrat, sollte auch ein
+  Fehler-String angezeigt werden. Bei meinem System ist es der
+  "21,read error,18,00"-String. Desweiteren sollte die rote LED aufhören zu
+  blinken.
+
+
+Wenn du soweit gekommen bist, kannst du dir sicher sein, dass du Befehle an das
+Laufwerk senden kannst und von ihm Antworten empfangen kannst. Das ist bis hierhin
+sehr gut. Du mußt jetzt aber nicht in Panik verfallen:
+Du musst diese Befehle nicht immer und immer wieder eingeben, es sind nur Tests,
+um sicherzugehen, dass alles korrekt installiert ist.
+
+Nun, lass uns fortfahren. Wenn du eine D64-Datei oder eine Diskette bereit hast,
+kannst du versuchen, sie mit dem Kabel zu transferieren. Benutze nicht alle der
+folgenden Befehle sondern nur die, die du wirklich ausführen möchtest.
+
+
+- Wenn du eine richtige Diskette vom Laufwerk zum PC übertragen willst, benutze
+  den folgenden Befehl: "d64copy --transfer=serial2 --warp 8 A.D64", wobei du
+  A.D64 mit deinem Wunschnamen ersetzen solltest, den du gerne für die
+  resultierende Datei haben möchtest. Falls du ein Parallelkabel angeschlossen
+  hast, versuche es mal hiermit: "d64copy --transfer=parallel --warp 8 A.D64".
+
+- WARNUNG, DER FOLGENDE BEFEHL ÜBERSCHREIBT ALLES, WAS SICH AUF DER DISKETTE
+  BEFINDET, also vergewissere dich, dass du diese Diskette nicht mehr brauchst.
+  Wenn du eine D64- oder D71-Datei auf deinem PC hast und du sie auf eine neue,
+  schon formatierte Diskette schreiben möchtest, tippe
+  "d64copy --transfer=serial2 --warp A.D64 8" ein, falls die Datei A.D64 benannt
+  ist. Abermals, wenn du ein Parallelkabel hast, solltest du
+  "--transfer=parallel" ersetzen.
+
+- WARNUNG, DER FOLGENDE BEFEHL ÜBERSCHREIBT ALLES, WAS SICH AUF DER DISKETTE
+  BEFINDET, also vergewissere dich, dass du diese Diskette nicht mehr brauchst.
+  Wenn du eine Diskette hast, die du formatieren möchtest, hast du zwei
+  Möglichkeiten: Entweder benutze den Befehl "cbmctrl command 8 N0:NAME,ID" oder
+  benutze das cbmformat-Programm.
+
+
+Falls du den OpenCBM-Treiber komplett von deinem Rechner entfernen möchtest,
+verwende dazu den "instcbm --remove"-Befehl.
+
+Du kannst einen Blick auf die möglichen cbmctrl-Befehle werfen, indem du cbmctrl
+in deine Konsole eingibst. Bei den anderen Programmen bekommst du Hilfe, wenn du
+die "--help"-Option verwendest.
+
+Momentan fehlen noch Teile der Dokumentation. Auf jeden Fall findest du die
+Dokumentation in den cbm4linux docs. Dies gilt aber nicht für das instcbm-Tool,
+welches nur für Windows gilt.
+
+
+
+
+Die folgenden Optionen für das "instcbm"-Tool sind vorhanden:
+
+   instcbm
+      Installiert die DLL und den Treiber auf dem Rechner. Der Treiber und die
+      DLL werden ins Windows-System-Verzeichnis kopiert.
+
+   instcbm --nocopy
+      Installiert die DLL und den Treiber auf den Rechner. Im Unterschied zu oben
+      werden beide Dateien nicht kopiert, sondern werden dort verwendet, wo sie
+      sich befinden.
+      Wenn du diese Option benutzt, muss das Verzeichnis, wo sich die Dateien
+      befinden, für das System beim Booten erreichbar sein. Zum Beispiel sind
+      Netzwerklaufwerke, USB-Laufwerke oder FireWire-Laufwerke nicht erlaubt.
+
+   instcbm --remove
+      Entfernt (deinstalliert) die Treiber vom Rechner. Die DLL und die Treiber-Datei
+      selbst werden entfernt, falls --nocopy bei der Installation *nicht*
+      angegeben wurde.
+
+   instcbm --check
+      Überprüft, ob die Installation erfolgreich abgeschlossen wurde.
+
+   instcbm --lpt=X --update
+      (Mit X als Wert von 1 bis ...) Wähle LptX als Standard-Port.
+
+   instcbm --help
+      Zeigt eine kurze Hilfe über die möglichen Optionen.
+
+Viel Spaß!
+
+Spiro Trikaliotis.
+(Übersetzung von Stefan Pohlmann, "Pohli")

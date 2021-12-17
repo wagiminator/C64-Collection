@@ -1,0 +1,25 @@
+
+TARGETNAME=libd64copy
+TARGETPATH=../../../bin
+TARGETTYPE=LIBRARY
+
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib   \
+           $(SDK_LIB_PATH)/advapi32.lib
+
+INCLUDES=../../include;../../include/WINDOWS
+
+SOURCES=../fs.c \
+	../gcr.c \
+	../pp.c \
+	../s1.c \
+	../s2.c \
+	../std.c \
+	../d64copy.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1
+
+NTTARGETFILE0=a65

@@ -1,0 +1,100 @@
+        *=$0700
+
+TMP = $54
+
+        jmp gts         ; get track/sector - $0722
+        jmp gbyte       ;                  - $0777
+        jmp gblk        ; receive block    - $072d
+        jmp sbyte       ; send byte        - $0741
+        jmp sblk        ; send block       - $0737
+
+        lda #$04
+i0      bit $4001
+        bne i0
+        lda #$02
+        sta $4001
+        asl
+i1      bit $4001
+        beq i1
+        rts
+
+gts     jsr gbyte
+        pha
+        jsr gbyte
+        tay
+        pla
+        tax
+        rts
+
+gblk    jsr gbyte
+        sta $3000,y
+        iny
+        bne gblk
+        rts
+
+sblk    lda $3000,y
+        jsr sbyte
+        iny
+        bne sblk
+        rts
+
+sbyte   sta TMP
+        ldx #$08
+write0  lda #$01
+        lsr TMP
+        rol
+        asl
+        asl
+        asl
+        sta $66
+        sta $4001
+        lda #$01
+write1  bit $4001
+        beq write1
+        lda $66
+        eor #$08
+        sta $4001
+        lda #$01
+write3  bit $4001
+        bne write3
+        lda #$12
+        sta $4001
+        lda #$04
+write4  bit $4001
+        beq write4
+        dex
+        bne write0
+        rts
+
+gbyte   ldx #$08
+read0   lda #$04
+read1   and $4001
+        bne read1
+        ora #$10
+        sta $4001
+        lda $4001
+        and #$01
+        sta $66
+        lsr
+        rol TMP
+        lda #$18
+        sta $4001
+read2   lda $4001
+        and #$01
+        cmp $66
+        beq read2
+        lda #$10
+        sta $4001
+        lda #$04
+read3   bit $4001
+        beq read3
+        jsr sub1
+        dex
+        bne read0
+        lda TMP
+        rts
+
+sub1    lda #$12
+        sta $4001
+        rts
+

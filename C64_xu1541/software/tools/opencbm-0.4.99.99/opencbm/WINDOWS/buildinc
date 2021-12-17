@@ -1,0 +1,22 @@
+#! /bin/sh
+
+
+. WINDOWS/buildone.inc.sh
+
+funcrecurse()
+{
+	for A in *; do
+		if [ -d "$A" ]; then
+			cd $A
+			for B in *.a65; do
+				if [ "$B" != "*.a65" ]; then
+					funcbuildinc $B
+				fi
+			done
+			funcrecurse
+			cd ..
+		fi
+	done
+}
+
+funcrecurse

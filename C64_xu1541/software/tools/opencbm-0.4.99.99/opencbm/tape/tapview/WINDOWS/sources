@@ -1,0 +1,19 @@
+
+TARGETNAME=tapview
+TARGETPATH=../../../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=../../../../bin/*/libtapcap.lib \
+           $(SDK_LIB_PATH)/comdlg32.lib \
+           $(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib
+
+INCLUDES=../../../include;../../../include/WINDOWS;../../lib/cap
+
+SOURCES=../tapview.c ../fileopen.c ../tapview.rc
+
+UMTYPE=windows
+UMENTRY=winmain
+UMBASE=0x400000
+
+USE_MSVCRT=1

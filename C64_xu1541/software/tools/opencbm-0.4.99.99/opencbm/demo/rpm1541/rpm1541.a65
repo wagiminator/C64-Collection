@@ -1,0 +1,115 @@
+; Copyright (C) 1999 Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+		* = $0500
+
+		in_sync = $86		; bit 7
+		cnt_l   = $87
+		cnt_h   = $88
+
+		jmp job			; to job routine
+
+		lda #41			; better trash track 41 ;-)
+		sta $0a			; usually unused
+		lda #$e0		; execute program in buffer
+		sta $02
+wait_job	lda $02
+		bmi wait_job
+		cmp #$01
+		bne error
+		jmp $c194		; 00,OK,00,00
+error		jmp $e60a
+
+job		lda $1c00
+		ora #$08		; LED on
+		sta $1c00
+		and #$10		; WP sensor
+		bne trash
+		lda #$08		; "write protect on"
+		bne exit		; always
+
+trash		jsr $fe0e		; clear track
+
+		lda #$ff		; write sync
+		sta $1c01
+		ldy #$03
+wr_sync	      	bvc *
+		clv
+		dey
+		bne wr_sync
+
+		sty cnt_l		; reset counter
+		sty cnt_h
+
+		jsr $fe00		; read
+
+		lda $180b		; timer1 free running mode
+		pha
+		ora #$40
+		sta $180b
+
+		lda #$62		; 98+2 cycles = 100us
+		sta $1804		; timer1 low
+
+		ldx #4			; 2 revolutions => 4 transitions
+
+sync		lda $1c00		; wait for sync
+		bpl sync
+
+sync0		lda $1c00		; end of sync
+		bmi sync0
+
+		sty $1805		; start timer
+
+		sta in_sync		; sync state
+
+loop		lda $180d		; timer1 IFR
+		asl
+		bpl no_underflow
+
+		lda $1804		; reset timer flag
+		inc cnt_l
+		bne no_underflow
+		inc cnt_h
+
+no_underflow	lda $1c00
+		tay
+		eor in_sync		; sync bit changed?
+		bpl loop		; no ->
+		sty in_sync		; zone transition
+		dex
+		bne loop		; next run
+
+		pla			; restore VIA configuration
+		sta $180b
+
+		lda #$01		; no error
+exit		jmp $f969

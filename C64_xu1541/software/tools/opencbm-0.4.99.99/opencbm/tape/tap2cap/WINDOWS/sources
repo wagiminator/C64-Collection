@@ -1,0 +1,21 @@
+
+TARGETNAME=tap2cap
+TARGETPATH=../../../../bin
+TARGETTYPE=PROGRAM
+
+TARGETLIBS=../../../../bin/*/opencbm.lib    \
+           ../../../../bin/*/arch.lib       \
+           ../../../../bin/*/libtapcap.lib  \
+           ../../../../bin/*/libtapcbm.lib  \
+           ../../../../bin/*/libtapmisc.lib \
+           $(SDK_LIB_PATH)/kernel32.lib  \
+           $(SDK_LIB_PATH)/user32.lib
+
+INCLUDES=../../../include;../../../include/WINDOWS;../../lib/cap;../../lib/tap-cbm;../../lib/misc
+
+SOURCES=../tap2cap.c ../cbmtap2cap.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

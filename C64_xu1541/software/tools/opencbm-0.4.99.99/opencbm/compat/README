@@ -1,0 +1,4 @@
+DON'T USE ANY OF THESE FILES.
+
+They exist only for cbm4linux<0.3.0 source compatibility.
+Better use opencbm.h/libopencbm.a instead.

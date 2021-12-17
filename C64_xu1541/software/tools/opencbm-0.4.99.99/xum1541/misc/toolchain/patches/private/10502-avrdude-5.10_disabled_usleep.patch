@@ -1,0 +1,31 @@
+--- avrdude.h.orig	2010-01-19 11:39:11.000000000 +0100
++++ avrdude.h	2010-08-24 18:50:33.346750000 +0200
+@@ -45,8 +45,8 @@
+  #define usleep(us) Sleep(us/1000)
+  #define ANTIWARP 3
+  #define usleep(us) Sleep(us/1000*ANTIWARP)
+-*/
+ int usleep(unsigned int us);
++*/
+ 
+ #if !defined(HAVE_GETTIMEOFDAY)
+ struct timezone;
+--- ppiwin.c.orig	2010-01-19 11:39:11.000000000 +0100
++++ ppiwin.c	2010-08-24 18:52:05.643625000 +0200
+@@ -374,6 +374,7 @@
+ 
+ #endif
+ 
++/*
+ int usleep(unsigned int us)
+ {
+ 	int has_highperf;
+@@ -410,7 +411,7 @@
+ 
+     return 0;
+ }
+-
++*/
+ #endif
+ 
+ 

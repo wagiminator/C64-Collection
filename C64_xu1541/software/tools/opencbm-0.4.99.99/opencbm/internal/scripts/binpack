@@ -1,0 +1,43 @@
+#! /bin/bash
+
+VERSIONH=include/version.h
+
+# get the old versions
+VER_MAJOR="`grep \"#define OPENCBM_VERSION_MAJOR\" $VERSIONH|sed -e \"s/#define OPENCBM_VERSION_MAJOR[ ]*//\"`"
+VER_MINOR="`grep \"#define OPENCBM_VERSION_MINOR\" $VERSIONH|sed -e \"s/#define OPENCBM_VERSION_MINOR[ ]*//\"`"
+VER_SUBMINOR="`grep \"#define OPENCBM_VERSION_SUBMINOR\" $VERSIONH|sed -e \"s/#define OPENCBM_VERSION_SUBMINOR[ ]*//\"`"
+VER_BUGFIX="`grep \"#define OPENCBM_VERSION_BUGFIX\" $VERSIONH|sed -e \"s/#define OPENCBM_VERSION_BUGFIX[ ]*//\"`"
+VER_DEVEL="`grep \"#define OPENCBM_VERSION_DEVEL\" $VERSIONH|sed -e \"s/#define OPENCBM_VERSION_DEVEL[ ]*//\"`"
+
+VERSION=$VER_MAJOR.$VER_MINOR.$VER_SUBMINOR.$VER_DEVEL
+
+echo $VERSION
+
+(
+cd bin/
+for A in amd64 amd64free amd64checked i386 i386free i386checked ia64 ia64free ia64checked; do
+	if [ -d $A ]; then
+		(
+		echo $A
+		cd $A
+
+		mkdir exe/ pdb/
+		mv *.exe *.sys *.dll exe/
+		chmod 644 *.pdb
+		mv *.pdb pdb/
+
+		mv exe/cbm4w98.sys .
+		mv exe/opencbmvice.dll .
+
+		mv pdb/cbm4w98.pdb .
+		mv pdb/opencbmvice.pdb .
+
+		zip ../opencbm-$VERSION-$A.zip exe/*
+		zip ../opencbm-$VERSION-$A-pdb.zip pdb/*
+
+		mv exe/* pdb/* .
+		rmdir exe/ pdb/
+		)
+	fi
+done
+)

@@ -1,0 +1,20 @@
+--- gcc/config/avr/avr-devices.c.bak	2009-07-17 20:49:03.000000000 +0200
++++ gcc/config/avr/avr-devices.c	2010-08-03 21:44:42.812500000 +0200
+@@ -154,7 +154,6 @@ const struct mcu_type_s avr_mcu_types[]
+   { "atmega6490",           ARCH_AVR5, "__AVR_ATmega6490__",        0, 0x0100, "m6490" },
+   { "atmega16hva",          ARCH_AVR5, "__AVR_ATmega16HVA__",       0, 0x0100, "m16hva" },
+   { "atmega16hvb",          ARCH_AVR5, "__AVR_ATmega16HVB__",       0, 0x0100, "m16hvb" },
+-  { "atmega32hvb",          ARCH_AVR5, "__AVR_ATmega32HVB__",       0, 0x0100, "m23hvb" },
+   { "at90can32",            ARCH_AVR5, "__AVR_AT90CAN32__",         0, 0x0100, "can32" },
+   { "at90can64",            ARCH_AVR5, "__AVR_AT90CAN64__",         0, 0x0100, "can64" },
+   { "at90pwm216",           ARCH_AVR5, "__AVR_AT90PWM216__",        0, 0x0100, "90pwm216" },
+--- gcc/config/avr/t-avr.bak	2009-12-24 21:32:38.000000000 +0100
++++ gcc/config/avr/t-avr	2010-08-03 21:44:41.578125000 +0200
+@@ -158,7 +158,6 @@ MULTILIB_MATCHES = \
+ 	mmcu?avr5=mmcu?atmega6490 \
+ 	mmcu?avr5=mmcu?atmega16hva \
+ 	mmcu?avr5=mmcu?atmega16hvb \
+-	mmcu?avr5=mmcu?atmega32hvb \
+ 	mmcu?avr5=mmcu?at90can32 \
+ 	mmcu?avr5=mmcu?at90can64 \
+ 	mmcu?avr5=mmcu?at90pwm216 \

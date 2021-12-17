@@ -1,0 +1,106 @@
+
+I'm proud to announce version 2.13.2 of cc65. cc65 is a complete cross
+development package for 65(C)02 systems, including a powerful macro assembler,
+a C compiler, linker, librarian and several other tools.
+
+cc65 has C and runtime library support for many of the old 6502 machines,
+including
+
+  - the following Commodore machines:
+
+        VIC20
+        C16/C116 and Plus/4
+        C64
+        C128
+        CBM 510 (aka P500)
+        the 600/700 family
+        newer PET machines (not 2001).
+
+  - the Apple ][ and successors.
+
+  - the Atari 8 bit machines.
+
+  - GEOS for the C64 and C128.
+
+  - the Nintendo Entertainment System (NES).
+
+  - the Supervision console.
+
+  - the Oric Atmos.
+
+  - the Lynx Console.
+
+The libraries are fairly portable, so creating a version for other 6502s
+shouldn't be too much work.
+
+This version is a bugfix release against 2.13.1. Changes have been made in the
+following areas:
+
+  * Some error corrections in the docs.
+
+  * Added a document that describes how to use the cc65 toolset with a
+    currently unsupported hardware platform. Constributed by Bruce Reidenbach.
+
+  * Fixed crlf->lf conversion problem in .INCBIN (ca65).
+
+  * Fixed problems with 80 column mode (C128).
+
+  * Added C64 mouse driver patches by Greg King to remove "crosstalk" between
+    mouse and keyboard.
+
+  * Fixes for the ptvjoy drivers (C64, C128, VIC20) by Marco van den Heuvel.
+
+  * Fixed an optimizer problem (cc65).
+
+  * Use the drive from which the program was started as default for all
+    following file ops (Commodore machines). Patch by Oliver Schmidt.
+
+Precompiled binaries are available for the most common platforms. On many
+other host platforms, the sources compile out of the box, so you'll able to
+create your own binaries.
+
+For RedHat Enterprise Linux 5, ready made RPM packages are available. These
+packages may also work on other rpm-based Linux systems. Please note that
+there are separate RPMs for the compiler proper, the docs, and the target
+specific libraries. To develop code for one of the target machines, you need
+the compiler RPM package *and* one of the target machine packages. Be sure to
+download the documentation package if you're new to cc65.
+
+For windows users, there's a user friendly installer package (the one with the
+.exe extension). All subpackages are selectable from within the installer
+dialogue. The installer will also setup the necessary environment variables
+and start menu entries. It is recommended that Windows users choose this
+package instead of the .ZIP files.
+
+Precompiled binaries for DOS, OS/2 and Windows are available in ZIP archives.
+As with the RPM packages, you need the package for the development host system
+(Windows or whatever) *and* one or more of the target machine packages, plus
+optionally the doc package.
+
+All packages are available from the MU software FTP server:
+
+        ftp://ftp.musoftware.de/pub/uz/cc65/
+
+More information on cc65 can be found on the cc65 web page at
+
+     	http://www.cc65.org/
+
+There is also a mailing list for discussing cc65 related issues (programming,
+suggestions, bugs, ...). See
+
+        http://www.cc65.org/#List
+
+for information on how to subscribe to this list.
+
+While I'm the main developer of cc65, it is actually a joint effort. I would
+like to thank the target library developers, all the people on the cc65
+mailing list, all those sending suggestions and feedback, and even those
+bugging me for a new stable release:-) The CREDITS file is probably
+incomplete, but you know who you are.
+
+Thank you!
+
+
+       	Uz
+
+

@@ -1,0 +1,216 @@
+; xu1541+xum1541.inf
+; Copyright (c) 2010 libusb-win32 (GNU LGPL)
+
+[Strings]
+VendorName  = "OpenCBM development team"
+SourceName  = "XU1541/XUM1541 Libusb-Win32 Driver Installation Disk"
+DeviceGUID  = "{04ECF226-1023-4259-B25C-15E904D846DE}"
+
+DeviceName1 = "OpenCBM USB (generic)"
+DeviceID1   = VID_0403&PID_c632
+
+DeviceName2 = "XU1541 BIOS (V-USB)"
+DeviceID2   = VID_0403&PID_c632&REV_0100
+DeviceName3 = "XU1541 BIOS (USBtiny)"
+DeviceID3   = VID_0403&PID_c632&REV_0200
+
+DeviceName4 = "XUM1541 USB floppy adapter"
+DeviceID4   = VID_16d0&PID_0504
+DeviceName5 = "XUM1541 USB floppy adapter (USBKEY)"
+DeviceID5   = VID_16d0&PID_0504&REV_0007
+DeviceName6 = "XUM1541 USB floppy adapter (BUMBLEB)"
+DeviceID6   = VID_16d0&PID_0504&REV_0107
+DeviceName7 = "XUM1541 USB floppy adapter (ZoomFloppy)"
+DeviceID7   = VID_16d0&PID_0504&REV_0207
+DeviceName8 = "XUM1541 USB floppy adapter (OLIMEX)"
+DeviceID8   = VID_16d0&PID_0504&REV_0307
+
+; AVR DFU devices for firmware updates
+DeviceName30 = "Atmel firmware update device (ATmega32U2)"
+DeviceID30   = VID_03eb&PID_2ff0
+DeviceName31 = "Atmel firmware update device (ATmega32U4)"
+DeviceID31   = VID_03eb&PID_2ff4
+DeviceName32 = "Atmel firmware update device (AT90USB162)"
+DeviceID32   = VID_03eb&PID_2ffa
+DeviceName33 = "Atmel firmware update device (AT90USB1287)"
+DeviceID33   = VID_03eb&PID_2ffb
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = "libusb-win32 devices"
+ClassGuid   = {EB781AAF-9C70-4523-A5DF-642A87ECA567}
+Provider    = "libusb-win32"
+CatalogFile = xu1541+xum1541.cat
+DriverVer   = 01/17/2012, 1.2.6.0
+
+[ClassInstall32]
+Addreg = libusb_class_install_add_reg
+
+[libusb_class_install_add_reg]
+HKR,,,0,"libusb-win32 devices"
+HKR,,Icon,,-20
+
+[Manufacturer]
+%VendorName% = Devices, NT, NTAMD64, NTIA64
+
+;--------------------------------------------------------------------------
+; libusb-win32 files
+;--------------------------------------------------------------------------
+
+[SourceDisksNames]
+1 = %SourceName%
+
+[SourceDisksFiles.x86]
+libusb0.sys     = 1,x86
+libusb0_x86.dll = 1,x86
+
+[SourceDisksFiles.amd64]
+libusb0.sys     = 1,amd64
+libusb0.dll     = 1,amd64
+libusb0_x86.dll = 1,x86
+
+[SourceDisksFiles.ia64]
+libusb0.sys     = 1,ia64
+libusb0.dll     = 1,ia64
+libusb0_x86.dll = 1,x86
+
+[DestinationDirs]
+libusb_files_sys       = 10,system32\drivers
+libusb_files_dll       = 10,system32
+libusb_files_dll_wow64 = 10,syswow64
+libusb_files_dll_x86   = 10,system32
+
+[libusb_files_sys]
+libusb0.sys
+
+[libusb_files_dll]
+libusb0.dll
+
+[libusb_files_dll_x86]
+libusb0.dll, libusb0_x86.dll
+
+[libusb_files_dll_wow64]
+libusb0.dll, libusb0_x86.dll
+
+;--------------------------------------------------------------------------
+; libusb-win32 device driver
+;--------------------------------------------------------------------------
+
+[LIBUSB_WIN32_DEV.NT]
+CopyFiles = libusb_files_sys, libusb_files_dll_x86
+
+[LIBUSB_WIN32_DEV.NTAMD64]
+CopyFiles = libusb_files_sys, libusb_files_dll, libusb_files_dll_wow64
+
+[LIBUSB_WIN32_DEV.NTIA64]
+CopyFiles = libusb_files_sys, libusb_files_dll, libusb_files_dll_wow64
+
+[LIBUSB_WIN32_DEV.NT.HW]
+DelReg = libusb_del_reg_hw
+AddReg = libusb_add_reg_hw
+
+[LIBUSB_WIN32_DEV.NTAMD64.HW]
+DelReg = libusb_del_reg_hw
+AddReg = libusb_add_reg_hw
+
+[LIBUSB_WIN32_DEV.NTIA64.HW]
+DelReg = libusb_del_reg_hw
+AddReg = libusb_add_reg_hw
+
+[LIBUSB_WIN32_DEV.NT.Services]
+AddService = libusb0, 0x00000002, libusb_add_service
+
+[LIBUSB_WIN32_DEV.NTAMD64.Services]
+AddService = libusb0, 0x00000002, libusb_add_service
+
+[LIBUSB_WIN32_DEV.NTIA64.Services]
+AddService = libusb0, 0x00000002, libusb_add_service
+
+; Older versions of this .inf file installed filter drivers. They are not
+; needed any more and must be removed
+[libusb_del_reg_hw]
+HKR,,LowerFilters
+HKR,,UpperFilters
+
+; libusb-win32 device properties
+[libusb_add_reg_hw]
+HKR,,SurpriseRemovalOK,0x00010001,1
+
+; (Optional) the usb configuration value to select when this device
+; is started. If this key does not exist the first config is selected.
+;HKR,,InitialConfigValue,0x00010001,<your config value>
+
+;--------------------------------------------------------------------------
+; libusb-win32 service
+;--------------------------------------------------------------------------
+
+[libusb_add_service]
+DisplayName   = "libusb-win32 - Kernel Driver 01/17/2012 1.2.6.0"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 0
+ServiceBinary = %12%\libusb0.sys
+
+;--------------------------------------------------------------------------
+; libusb-win32 devices
+;--------------------------------------------------------------------------
+
+; Hardware IDs in a 'Devices' section can be installed by libusb-win32
+; using usb_install_driver_np(), usb_install_driver_np_rundll(), or the
+; inf-wizard utility.
+;
+[Devices]
+%DeviceName1% = LIBUSB_WIN32_DEV, USB\%DeviceID1%
+%DeviceName2% = LIBUSB_WIN32_DEV, USB\%DeviceID2%
+%DeviceName3% = LIBUSB_WIN32_DEV, USB\%DeviceID3%
+%DeviceName4% = LIBUSB_WIN32_DEV, USB\%DeviceID4%
+%DeviceName5% = LIBUSB_WIN32_DEV, USB\%DeviceID5%
+%DeviceName6% = LIBUSB_WIN32_DEV, USB\%DeviceID6%
+%DeviceName7% = LIBUSB_WIN32_DEV, USB\%DeviceID7%
+%DeviceName8% = LIBUSB_WIN32_DEV, USB\%DeviceID8%
+%DeviceName30% = LIBUSB_WIN32_DEV, USB\%DeviceID30%
+%DeviceName31% = LIBUSB_WIN32_DEV, USB\%DeviceID31%
+%DeviceName32% = LIBUSB_WIN32_DEV, USB\%DeviceID32%
+%DeviceName33% = LIBUSB_WIN32_DEV, USB\%DeviceID33%
+
+[Devices.NT]
+%DeviceName1% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID1%
+%DeviceName2% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID2%
+%DeviceName3% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID3%
+%DeviceName4% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID4%
+%DeviceName5% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID5%
+%DeviceName6% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID6%
+%DeviceName7% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID7%
+%DeviceName8% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID8%
+%DeviceName30% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID30%
+%DeviceName31% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID31%
+%DeviceName32% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID32%
+%DeviceName33% = LIBUSB_WIN32_DEV.NT, USB\%DeviceID33%
+
+[Devices.NTAMD64]
+%DeviceName1% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID1%
+%DeviceName2% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID2%
+%DeviceName3% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID3%
+%DeviceName4% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID4%
+%DeviceName5% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID5%
+%DeviceName6% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID6%
+%DeviceName7% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID7%
+%DeviceName8% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID8%
+%DeviceName30% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID30%
+%DeviceName31% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID31%
+%DeviceName32% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID32%
+%DeviceName33% = LIBUSB_WIN32_DEV.NTAMD64, USB\%DeviceID33%
+
+[Devices.NTIA64]
+%DeviceName1% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID1%
+%DeviceName2% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID2%
+%DeviceName3% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID3%
+%DeviceName4% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID4%
+%DeviceName5% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID5%
+%DeviceName6% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID6%
+%DeviceName7% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID7%
+%DeviceName8% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID8%
+%DeviceName30% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID30%
+%DeviceName31% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID31%
+%DeviceName32% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID32%
+%DeviceName33% = LIBUSB_WIN32_DEV.NTIA64, USB\%DeviceID33%

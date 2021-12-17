@@ -1,0 +1,26 @@
+xum1541cfg: a configuration utility for the xum1541 Commodore floppy adapters
+    By Nate Lawson <nate@root.org>
+    ==============================
+
+This utility will help you configure and update various xum1541 devices,
+notably the ZoomFloppy. These devices connect a Commodore floppy drive
+to a PC or Mac via USB so that files or entire disk images can be read and
+written.
+
+
+Compiling
+===
+* Linux, FreeBSD, or Mac OS X
+
+    make -f LINUX/Makefile
+
+* Windows
+
+    Start up a DDK build prompt
+    cd WINDOWS
+    build /c
+
+
+Usage
+===
+Run "xum1541cfg" without any arguments to get more info.

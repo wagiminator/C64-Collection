@@ -1,0 +1,9 @@
+SUBSYSTEM!="usb_device", ACTION!="add", GOTO="opencbm_rules_end"
+
+# xum1541
+SUBSYSTEM=="usb", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="0504", MODE="0664", GROUP="users"
+
+# xum1541 in DFU mode
+SUBSYSTEM=="usb", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2ff0", MODE="0664", GROUP="users"
+
+LABEL="opencbm_rules_end"

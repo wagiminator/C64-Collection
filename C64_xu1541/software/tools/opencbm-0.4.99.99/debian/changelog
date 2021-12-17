@@ -1,0 +1,44 @@
+opencbm (0.4.99.94-1) unstable; urgency=low
+
+  * Fix for newer cc65 versions to allow compilation again.
+
+ -- Spiro Trikaliotis <cbm4in@trikaliotis.net>  Sat, 07 Jan 2012 13:11:50 +0100
+
+opencbm (0.4.99.93-3) unstable; urgency=low
+
+  * Update.
+
+ -- Spiro Trikaliotis <cbm4in@trikaliotis.net>  Sun, 01 Jan 2012 21:25:17 +0100
+opencbm (0.4.99.93-2) unstable; urgency=low
+
+  * Update.
+
+ -- Spiro Trikaliotis <cbm4in@trikaliotis.net>  Sat, 31 Dec 2011 22:13:44 +0100
+opencbm (0.4.99.93-1) unstable; urgency=low
+
+  * Update.
+
+ -- Spiro Trikaliotis <cbm4in@trikaliotis.net>  Thu, 21 Dec 2011 23:04:44 +0100
+cbm4linux (0.4.0-1) unstable; urgency=low
+
+  * new version
+
+ -- Spiro Trikaliotis <cbm4in@trikaliotis.net>  Fri, 28 Apr 2006 19:31:44 +0200
+cbm4linux (0.3.3-1) unstable; urgency=low
+
+  * version bump
+
+ -- Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>  Sat, 28 Aug 2004 20:40:44 +0200
+
+cbm4linux (0.3.2-2) unstable; urgency=low
+
+  * kernel 2.6 module build fixes
+
+ -- Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>  Fri, 13 Feb 2004 18:33:28 +0100
+
+cbm4linux (0.3.2-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>  Sun, 31 Aug 2003 14:16:39 +0200
+

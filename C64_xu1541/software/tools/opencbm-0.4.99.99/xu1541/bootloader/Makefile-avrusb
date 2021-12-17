@@ -1,0 +1,93 @@
+# Name: Makefile
+# Project: AVRUSBBoot
+# Modified by: Thomas Fischl
+# Modified: 2006-06-25
+
+# Original file by: Christian Starkjohann
+# Creation Date: 2004-12-29
+# Tabsize: 4
+# Copyright: (c) 2005 by OBJECTIVE DEVELOPMENT Software GmbH
+# License: Proprietary, free under certain conditions. See Documentation.
+
+include Makefile.common
+LDFLAGS += $(LDFLAGS_BOOTLOADER)
+
+SERIAL = `echo /dev/tty.KeySerial*`
+UISP = uisp -dprog=avr910 -dserial=$(SERIAL) -dpart=auto
+# The two lines above are for "uisp" and the AVR910 serial programmer connected
+# to a Keyspan USB to serial converter to a Mac running Mac OS X.
+# Choose your favorite programmer and interface.
+
+COMPILE = avr-gcc -Wall -Os -Iusbdrv -I. -I$(XU1541_INCLUDE) -mmcu=atmega8
+#-DDEBUG_LEVEL=2
+# NEVER compile the final product with debugging! Any debug output will
+# distort timing so that the specs can't be met.
+
+OBJECTS := usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o $(OBJECTS)
+# Note that we link usbdrv.o first! This is required for correct alignment of
+# driver-internal global variables!
+
+
+# symbolic targets:
+all:	bootldr-avrusb.hex
+
+.INTERMEDIATE: $(OBJECTS)
+
+.c.o:
+	$(COMPILE) -c $< -o $@
+
+.S.o:
+	$(COMPILE) -x assembler-with-cpp -c $< -o $@
+# "-x assembler-with-cpp" should not be necessary since this is the default
+# file type for the .S (with capital S) extension. However, upper case
+# characters are not always preserved on Windows. To ensure WinAVR
+# compatibility define the file type manually.
+
+.c.s:
+	$(COMPILE) -S $< -o $@
+
+flash:	all
+	$(UISP) --erase --upload --verify if=bootldr-avrusb.hex
+
+program: bootldr-avrusb.hex
+	avrdude -c stk200 -p atmega8 -U lfuse:w:0x9f:m -U hfuse:w:0xc8:m -U flash:w:bootldr-avrusb.hex
+
+program-usb: bootldr-avrusb.hex
+	avrdude -c usbasp -p atmega8 -U lfuse:w:0x9f:m -U hfuse:w:0xc8:m -U flash:w:bootldr-avrusb.hex
+
+# Fuse high byte:
+# 0xc8 = 1 1 0 0   1 0 0 0 <-- BOOTRST (boot reset vector at boot code)
+#        ^ ^ ^ ^   ^ ^ ^------ BOOTSZ0
+#        | | | |   | +-------- BOOTSZ1
+#        | | | |   + --------- EESAVE (don't preserve EEPROM over chip erase)
+#        | | | +-------------- CKOPT (full output swing)
+#        | | +---------------- SPIEN (allow serial programming)
+#        | +------------------ WDTON (WDT not always on)
+#        +-------------------- RSTDISBL (reset pin is enabled)
+# Fuse low byte:
+# 0x9f = 1 0 0 1   1 1 1 1
+#        ^ ^ \ /   \--+--/
+#        | |  |       +------- CKSEL 3..0 (external >8M crystal)
+#        | |  +--------------- SUT 1..0 (crystal osc, BOD enabled)
+#        | +------------------ BODEN (BrownOut Detector enabled)
+#        +-------------------- BODLEVEL (2.7V)
+
+clean:
+	rm -f bootldr-avrusb.lst bootldr-avrusb.obj bootldr-avrusb.cof bootldr-avrusb.list bootldr-avrusb.map bootldr-avrusb.bin *.o usbdrv/*.o bootldr-avrusb.s usbdrv/oddebug.s usbdrv/usbdrv.s *~
+
+# file targets:
+bootldr-avrusb.bin:	$(OBJECTS)
+	$(COMPILE) -o bootldr-avrusb.bin $(OBJECTS) $(LDFLAGS)
+
+bootldr-avrusb.hex:	bootldr-avrusb.bin
+	rm -f $@
+	avr-objcopy -j .text -j .data -j .textadd -j .textbiostable -O ihex $< $@
+#	./checksize bootldr-avrusb.bin
+# do the checksize script as our last action to allow successful compilation
+# on Windows with WinAVR where the Unix commands will fail.
+
+disasm:	bootldr-avrusb.bin
+	avr-objdump -d bootldr-avrusb.bin
+
+cpp:
+	$(COMPILE) -E main.c

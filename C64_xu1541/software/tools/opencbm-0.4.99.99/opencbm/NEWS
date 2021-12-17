@@ -1,0 +1,122 @@
+These are the NEWS for cbm4linux ONLY!
+
+This file is discontinued, look in the documentation instead (see first
+point for version 0.4.0)
+
+version 0.4.0:
+- cbm4win and cbm4linux have been re-joined to opencbm; for the NEWS,
+  have a look at the documentation (http://opencbm.trikaliotis.net/,
+  or with "info opencbm").
+
+version 0.3.3 (NEVER RELEASED!)
+- documentation in --help for d64copy and cbmcopy fixed: now, it is clearly
+  stated that a XP cable must be used in combination with a serial cable, not
+  as only one.  (Spiro Trikaliotis)
+- fixed crash with unkown long options in d64copy, cbmformat and maybe cbmcopy
+  (Spiro Trikaliotis)
+- "cbmctrl upload" accepts "-" as filename now (read from stdin)
+- "cbmctrl download" takes optionally a file name argument (Spiro Trikaliotis)
+- libd64copy failed to recognize .d71 images as valid images. Because of this,
+  you could not write a .d71 image back to a real floppy drive
+- d64copy: If you copy a disk to an image which already exists, the error
+  information was not removed from the file if necessary. This is fixed now.
+  (Spiro Trikaliotis)
+- libd64copy: Fixed a crash on exit of d64copy if a .d64 file grows.
+- parport_enumerate()-fix for kernels>=2.6.4
+- new ioctl CBMCTRL_CLEAR_EOI and API function cbm_clear_eoi() (Robert Norris)
+- minor (still compatible) API changes (Spiro Trikaliotis)
+- cbmformat: make sure disk name is 0-terminated (Spiro Trikaliotis)
+
+version 0.3.2:
+- we're debianized now
+- reset line can now be controlled through cbm_iec_{set,release}
+- prepared for the 2.6 kernel series
+- new module parameter 'hold_clk'
+- cbmcopy hang-at-exit-bug fixed
+- gcc 3.3 fixes (Count Zero, Andreas Boose)
+- RPM .spec file tweaks (allows for non-root build)
+- 1571 w/ XP1571 hang fixed
+- cbm{copy,read,write} didn't understand '-f' ('--file-type' works, though)
+  (reported by Ullrich von Bassewitz)
+
+version 0.3.1:
+- a few compilation fixes for various distros (RH 7.1, slackware 8.0,
+  SuSE 7.3) by me and Kees Jongenburger
+
+version 0.3.0:
+
+- the fast file copier (cbmcopy/cbmread/cbmwrite) for 1541/1570/1571/1581
+  drives has landed.
+- driver module uses generic parport driver by default
+- libopencbm is a shared library now and contains most of the d64copy and
+  cbmwrite code
+- an experimental perl API has arrived
+- d64copy handles error information
+- support for odd-sized .d64 images in d64copy
+- head movement optimization for 1571 in double double sided mode
+- better error handling in d64copy
+- cbmctrl 'detect' command added
+
+version 0.2.5a:
+
+- compilation fix for kernel 2.4.10
+
+version 0.2.5:
+
+- .d71 support in d64copy, all modes except warp
+- cbmformat comes with a ugly progress indicator (-p option)
+- minor Makefile fixes
+
+version 0.2.4:
+
+- SGML documentation to create Texinfo and HTML docs
+- 1571/2MHz support in d64copy, Turbo and Warp mode
+- XP1571 support in d64copy
+- compiles for Linux 2.4.0 kernel
+- cbmupload and cbmdownload merged into cbmctrl
+- cbm4linux.spec file to build binary RPMs
+
+version 0.2.3:
+
+- some config.make/Makefile tweaks
+- new ioctl's: CBMCTRL_IEC_WAIT (experimental), CBMCTRL_GET_EOI
+- cbmctrl: `dir´ command fixed for devices other than 8
+- `cbm.h´ renamed to `cbm4linux.h´, `libcbm.a´ renamed to `libcbm4linux.a´.
+  Both files get installed systemwide in $(INCDIR) resp. $(LIBDIR)
+- `xa´ not mandatory any more, as suggested by Ullrich von Bassewitz.
+  Preassembled 6502 binaries included.
+- (Forgotten) device locking added. Pointed out by Ullrich von Bassewitz.
+- kernel module: #include <linux/config.h> and <linux/modversions.h> (the
+  latter one #ifdef CONFIG_MODVERSION)
+- default interleave values increased by one, should be more reasonable now
+
+version 0.2.2:
+
+- CABLE description fixed (thanks, Joe)
+- d64copy: added `-b´ and `-B´ options. Poorly tested.
+- d64copy.c: GCR stuff moved to d64copy/gcr.c, code cleanup
+- cbmdownload: fixed byte count
+- cbmctrl: new command `dir´, no need for petcat any more
+- kernel module: use save_flags()/restore_flags() instead of cli()/sti(),
+  module description added
+
+version 0.2.1:
+
+- XA1541/XM1541 support
+- ports in PS/2 mode should work now
+- support for 40-track images in d64copy and cbmformat
+- new utilities: cbmdownload, cbmupload
+
+version 0.2.0a:
+
+- bugfix: writing an image with `serial2´ and `turbo' should work now
+
+version 0.2.0:
+
+- fast transfer routines in d64copy (serial1, serial2, parallel)
+- source tree restructured
+- new utility: cbmformat
+
+version 0.1.0:
+
+- initial release

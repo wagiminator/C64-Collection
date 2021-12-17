@@ -1,0 +1,15 @@
+TARGETNAME=libwnt
+TARGETPATH=../../../../bin
+TARGETTYPE=DRIVER_LIBRARY
+USE_PDB=1
+
+BROWSERFILE=libwinnt.bsc -n
+
+# !if "$(DDK_TARGET_OS)"!="WinXP"
+!if $(_NT_TARGET_VERSION) < 0x0501
+C_DEFINES=$(C_DEFINES) -DCSQ_STATIC=1 -DCOMPILE_W2K_API=1
+!endif
+
+INCLUDES=../../include;../../include/WINDOWS;../../../include;../../../include/WINDOWS;../../libcommon
+
+SOURCES= 	../processor.c

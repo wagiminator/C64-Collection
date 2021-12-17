@@ -1,0 +1,119 @@
+        *=$0700
+
+        jmp gts         ; get track/sector  $072c
+        jmp gbyte       ;                   $0740
+        jmp gblk        ; receive block     $0737
+        jmp sbyte       ; send byte         $0760
+        jmp sblk        ; send block        $078b 
+
+        lda #$04
+        jsr br3
+        jsr $81ce
+        jsr $81b2
+        lda #$01
+        sta $4004
+        lda #$00
+        sta $4005
+        lda #$08
+        sta $400d
+        jmp br5
+
+gts     jsr gbyte
+        pha
+        jsr gbyte
+        tay
+        pla
+        tax
+        rts
+
+gblk    jsr gbyte
+        sta ($30),y
+        iny
+        bne gblk
+        rts
+
+gbyte   lda #$04
+        jsr br4
+        bit $400d
+        jsr br6
+        lda #$08
+br1     bit $400d
+        beq br1
+        lda $400c
+        pha
+        lda #$04
+        jsr br3
+        jsr br5
+        pla
+        rts
+
+sbyte   pha
+        lda #$04
+        jsr br4
+        jsr br7
+        lda #$01
+        jsr br4
+        jsr $81ce
+        jsr br6
+        lda #$04
+        jsr br4
+        pla
+        sta $400c
+        lda #$04
+        jsr br3
+        jsr br7
+        jsr $81b2
+        jmp br5
+
+sblk    lda #$04
+        jsr br4
+        jsr br7
+        lda #$01
+        jsr br4
+        jsr $81ce
+        jmp br8
+
+br2     lda $400e
+        and #$bf
+        sta $400e
+        jsr br5
+        lda #$04
+        jsr br4
+        jsr br7
+        lda #$01
+        jsr br4
+        lda $400e
+        ora #$40
+        sta $400e
+br8     jsr br6             ; $07be
+        lda #$04
+        jsr br4
+        lda ($30),y
+        sta $400c
+        lda #$04
+        jsr br3
+        jsr br7
+        iny
+        bne br2
+        jsr $81b2
+        jmp br5
+
+br3     bit $1800           ; $07dc
+        bne br3
+        rts
+
+br4     bit $1800           ; $07e2
+        beq br4
+        rts
+
+br5     lda #$02            ; $07e8
+        .byte $2c
+
+br6     lda #$00            ; $07eb
+        sta $1800
+        rts
+
+br7     lda #$08            ; $07f1
+        sta $1800
+        rts
+

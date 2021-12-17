@@ -1,0 +1,220 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+        * = $0500
+
+	tr = $0a
+	se = tr+1
+
+	hdrbuf	   = $24
+	l4b	   = $4b
+	dbufptr	   = $31
+	n_sectors  = $43
+	retry_mode = $6a
+        drv        = $7f
+	bump_cnt   = $8d
+	tmflag     = $90
+	scount     = $92
+        buf        = $f9
+
+	rdgcr      = $0146
+	retry	   = $0180
+
+	trackmap   = $0400
+
+	get_ts     = $0700
+	get_byte   = $0703
+	send_byte  = $0709
+	send_block = $070c
+	init	   = $070f
+
+	jmp main
+
+	jsr init
+	ldy #$1b
+i0	lda $f4d1,y
+	sta rdgcr,y
+	dey
+	bpl i0
+	ldy #$36
+i1	lda $d5f8,y
+	sta retry,y
+	dey
+	bpl i1
+	lda #$56
+	sta rdgcr+1
+	lda #$60
+	sta rdgcr+$1c
+	sta retry+$37
+	ldx drv
+	lda $feca,x
+	sta $026d
+	lda #$01
+	sta $1c,x
+start	lda #$02
+	sta buf
+	sta bump_cnt
+	sei
+	jsr get_ts	; get
+	stx tr		; track and
+	sty scount 	; number of sectors
+	cli
+nexttr	lda #$00
+	sta se
+	sta tmflag
+exec	lda tr
+	beq done
+	ldx buf
+	lda #$e0
+	jsr $d57d
+wait	lda $00,x	; execute job
+	bmi wait
+check	beq start	; no error
+	sta l4b
+	jsr $d6a6	; retry
+	bcc check
+	bit retry_mode
+	bvs noht
+	jsr retry
+	bcc check
+noht	bit retry_mode
+	bmi nobump
+	dec bump_cnt
+	beq nobump
+	lda #$c0
+	jsr $d57d
+	jsr $d599
+	beq exec
+nobump	ldy #$00
+findse	lda trackmap,y
+	beq foundse
+	iny
+	bne findse
+foundse	tya
+	sei
+	jsr send_byte
+	lda l4b
+	jsr send_byte
+	cli
+	jmp start
+done	sta $1800		; A == 0
+	jmp $c194
+
+main	lda tr
+	cmp $fed7
+	bcc legal
+	lda $1c00
+	and #$9f
+	sta $1c00
+	lda #$11
+	sta n_sectors
+legal	lda #$03
+	sta dbufptr
+	lda tmflag
+	bmi tmok
+	ldy #$00
+rcvtm	jsr get_byte
+	sta trackmap,y
+	iny
+	cpy n_sectors
+	bne rcvtm
+	lda #$80
+	sta tmflag
+tmok	ldx #$5a
+	stx l4b
+	sei
+find	ldx #$00
+	lda #$52
+	sta hdrbuf
+	jsr $f556
+sync	bvc sync
+	clv
+	lda $1c01
+	cmp hdrbuf
+	beq rdhdr
+next	dec l4b
+	bne find
+	lda #$02
+	jmp $f969
+rdhdr	bvc rdhdr
+	clv
+	lda $1c01
+	sta hdrbuf+1,x
+	inx
+	cpx #$09
+	bne rdhdr
+	lda hdrbuf+3
+	and #$7c
+	lsr
+	lsr
+	tax
+	lda $f8c0,x
+	sta se
+	lda hdrbuf+2
+	and #$0f
+	rol hdrbuf+3
+	rol
+	tax
+	lda $f8a0,x
+	ora se
+	sta se
+	cmp n_sectors
+	bcs next
+	jsr rdgcr
+	ldx se
+	lda trackmap,x
+	bne next
+	lda $180f	; 2 MHz
+	pha
+	ora #$20
+	sta $180f
+	inc trackmap,x
+	lda $026d
+	eor $1c00
+	sta $1c00
+	txa
+	jsr send_byte
+	lda #$00
+	tay
+	jsr send_byte
+	jsr send_block
+	iny
+	sty dbufptr
+	ldy #$ba
+	jsr send_block
+	pla
+	sta $180f
+	dec scount
+	bne jmpmain
+	lda #$00
+	jmp $f969
+
+jmpmain jmp main

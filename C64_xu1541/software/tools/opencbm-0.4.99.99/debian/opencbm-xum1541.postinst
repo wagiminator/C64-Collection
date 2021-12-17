@@ -1,0 +1,14 @@
+#! /bin/sh
+# postinst script for opencbm-xum1541
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+if [ "$1" = "configure" ]; then
+	/usr/lib/opencbm/install_plugin.sh install xum1541
+fi
+
+#DEBHELPER#
+
+exit 0

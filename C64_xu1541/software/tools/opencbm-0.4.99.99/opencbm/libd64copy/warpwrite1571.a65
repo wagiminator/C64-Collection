@@ -1,0 +1,162 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+	* = $0500
+
+	tr = $0a
+	se = tr+1
+
+	drv = $7f
+	buf = $f9
+
+	dbufptr	   = $31
+	bump_cnt   = $8d
+	n_sectors  = $43
+	retry_flag = $90
+	retry_mode = $6a
+
+	write = $0146
+	retry = $06c0
+
+	get_ts     = $0700
+	get_byte   = $0703
+	get_block  = $0706
+	send_byte  = $0709
+	init	   = $070f
+
+	jmp main
+
+	jsr init
+	ldy #$5e
+i0	lda $f57a,y
+	sta write,y
+	dey
+	bpl i0
+	ldy #$36
+i1	lda $d5f8,y
+	sta retry,y
+	dey
+	bpl i1
+	lda #$2c
+	sta write+$0c
+	lda #$60
+	sta write+$5f
+	sta retry+$37
+	ldx drv
+	lda $feca,x
+	sta $026d
+	lda #$01
+	sta $1c,x
+start	lda #$00
+	sta retry_flag
+	lda #$02
+	sta buf
+	sta bump_cnt
+	sei
+	jsr get_ts
+	stx tr
+	sty se
+	cli
+exec	lda tr
+	beq done
+	ldx buf
+	lda #$e0
+	jsr $d57d
+wait	lda $00,x
+	bmi wait
+check	beq exec
+	cmp #$08
+	beq nobump
+	sta retry_flag
+	jsr $d6a6
+	bcc check
+	bit retry_mode
+	bvs noht
+	jsr retry
+	bcc check
+noht	bit retry_mode
+	bmi nobump
+	dec bump_cnt
+	beq nobump
+	lda #$c0
+	jsr $d57d
+	jsr $d599
+	bne exec
+nobump	sei
+	jsr send_byte
+	cli
+	jmp start
+done	sta $1800	; A == 0
+	jmp $c194
+
+main	lda tr
+	cmp $fed7
+	bcc legal
+	lda $1c00
+	and #$9f
+	sta $1c00
+	lda #$11
+	sta n_sectors
+legal	lda retry_flag
+	bne isretry
+	lda $180f
+	pha
+	ora #$20
+	sta $180f	; 2 MHz
+	jsr get_byte
+	sta $01bb
+	lda #$01
+	sta dbufptr
+	ldy #$bc
+	jsr get_block
+	lda #$03
+	sta dbufptr
+	jsr get_block
+	pla
+	sta $180f
+isretry	lda #$03
+	sta dbufptr
+	jsr write
+	lda $026d
+	eor $1c00
+	sta $1c00
+	lda #$0
+	sta retry_flag
+	jsr send_byte
+	lda #$2
+	sta bump_cnt
+	jsr get_ts
+	cpx tr
+	stx tr
+	sty se
+	beq legal
+	lda #$00
+	jmp $f969

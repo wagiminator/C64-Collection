@@ -1,0 +1,20 @@
+TARGETNAME=cbm4nt
+TARGETPATH=../../../bin
+TARGETTYPE=DRIVER
+USE_PDB=1
+
+C_DEFINES=$(C_DEFINES) -DWNT4=1 -DCSQ_STATIC=1
+
+TARGETLIBS=	$(DDK_LIB_PATH)/csq.lib \
+		../../../bin/*/libiec.lib \
+		../../../bin/*/libwnt.lib \
+		../../../bin/*/libcommon.lib
+
+BROWSERFILE=nt4driver.bsc -n
+
+INCLUDES=../include;../include/WINDOWS;../../include;../../include/WINDOWS;../libcommon
+
+SOURCES= 	LoadUnload.c \
+		PortEnum.c \
+		PortAccessNt4.c \
+		cbm4nt.rc

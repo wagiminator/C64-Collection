@@ -1,0 +1,19 @@
+
+;
+; Maciej 'YTM/Elysium' Witkowiak
+;
+; 25.12.1999, 2.1.2003
+
+; char FindFile  (char *myName);
+
+	    .import setoserror
+	    .export _FindFile
+
+	    .include "../inc/jumptab.inc"
+	    .include "../inc/geossym.inc"
+	
+_FindFile:
+	sta r6L
+	stx r6H
+	jsr FindFile
+	jmp setoserror

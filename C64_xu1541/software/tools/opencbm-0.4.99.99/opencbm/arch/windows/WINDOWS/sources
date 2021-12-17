@@ -1,0 +1,24 @@
+
+TARGETNAME=arch
+TARGETPATH=../../../../bin
+TARGETTYPE=LIBRARY
+
+INCLUDES=../../../include;../../../include/WINDOWS
+
+C_DEFINES = $(C_DEFINES) /DHAVE_STRING_H=1
+
+
+
+SOURCES=../debug.c \
+        ../ctrlbreak.c \
+        ../dbghelp.c \
+        ../error.c \
+        ../file.c \
+        ../getopt.c \
+        ../getopt1.c \
+        ../getopt_init.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

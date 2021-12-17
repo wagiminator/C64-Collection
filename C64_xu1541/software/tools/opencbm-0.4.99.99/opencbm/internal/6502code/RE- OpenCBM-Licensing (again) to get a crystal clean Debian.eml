@@ -1,0 +1,200 @@
+Received: from emx03.educatio.hu (emx03.educatio.hu [193.225.215.131])
+	by advm2.GM.FH-Koeln.DE (8.13.1/8.13.1) with ESMTP id n11Hcw5Z081134
+	(version=TLSv1/SSLv3 cipher=RC4-SHA bits=128 verify=NO)
+	for <wm0612@gm.fh-koeln.de>; Sun, 1 Feb 2009 18:38:58 +0100
+Received: from hq-mail.iroda.educatio.hu (10.0.255.27) by
+ hq-mailedge.iroda.educatio.hu (172.16.1.5) with Microsoft SMTP Server (TLS)
+ id 8.1.311.2; Sun, 1 Feb 2009 18:17:27 +0100
+Received: from hq-mail.iroda.educatio.hu ([10.0.255.27]) by
+ hq-mail.iroda.educatio.hu ([10.0.255.27]) with mapi; Sun, 1 Feb 2009 18:15:21
+ +0100
+From: =?iso-8859-1?Q?Kov=E1cs_Bal=E1zs?= <Kovacs.Balazs@educatio.hu>
+To: Wolfgang Moser <wm0612@gm.fh-koeln.de>
+CC: Spiro Trikaliotis <cbm4win@trikaliotis.net>,
+        "fbriere@fbriere.net"
+	<fbriere@fbriere.net>
+Date: Sun, 1 Feb 2009 18:14:16 +0100
+Subject: RE: OpenCBM-Licensing (again) to get a crystal clean Debian
+ packaging
+Thread-Topic: OpenCBM-Licensing (again) to get a crystal clean Debian
+ packaging
+Thread-Index: AcmEZ+6aNi7nwZpVRD6wvZVqkpkfPAAIpCwQ
+Message-ID: <21A94BC0E182DB4A8A8FB88D1F82592D0A573A808B@hq-mail.iroda.educatio.hu>
+In-Reply-To: <Pine.A41.4.60.0902011305100.38204@advm2.GM.FH-Koeln.DE>
+Accept-Language: en-US, hu-HU
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+acceptlanguage: en-US, hu-HU
+Content-Type: multipart/alternative;
+	boundary="_000_21A94BC0E182DB4A8A8FB88D1F82592D0A573A808Bhqmailirodaed_"
+MIME-Version: 1.0
+X-Greylist: Delayed for 00:24:06 by milter-greylist-1.6 (advm2.GM.FH-Koeln.DE [139.6.57.8]); Sun, 01 Feb 2009 18:38:58 +0100 (NFT)
+X-Virus-Scanned: ClamAV 0.91.2/8934/Sun Feb  1 14:58:06 2009 on advm2
+X-Virus-Status: Clean
+
+
+--_000_21A94BC0E182DB4A8A8FB88D1F82592D0A573A808Bhqmailirodaed_
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Hi guys,
+
+My intentions with the strict license were to not allow people to make (dir=
+ectly or indirectly) profit from my work; that's one thing I'd really hate =
+to see. (On a side note: see that ramswell guy on comp.sys.cbm for an excel=
+lent example of a person I wouldn't like to see touch my work at all!) But =
+you're right, nobody gives a fuck about Commodore stuff anymore, :-( or :-)=
+ so it doesn't make much sense to be so strict about it. It would be nice i=
+f _I_ could release the full source of the Commander under GPL or some othe=
+r similar free license but my hands are tied because of the inclusion of Tu=
+rbo Vision - Turbo/Borland Pascal's text-based UI, which I heavily modified=
+, though - that has still not been released by Inprise, although I've been =
+bombarding them with a request every few years. :-( However, I'm very happy=
+ when a benevolent person can/is willing to make use of my work so I'd like=
+ to help in any way possible to allow him or her to.
+
+As Spiro also mentioned, "returning" code developed by others into the Comm=
+ander would be impossible with a GPL license on the other side, if no speci=
+al permissions are added. I don't think this should be such a big problem a=
+s I 1) am a lone wolf and prefer my own solutions to others, ;-) 2) I don't=
+ mind if someone is not helpful (see the "fucks go to" part in the Star LFN=
+ docs) and 3) I think, if needed, I could persuade the author of the other =
+software, as a suggestion for cooperation resulting in a win-win situation,=
+ anyway.
+
+Please, feel free to include ANY part of the Commander in your software und=
+er ANY free software license, whichever you see fit. I don't care; I mean a=
+bout the _license_. (For further help, I've uploaded the partially disassem=
+bled but heavily commented version of the disk turbos to http://sta.c64.org=
+/scalpha/scdrvprg.zip . As you may know, I'm coding them in a monitor so th=
+ere was no assembly source of them before. Please, don't use them as they a=
+re because they may not even work, the disassembly is not finished yet. I d=
+on't use them either: the process is going backwards, from the object code =
+I use to the source code I create. Apart from this, they're all yours, too.=
+)
+
+If you feel pressed about having to choose a free software license you don'=
+t like 100%, ONLY because of the Commander, then don't do it: I understand =
+that, in the long run, everyone benefits from an as free as possible licens=
+e rather than my stubborness and quite one-sided view of the world. ;-) Als=
+o, if you have some ideas to make the Commander's own license more free, do=
+n't hesitate to tell me. (Again, on a side note: I'm currently coding littl=
+e programs in C under Windows, using MinGW, that are custom pipe stages or =
+some other small, efficient and interesting pieces of software. I'm working=
+ on some documentations, too. These are all NOT Commodore-related, neverthe=
+less are things nobody seems to have done before, have heavily commented so=
+urce and a common routine library and - at least, according to my plans - w=
+ill be released into the public domain, without any restriction. I think th=
+ese, as well as reading a 800-page book from 1965 about the basics of commu=
+nism a few years ago, helped with understanding that any kind of such "arti=
+ficial" restriction is per se stupid. ;-) And, as you may also remember, I =
+was _never_ against helping fellow Commodore developers.)
+
+> The next generation formatter was rewritten by me from scratch. Because I=
+ couldn't write the new formatter without knowledge of the old code, I also=
+ added all "indirect authors" into the copyright statements.
+
+You can't steal _ideas_. ;-) I'm sure there's code in Star LFN similar to t=
+he code whose copyright holder I sent to hell (see above) but that means no=
+thing. How can you measure similarity (some kind of numeric correlation? co=
+mputed how? diff length?) and at what percentage of similarity can you cons=
+ider codes "the same" and sue the other's author? Bye,
+
+Joe
+
+
+--_000_21A94BC0E182DB4A8A8FB88D1F82592D0A573A808Bhqmailirodaed_
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859-=
+1">
+<meta name=3D"Generator" content=3D"Microsoft Exchange Server">
+<!-- converted from rtf -->
+<style><!-- .EmailQuote { margin-left: 1pt; padding-left: 4pt; border-left:=
+ #800000 2px solid; } --></style>
+</head>
+<body>
+<font face=3D"Arial, sans-serif" size=3D"2">
+<div>Hi guys,</div>
+<div>&nbsp;</div>
+<div>My intentions with the strict license were to not allow people to make=
+ (directly or indirectly) profit from my work; that's one thing I'd really =
+hate to see. (On a side note: see that ramswell guy on comp.sys.cbm for an =
+excellent example of a person I
+wouldn't like to see touch my work at all!) But you're right, nobody gives =
+a fuck about Commodore stuff anymore, :-( or :-) so it doesn't make much se=
+nse to be so strict about it. It would be nice if _I_ could release the ful=
+l source of the Commander under
+GPL or some other similar free license but my hands are tied because of the=
+ inclusion of Turbo Vision - Turbo/Borland Pascal's text-based UI, which I =
+heavily modified, though - that has still not been released by Inprise, alt=
+hough I've been bombarding them
+with a request every few years. :-( However, I'm very happy when a benevole=
+nt person can/is willing to make use of my work so I'd like to help in any =
+way possible to allow him or her to.</div>
+<div>&nbsp;</div>
+<div>As Spiro also mentioned, &quot;returning&quot; code developed by other=
+s into the Commander would be impossible with a GPL license on the other si=
+de, if no special permissions are added. I don't think this should be such =
+a big problem as I 1) am a lone wolf and prefer
+my own solutions to others, ;-) 2) I don't mind if someone is not helpful (=
+see the &quot;fucks go to&quot; part in the Star LFN docs) and 3) I think, =
+if needed, I could persuade the author of the other software, as a suggesti=
+on for cooperation resulting in a win-win
+situation, anyway.</div>
+<div>&nbsp;</div>
+<div>Please, feel free to include ANY part of the Commander in your softwar=
+e under ANY free software license, whichever you see fit. I don't care; I m=
+ean about the _license_. (For further help, I've uploaded the partially dis=
+assembled but heavily commented
+version of the disk turbos to <a href=3D"http://sta.c64.org/scalpha/scdrvpr=
+g.zip">http://sta.c64.org/scalpha/scdrvprg.zip</a> . As you may know, I'm c=
+oding them in a monitor so there was no assembly source of them before. Ple=
+ase, don't use them as they are because
+they may not even work, the disassembly is not finished yet. I don't use th=
+em either: the process is going backwards, from the object code I use to th=
+e source code I create. Apart from this, they're all yours, too.)</div>
+<div>&nbsp;</div>
+<div>If you feel pressed about having to choose a free software license you=
+ don't like 100%, ONLY because of the Commander, then don't do it: I unders=
+tand that, in the long run, everyone benefits from an as free as possible l=
+icense rather than my stubborness
+and quite one-sided view of the world.<font face=3D"Arial CE, sans-serif"> =
+</font>;-) Also, if you have some ideas to make the Commander's own license=
+ more free, don't hesitate to tell me. (Again, on a side note: I'm currentl=
+y coding little programs in C under
+Windows, using MinGW, that are custom pipe stages or some other small, effi=
+cient and interesting pieces of software. I'm working on some documentation=
+s, too. These are all NOT Commodore-related, nevertheless are things nobody=
+ seems to have done before, have
+heavily commented source and a common routine library and - at least, accor=
+ding to my plans - will be released into the public domain, without any res=
+triction. I think these, as well as reading a 800-page book from 1965 about=
+ the basics of communism a few years
+ago, helped with understanding that any kind of such &quot;artificial&quot;=
+ restriction is per se stupid. ;-) And, as you may also remember, I was _ne=
+ver_ against helping fellow Commodore developers.)</div>
+<div>&nbsp;</div>
+<div>&gt; The next generation formatter was rewritten by me from scratch. B=
+ecause I couldn't write the new formatter without knowledge of the old code=
+, I also added all &quot;indirect authors&quot; into the copyright statemen=
+ts.</div>
+<div>&nbsp;</div>
+<div>You can't steal _ideas_. ;-) I'm sure there's code in Star LFN similar=
+ to the code whose copyright holder I sent to hell (see above) but that mea=
+ns nothing. How can you measure similarity (some kind of numeric correlatio=
+n? computed how? diff length?) and
+at what percentage of similarity can you consider codes &quot;the same&quot=
+; and sue the other's author? Bye,</div>
+<div>&nbsp;</div>
+<div>Joe</div>
+<div>&nbsp;</div>
+</font>
+</body>
+</html>
+
+--_000_21A94BC0E182DB4A8A8FB88D1F82592D0A573A808Bhqmailirodaed_--

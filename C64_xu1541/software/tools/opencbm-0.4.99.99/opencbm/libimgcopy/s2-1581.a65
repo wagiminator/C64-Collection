@@ -1,0 +1,82 @@
+        *=$0700
+
+TMP = $66
+
+        jmp gts         ; get track/sector
+        jmp gbyte
+        jmp gblk        ; receive block
+        jmp sbyte       ; send byte
+        jmp sblk        ; send block
+
+        lda #$04
+i0      bit $4001
+        bne i0 
+        lda #$0c
+        sta $4001
+i1      lda $4001
+        bpl i1
+        rts
+
+gts     jsr gbyte
+        pha
+        jsr gbyte
+        tay
+        pla
+        tax
+        rts
+
+gblk    jsr gbyte
+        sta $0300,y
+        iny
+        bne gblk 
+        rts
+
+sblk    lda $0300,y
+        jsr sbyte
+        iny
+        bne sblk 
+        rts
+
+sbyte   sta TMP
+        ldx #$04
+write0  lda #$00
+        lsr TMP
+        rol
+        asl
+        sta $4001
+write1  lda $4001
+        bmi write1
+        lda #$06
+        lsr TMP
+        rol
+        asl
+        sta $4001
+write2  lda $4001
+        bpl write2
+        dex
+        bne write0 
+        lda #$18
+        sta $4001
+        rts
+
+gbyte   ldx #$04
+read0   lda $4001
+        bmi read0
+        lda $4001
+        lsr
+        ror TMP
+        lda #00
+        sta $4001
+read1   lda $4001
+        bpl read1
+        lda $4001
+        lsr
+        ror TMP
+        lda #$18
+        sta $4001
+        dex
+        bne read0
+        lda TMP
+        rts
+
+        do_read=*

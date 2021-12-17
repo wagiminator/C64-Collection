@@ -1,0 +1,104 @@
+rem THIS IS A SAMPLE FILE FOR DDKBUILD_LOCAL.BAT
+rem ADJUST THIS TO YOUR OWN NEEDS, AND PLACE IT *ABOVE* THE
+rem CURRENT OPENCBM DIRECTORY.
+rem
+rem EXAMPLE:
+rem
+rem If the cbm4win sources are in ~/somedir/cbm4win/,
+rem then store this file in ~/somedir/ddkbuild_local.bat
+rem
+rem
+rem PARAMETERS:
+rem
+rem This script file is called with the cbm4win
+rem source home directory as parameter %1
+
+
+if not defined DDKBUILD_COMMAND_OSR    set    DDKBUILD_COMMAND_OSR=ddkbuild_osr.bat
+if not defined DDKBUILD_COMMAND_HOLLIS set DDKBUILD_COMMAND_HOLLIS=ddkbuild_hollis-13.bat
+
+if not defined DDKBUILD_QUIET_VERBOSE  set DDKBUILD_QUIET_VERBOSE=-quiet
+
+if not defined BASEDIR  set BASEDIR=
+if not defined W2KBASE  set W2KBASE=
+if not defined WXPBASE  set WXPBASE=
+if not defined WNETBASE set WNETBASE=%PROGRAMFILES%\WinDDK\3790.1830
+if not defined WLHBASE  set WLHBASE=
+if not defined WDF_DDK  set WDF_DDK=%PROGRAMFILES%\WINDDK\6000
+if not defined WDF_ROOT set WDF_ROOT=%WDF_DDK%
+
+if not defined DDK_TO_USE_HOLLIS set DDK_TO_USE_HOLLIS=-WNET
+if not defined DDK_TO_USE_OSR    set DDK_TO_USE_OSR=-WNET
+
+
+if not defined CYGWIN   set CYGWIN=%PROGRAMFILES%\Cygwin
+if not defined BASH     set BASH=%CYGWIN%\bin\bash
+
+if not defined XU1541DIR set XU1541DIR=c:\xu1541\firmware
+
+rem set COPYTARGET=
+rem set COPYSYM=
+
+	rem use post BUILD operations to e.g. install the binaries
+	rem after (successful) compilation into userdefined local
+	rem directories and maybe do install the drive with admin
+	rem rights. See the file postbuild_local.bat.sample for
+	rem more. Modify it, strip the "sample" part off of the
+	rem filename and place it into the same directory as this
+	rem file, then the definition below will let call it
+	rem automatically.
+set USERDEFPOSTBUILD=%1\..\postbuild_local.bat
+
+if not defined DDKBUILD_HOLLIS set DDKBUILD_HOLLIS=1
+
+	rem Additional arguments for DDKBUILD:
+if not defined CMDARGUMENTS set CMDARGUMENTS=
+rem if not defined DDKBUILD_ARGUMENTS set DDKBUILD_ARGUMENTS=-prefast
+
+	rem to build (more) optional or additional parts of cbm4win, modify
+	rem the accompaying "dirs" files and add your directories under the
+	rem "OPTIONAL_DIRS" tag. Then you can use lines like the one below
+	rem to additionally compile these components
+rem if exist %1\libopencbmtransfer set CMDARGUMENTS=%CMDARGUMENTS% libopencbmtransfer sample
+
+	rem preset C macro definitions that are addd to the CFLAGS make
+	rem macro definition within the DDK build process
+	rem here, inclusion of the CVS ID strings into the binaries is
+	rem enabled, but only if USER_C_FLAGS was not defined before
+        rem (this feature is not available anymore, but left "as is" for
+	rem illustrative purposes!)
+if not defined USER_C_FLAGS set USER_C_FLAGS=/DSAVE_RCSID=1
+
+rem Settings for the BASH CC65 build process:
+
+	rem the main CC65 path may be defined in a generic manner, if
+	rem CC65 was installed with its install script and its own
+	rem environment variables were set
+if not defined CC65PATH       set CC65PATH=%CC65_INC%/../bin/
+
+	rem if this doesn't work for you, you may alternatively define
+	rem a fixed path
+rem if not defined CC65PATH   set CC65PATH=/usr/local/bin/
+
+if not defined CA65           set     CA65=%CC65PATH%ca65
+if not defined LD65           set     LD65=%CC65PATH%ld65
+
+rem Explicit settings for Cygwin based tools
+
+rem if not defined OD         set       OD=%PROGRAMFILES%/CygWin/bin/od
+rem if not defined SED        set      SED=%PROGRAMFILES%/CygWin/bin/sed
+rem if not defined RM         set       RM=%PROGRAMFILES%/CygWin/bin/rm
+
+
+rem Additional options for the BASH CC65 build process
+
+rem if not defined CA65_FLAGS set CA65_FLAGS=%CA65_FLAGS% --listing
+
+rem Adjust for XU1541/XUM1541 compilation
+rem set XU1541DIR=\xu1541\include
+rem set XUM1541DIR=xum1541
+
+rem if not defined CYGWINPATHSET (
+rem	set PATH=%PATH%;%CYGWIN%\bin
+rem	set CYGWINPATHSET=1
+rem	)

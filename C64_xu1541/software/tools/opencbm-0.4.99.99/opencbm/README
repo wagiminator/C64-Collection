@@ -1,0 +1,31 @@
+
+              README for opencbm/cbm4linux 0.4.0
+              ----------------------------------
+
+This README is not maintained separately, but has been integrated
+into the main opencbm documentation, which can be found in the
+docs/ directory.
+
+Either built it yourself:
+
+  cd docs/
+  make -f LINUX/Makefile
+
+
+The documentation comes in ASCII, DVI, HTML and Texinfo. If you have the
+GNU info program installed you can access the latter one with
+
+  info opencbm
+
+or
+
+  info opencbm.info (if you are in the docs/ directory)
+
+or have a look at the online version
+
+http://opencbm.trikaliotis.net/
+
+
+Have fun,
+Michael Klein <nip@c64.org>
+Spiro Trikaliotis.

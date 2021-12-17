@@ -1,0 +1,5 @@
+usr/bin/*
+etc/devfs/*/opencbm
+etc/modutils/opencbm
+usr/lib/opencbm/install_plugin.sh
+usr/lib/opencbm/plugin_helper_tools

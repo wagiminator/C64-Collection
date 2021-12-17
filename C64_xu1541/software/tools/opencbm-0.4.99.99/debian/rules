@@ -1,0 +1,133 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+# Note: debian/compat is the place to change this!
+#export DH_COMPAT=7
+
+
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+# shared library versions, option 1
+version=0.4.0
+major=0
+# option 2, assuming the library is created as src/.libs/libfoo.so.2.0.5 or so
+#version=`ls src/.libs/lib*.so.* | \
+# awk '{if (match($$0,/[0-9]+\.[0-9]+\.[0-9]+$$/)) print substr($$0,RSTART)}'`
+#major=`ls src/.libs/lib*.so.* | \
+# awk '{if (match($$0,/\.so\.[0-9]+$$/)) print substr($$0,RSTART+4)}'`
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+
+	touch configure-stamp
+
+
+build: build-stamp
+build-stamp: configure-stamp
+	dh_testdir
+
+	# Add here commands to compile the package.
+	$(MAKE) -f LINUX/Makefile all-doc
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) -f LINUX/Makefile mrproper
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+
+	mkdir -p $(CURDIR)/debian/tmp/etc $(CURDIR)/debian/tmp/etc/udev/rules.d
+	touch $(CURDIR)/debian/tmp/etc/ld.so.conf
+
+	# Add here commands to install the package into debian/tmp
+
+	$(MAKE) -f LINUX/Makefile \
+		DESTDIR=$(CURDIR)/debian/tmp \
+		PREFIX=/usr \
+		PLUGINDIR=/usr/lib/opencbm/plugin \
+		MANDIR=/usr/share/man/man1 \
+		INFODIR=/usr/share/info \
+		install-all
+
+	install -D -o root -g root -m 644 debian/opencbm-xa1541-modules-source.conf.h \
+		debian/tmp/etc/opencbm/opencbm-xa1541-modules-source.conf.h
+	install -D -o root -g root -m 644 debian/opencbm.modutils \
+		debian/tmp/etc/modutils/opencbm
+
+	install -D -o root -g root -m 755 opencbm/LINUX/plugin_helper_tools \
+		debian/tmp/usr/lib/opencbm
+	install -D -o root -g root -m 755 debian/install_plugin.sh \
+		debian/tmp/usr/lib/opencbm
+
+	mkdir -p debian/tmp/usr/src/modules/opencbm/debian
+	for f in debian/copyright debian/changelog debian/*.MODULE; \
+		do cp $$f debian/tmp/usr/src/modules/opencbm/`echo $$f | sed 's/\\.MODULE$$//'`; \
+	done
+	cp opencbm/sys/linux/cbm_module.c opencbm/include/LINUX/cbm_module.h debian/tmp/usr/src/modules/opencbm/
+	cp debian/Makefile.module debian/tmp/usr/src/modules/opencbm/Makefile
+	tar -czf debian/tmp/usr/src/opencbm.tar.gz -C debian/tmp/usr/src modules/
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_movefiles
+
+	dh_installdebconf
+	dh_installdocs
+	dh_installexamples
+#	find debian/*/ -name CVS -type d -exec rm -rf -- \{\} \;
+
+#	dh_installmenu
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_installinit
+#	dh_installcron
+	dh_installman
+	dh_installinfo
+#	dh_undocumented
+	dh_installchangelogs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+#	dh_perl
+	dh_shlibdeps -ldebian/libopencbm0/usr/lib
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

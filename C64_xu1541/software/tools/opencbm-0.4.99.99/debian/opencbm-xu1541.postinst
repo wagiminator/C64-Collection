@@ -1,0 +1,14 @@
+#! /bin/sh
+# postinst script for opencbm-xu1541
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+if [ "$1" = "configure" ]; then
+	/usr/lib/opencbm/install_plugin.sh install xu1541
+fi
+
+#DEBHELPER#
+
+exit 0

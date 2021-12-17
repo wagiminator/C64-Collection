@@ -1,0 +1,92 @@
+; Copyright 1999 Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+	*=$0680
+
+	port = $4001
+	zp   = $66	; temp
+	db   = $54
+
+	jmp init  	; init
+	rts		; trap error
+	nop
+	nop
+	jmp noerr	; no error
+
+	sta db		; store data byte
+	ldx #$08	; bit count
+s0	lda #$01
+	lsr db		; data bit into carry
+	rol
+	asl
+	asl
+	asl		; data bit now in bit 3 (DATA)
+	sta zp		; temp. storage
+	sta port	; CLK=x, DATA=0
+	lda #$01
+s1	bit port
+	beq s1		; wait for DATA=1
+	lda zp
+	eor #$08	; toggle CLK
+	sta port
+	lda #$01
+s2	bit port
+	bne s2		; wait for DATA=0
+	lda #$12
+	sta port	; set DATA=1, CLK=0
+	lda #$04
+s3	bit port
+	beq s3		; wait for CLK=1
+	dex
+	bne s0
+	rts
+
+init	lda #$04	; init
+	bit port
+	bne *-3
+data_1	lda #$02
+	sta port
+	asl
+	bit port
+	beq *-3
+	rts
+
+noerr	lda #$18
+	sta port
+	lda #$01
+	bit port
+	beq *-3
+	lda #$10
+	sta port
+	lda #$01
+	bit port
+	bne *-3
+	jmp data_1

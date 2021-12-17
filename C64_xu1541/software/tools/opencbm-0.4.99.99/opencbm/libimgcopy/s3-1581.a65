@@ -1,0 +1,117 @@
+        *=$0700
+
+        jmp gts         ; $072c
+        jmp gbyte       ; $0741
+        jmp gblk        ; $0737
+        jmp sbyte       ; $0761
+        jmp sblk        ; $078c
+
+        lda #$04
+        jsr $07de
+        jsr $accf
+        jsr $acb6
+        lda #$01
+        sta $4004
+        lda #$00
+        sta $4005
+        lda #$08
+        sta $400d
+        jmp $07ed
+
+gts     jsr gbyte
+        pha
+        jsr gbyte
+        tay
+        pla
+        tax
+        rts
+
+gblk    jsr gbyte
+        sta $0300,y
+        iny
+        bne gblk
+        rts
+
+gbyte   lda #$04
+        jsr $07e4
+        bit $400d
+        jsr $07f0
+        lda #$08
+br1     bit $400d
+        beq br1
+        lda $400c
+        pha
+        lda #$04
+        jsr $07de
+        jsr $07ed
+        pla
+        rts
+
+sbyte   pha
+        lda #$04
+        jsr $07e4
+        jsr $07ea
+        lda #$01
+        jsr $07e4
+        jsr $accf
+        jsr $07f0
+        lda #$04
+        jsr $07e4
+        pla
+        sta $400c
+        lda #$04
+        jsr $07de
+        jsr $07ea
+        jsr $acb6
+        jmp $07ed
+sblk    lda #$04
+        jsr $07e4
+        jsr $07ea
+        lda #$01
+        jsr $07e4
+        jsr $accf
+        jmp $07bf
+br2     lda $400e
+        and #$bf
+        sta $400e
+        jsr $07ed
+        lda #$04
+        jsr $07e4
+        jsr $07ea
+        lda #$01
+        jsr $07e4
+        lda $400e
+        ora #$40
+        sta $400e
+        jsr $07f0
+        lda #$04
+        jsr $07e4
+        lda $0300,y
+        sta $400c
+        lda #$04
+        jsr $07de
+        jsr $07ea
+        iny
+        bne br2
+        jsr $acb6
+        jmp $07ed
+br3     bit $4001
+        bne br3
+        rts
+
+br4     bit $4001
+        beq br4
+        rts
+
+        lda #$08
+        .byte $2c
+        lda #$02
+        .byte $2c
+        lda #$00
+        sta $45
+        lda $4001
+        and #$f0
+        ora $45
+        sta $4001
+        rts
+

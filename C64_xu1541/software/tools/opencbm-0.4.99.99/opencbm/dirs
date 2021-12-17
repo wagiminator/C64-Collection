@@ -1,0 +1,28 @@
+DIRS= \
+	arch \
+	cbmformat \
+	cbmforng \
+	cbmlinetester \
+	libcbmcopy \
+	cbmcopy \
+	libd64copy \
+	d64copy \
+	libd82copy \
+	d82copy \
+	libimgcopy \
+	imgcopy \
+	cbmctrl \
+	install \
+	lib \
+	libmisc \
+	libtrans \
+	demo \
+	sample \
+	cbmrpm41 \
+	tape \
+	sys
+
+OPTIONAL_DIRS= \
+	addon \
+	nibtools \
+	mnib36

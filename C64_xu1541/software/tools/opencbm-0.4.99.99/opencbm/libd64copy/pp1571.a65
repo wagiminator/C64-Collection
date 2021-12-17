@@ -1,0 +1,151 @@
+; Copyright 1999-2001 Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
+; Copyright 2005-2006 Spiro Trikaliotis
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+; XP1541 transfer routines
+
+.if .defined(Drive1541)
+	IEC_PORT   = $1800
+	PP_DATA    = $1801
+	PP_DDR     = $1803
+.else
+	Drive1571 = 1
+
+	IEC_PORT   = $1800
+	PP_DATA    = $4001
+	PP_DDR     = $4003
+.endif
+	PP_DDR_IN         = $00
+	PP_DDR_OUT        = $FF
+
+	IEC_PORT_ATN_IN   = $80
+	IEC_PORT_ATNA_OUT = $10
+	IEC_PORT_CLK_OUT  = $08
+	IEC_PORT_CLK_IN   = $04
+	IEC_PORT_DATA_OUT = $02
+	IEC_PORT_DATA_IN  = $01
+	IEC_PORT_NONE     = $00
+
+	* = $0700
+
+	jmp gts		; get track/sector
+	jmp gbyte	; get byte
+	jmp gblk	; receive block
+	jmp sbyte	; send byte
+	jmp sblk	; send block
+;	nop		; initialize transfer
+
+	jsr clk_0
+
+SetInput
+	lda #PP_DDR_IN
+	.byte $2c
+SetOutput
+	lda #PP_DDR_OUT	; send block
+	sta PP_DDR
+	rts
+
+sblk	jsr SetOutput	; send block
+sblk0	lda ($30),y
+	sta PP_DATA
+	jsr data_1
+	jsr clk_1
+	iny
+	lda ($30),y
+	sta PP_DATA
+	jsr data_0
+	jsr clk_0
+	iny
+	bne sblk0
+	jmp SetInput
+
+sbyte	pha
+	jsr SetOutput
+	pla
+	sta PP_DATA
+	jsr data_1
+	jsr clk_1
+	jsr data_0
+	jsr clk_0
+	jmp SetInput
+
+clk_0	lda #IEC_PORT_CLK_IN
+c0	bit IEC_PORT
+	beq c0
+	rts
+
+clk_1   lda #IEC_PORT_CLK_IN
+c1	bit IEC_PORT
+	bne c1
+	rts
+
+gbyte	tya
+	pha
+	jsr gts
+	pla
+	tay
+	txa
+	rts
+
+gts
+	jsr data_1
+	jsr clk_1
+	ldx PP_DATA
+	jsr data_0
+	jsr clk_0
+	ldy PP_DATA
+	rts
+
+data_1	lda #IEC_PORT_DATA_OUT
+	.byte $2c
+data_0	lda #IEC_PORT_NONE
+	sta IEC_PORT
+	rts
+
+gblk
+	tya
+	lsr
+	bcc gblk0
+	jsr gbyte
+	iny
+gblk0
+	jsr data_1
+	jsr clk_1
+	lda PP_DATA
+	sta ($30),y
+	iny
+	jsr data_0
+	jsr clk_0
+	lda PP_DATA
+	sta ($30),y
+	iny
+	bne gblk0
+	rts

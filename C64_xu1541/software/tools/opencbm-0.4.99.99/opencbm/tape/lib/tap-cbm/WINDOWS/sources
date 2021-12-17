@@ -1,0 +1,16 @@
+
+TARGETNAME=libtapcbm
+TARGETPATH=../../../../../bin
+TARGETTYPE=LIBRARY
+
+TARGETLIBS=$(SDK_LIB_PATH)/kernel32.lib \
+           $(SDK_LIB_PATH)/user32.lib
+
+INCLUDES=../../include;../../include/WINDOWS
+
+SOURCES=../tap-cbm.c
+
+UMTYPE=console
+#UMBASE=0x100000
+
+USE_MSVCRT=1

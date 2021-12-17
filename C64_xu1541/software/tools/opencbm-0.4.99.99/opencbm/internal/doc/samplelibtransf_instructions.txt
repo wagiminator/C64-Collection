@@ -1,0 +1,41 @@
+Thus, I would like to ask you to do the following:
+
+- check out v0.4.0.8 (I hope it will show up shortly on the public CVS;
+  the tag is v0_4_0_8).
+
+- Compile it, as always, and install it.
+
+- Now, do the following:
+
+  1. samplelibtransf -c1 -w -tpp -D9 32768
+  This commands reads in from drive 9 (-D9) the ROM area (starting at
+  $8000, this is hard-coded), length 32768 (32768), via the parallel
+  protocol (-tpp - yes, there are TWO pp, despite how d64copy and
+  cbmcopy expect it!), and writes (-w) it oput into image.bin. -c1 tells
+  the program to do this just once.
+
+  2. mv image.bin rom.image
+  Rename the file so we can use it later
+  
+  3. samplelibtransf -c1 -C -tpp -D9 32768
+  Now, compare (-C) rom.image with the read contents. There should be no
+  errors at all ("compare success"); if there are errors, the image is
+  written into a file image.err.X, with X counting from 1 upwards.
+
+  If this works, just make the number X at -cX bigger (100 comes to
+  mind), and let it run for a while.
+
+  Do you get any errors?
+
+  Tim, as you have problems with -tp on d64copy/cbmcopy: Does this test
+  here work for you?
+
+  The parallel protocol is an advanced version of the parallel protocol
+  from d64copy/cbmcopy. I believe I should have removed all races.
+
+  Note: Although -ts2 and -ts1 can be selected, you will notice that
+  these almost always hang-up the system. Whenever there was an hang-up,
+  you have to use "cbmctrl reset" to make the drive work again.
+
+Regards,
+   Spiro.

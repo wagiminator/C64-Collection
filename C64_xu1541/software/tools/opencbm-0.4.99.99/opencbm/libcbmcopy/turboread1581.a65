@@ -1,0 +1,118 @@
+; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+; 1581 Turbo read
+
+	*	= $0500
+
+	cnt	= $fc	; byte count
+
+	chn	= $50	; current channel
+	sa	= $52	; secondary address
+
+
+	init       = $0680
+	chkerr     = $0683
+	noerr	   = $0686
+	send_byte  = $0689
+
+	bufadr     = $0300
+	bufnr      = $00
+	tr	   = $0b
+	se	   = tr+1
+
+	nop
+	nop
+	nop
+
+	jsr init	; custom I/O init
+
+	ldy $0204
+	lda $0203
+	bne copy	; start by track/sector
+
+	ldy #$01
+	sty chn		; channel = 1
+	dey
+	sty sa		; sec. addr = 0
+
+	jsr $9f11	; get buffer number
+	asl
+	tax
+	lda $0c,x	; and
+	tay
+	sta se		; sector
+	lda $0b,x	; start
+	beq finish
+
+copy	sty se
+	sty $4e
+	sta tr
+	sta $4d
+	jsr chkerr
+	lda tr
+	cmp $022c
+	bcs ill_ts
+	lda #$80
+	ldx #bufnr
+	jsr $ff54
+	cmp #$02
+	bcs error
+	jsr noerr
+
+	lda bufadr
+	bne notlast
+	ldy bufadr+1
+	dey
+	tya
+	.byte $2c
+notlast	lda #$ff
+	sta cnt
+	jsr send_byte
+
+	ldy #$01
+send	iny
+	beq next
+	lda bufadr,y
+	jsr send_byte	; block data
+	dec cnt
+	bne send
+
+next	ldy bufadr+1
+	lda bufadr
+ 	bne copy
+	
+finish	jmp $99c5
+
+error	jmp $ff2d	; controller error
+
+ill_ts	lda #$67	; illegal track or sector
+	jmp $ff3f	; DOS error handler

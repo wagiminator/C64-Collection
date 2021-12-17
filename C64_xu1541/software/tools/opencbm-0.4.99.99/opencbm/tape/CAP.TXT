@@ -1,0 +1,83 @@
+
+--- THIS IS A DRAFT ---
+
+*** CAP (cassette CAPture images)
+*** Document revision: 1.0-DRAFT
+*** Last updated: July 23, 2012
+*** Compiler/Editor: Arnd Menge
+
+  The CAP format represents the data stored on a cassette tape by storing
+timestamps of customizable resolution of the digital signal edges. It
+should be compatible with any existing tape loaders.
+
+  The layout is simple - a small header precedes the timestamps.
+
+
+      00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F        ASCII
+      -----------------------------------------------   ----------------
+0000: 54 41 50 52 45 41 44 00 00 00 00 00 00 00 00 00   TAPREAD.........
+0010: 76 31 2E 30 30 00 00 00 00 00 00 00 00 00 00 00   v1.00...........
+0020: 36 32 2E 35 6E 73 00 00 00 00 00 00 00 00 00 00   62.5ns..........
+0030: 43 36 34 00 00 00 00 00 00 00 00 00 00 00 00 00   C64.............
+0040: 50 41 4C 00 00 00 00 00 00 00 00 00 00 00 00 00   PAL.............
+0050: 46 61 6C 6C 69 6E 67 45 64 67 65 00 00 00 00 00   FallingEdge.....
+0060: 52 65 6C 61 74 69 76 65 00 00 00 00 00 00 00 00   Relative........
+0070: 34 30 62 69 74 00 00 00 00 00 00 00 00 00 00 00   40bit...........
+0080: 00 00 00 A0 00 00 00 00 00 00 00 00 00 00 00 00   .... ...........
+0090: 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D 2D   ----------------
+00A0: 00 10 D7 51 C0 00 00 00 10 2A 00 00 00 08 2E 00   ..×QÀ....*......
+00B0: 00 00 0E A8 00 00 00 09 96 00 00 00 0E 0F 00 00   ...¨....-.......
+00C0: 00 09 ED 00 00 00 0E 1E 00 00 00 0A 06 00 00 00   ..í.............
+
+    Bytes: $0000-000F: File signature "TAPREAD"
+            0010-001F: CAP image version
+                         "v1.00" - Original layout
+            0020-002F: Timestamp precision
+                         Default: 1us (microsecond)
+                         Maximum: 62.5ns (nanoseconds)
+            0030-003F: Target computer
+                         C64, C16, VC20, Spectrum48K, or CUSTOM
+            0040-004F: Target video standard
+                         PAL, NTSC, Spectrum48K, or CUSTOM
+            0050-005F: First timestamp corresponds to specified signal edge
+                         "FallingEdge", "RisingEdge"
+            0060-006F: Specifies if timestamps are relative or absolute
+                         "Relative", "Absolute"
+            0070-007F: Specifies the bitwidth of the timestamps
+                         Currently only 40bit in use.
+            0080-008F: CAP data start offset (first timestamp)
+                         32bit unsigned integer, hi/lo order.
+            0090-009F: Separator
+            xxxx-    : Timestamps (5 bytes each, hi/lo order)
+                         xxxx = specified CAP data start offset
+
+  All header entries are padded with trailing zero bytes.
+
+  The hardware sampling rate of 16MHz allows a maximum signal/timestamp
+precision of 62.5 nanoseconds. Default setting is 1 microsecond (us),
+which is equivalent to 1MHz.
+
+  The timestamps (bitwidth specified at 0x70) and are stored in hi/lo order
+hexadecimal format. Each timestamp corresponds to a tape signal level change.
+The tape capture starts with the first detected signal edge of the selected
+type specified in the header at 0x50 and continues in alternating signal
+edge order.
+Relative timestamps define the time between two successive tape signal
+level changes. Absolute timestamps define the time that has passed since the
+start (zero).
+
+  In the above example the timestamp width is 40bit (5 bytes) and the first
+timestamp "0x0010D751C0" is stored at 0xA0. This timestamp gives us the time
+that had passed until the first negative/falling signal edge was detected by
+the capture hardware. As the timestamp precision is 62.5ns, the first
+timestamp 0x0010D751C0 means that the first negative/falling signal edge
+occurred after
+
+  0x0010D751C0/16 us = 17,659,164 us = about 17.7 seconds
+
+  If the timestamp precision in the header would have been 1us, the first
+timestamp 0x0010D751C0 would have been equivalent to
+
+  0x0010D751C0 us = 282,546,624 us = about 4.7 minutes
+
+----------------------------------------------------------------------------

@@ -1,0 +1,40 @@
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
+
+PortSystem          1.0
+
+name                opencbm
+version             0.4.99
+revision            88
+categories          emulators
+license             GPL mBSD
+maintainers         vogelgsang.org:chris
+
+description         opencbm IEC serial host
+long_description    The opencbm (cbm4linux) package contains user space \
+                    support programs to control and use serial devices as used by most Commodore \
+                    (CBM) 8-bit machines, such as disk drives and printers from your trusty C64.  A \
+                    fast .d64 transfer program is included. The device is connected \
+                    via a custom USB adapter (called xu1541 or xum1541).
+
+platforms           darwin
+homepage            https://sourceforge.net/projects/opencbm/
+
+depends_build       port:cc65
+depends_lib         port:libusb-legacy
+
+fetch.type          git
+git.url             git://git.code.sf.net/p/opencbm/code
+git.branch          master
+
+checksum {}
+
+use_configure       no
+
+worksrcdir          code
+
+build.cmd           make -f LINUX/Makefile PREFIX=${prefix} MANDIR=${prefix}/share/man/man1
+use_parallel_build  no
+
+destroot.target     install-all
+
+livecheck.type      none

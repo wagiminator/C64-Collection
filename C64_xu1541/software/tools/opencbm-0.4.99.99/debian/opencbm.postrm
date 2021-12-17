@@ -1,0 +1,20 @@
+#! /bin/sh
+# postrm script for opencbm
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+#DEBHELPER#
+
+if [ "$1" = "purge" ]; then
+
+	[ -e /etc/opencbm.conf.d/00opencbm.conf ] && rm /etc/opencbm.conf.d/00opencbm.conf
+	[ -e /etc/opencbm.conf ] && rm /etc/opencbm.conf
+
+	rmdir --ignore-fail-on-non-empty /etc/opencbm.conf.d
+fi
+
+db_stop
+
+exit 0

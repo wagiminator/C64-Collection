@@ -1,0 +1,63 @@
+/** \file
+ *
+ *  This file contains special DoxyGen information for the generation of the main page and other special
+ *  documentation pages. It is not a project source file.
+ */
+
+/** \page Page_LUFAPoweredProjects User Projects Powered by LUFA
+ *
+ *  LUFA is currently in use all around the world, in many applications both commercial and non-commercial. Below is a
+ *  list of known public LUFA powered projects, which all use the LUFA library in some way. Feel free to visit each project's
+ *  home page for more information on each project.
+ *
+ *  If you have a project that you would like to add to this list, please contact me via the details on the main page of this
+ *  documentation.
+ *
+ *  \section Sec_BoardsUsingLUFA AVR-USB Development Boards Using LUFA
+ *
+ *  The following is a list of known AVR USB development boards, which recommend using LUFA for the USB stack. Some of these
+ *  are open design, and all are available for purchase as completed development boards suitable for project development.
+ *
+ *  - Benito #7, a no-frills USB board: http://www.dorkbotpdx.org/wiki/benito
+ *  - Bumble-B, yet another AT90USB162 development board: http://fletchtronics.net/bumble-b
+ *  - Micropendous, an open design/source set of AVR USB development boards: http://micropendous.org/
+ *  - Nanduino, a do-it-yourself AT90USB162 board: http://www.makestuff.eu/wordpress/?page_id=569
+ *  - Teensy and Teensy++, two other AVR USB development boards: http://www.pjrc.com/teensy/index.html
+ *  - USB10 AKA "The Ferret", a AT90USB162 development board: http://www.soc-machines.com
+ *  - USBFoo, an AT90USB162 based development board: http://shop.kernelconcepts.de/product_info.php?products_id=102
+ * 
+ *  \section Sec_LUFAProjects Projects Using LUFA (Hobbyist)
+ *
+ *  The following are known hobbyist projects using LUFA. Most are open source, and show off interesting ways that the LUFA library
+ *  can be incorporated into many different applications.
+ *
+ *  - Arcade Controller: http://fletchtronics.net/arcade-controller-made-petunia
+ *  - Bicycle POV: http://www.code.google.com/p/bicycleledpov/
+ *  - CAMTRIG, a remote Camera Trigger device: http://code.astraw.com/projects/motmot/camtrig
+ *  - "Fingerlicking Wingdinger" (WARNING: Bad Language if no Javascript), a MIDI controller - http://noisybox.net/electronics/wingdinger/
+ *  - Garmin GPS USB to NMEA standard serial sentence translator: http://github.com/nall/garmin-transmogrifier/tree/master
+ *  - Generic HID Device Creator : http://generichid.sourceforge.net/
+ *  - Mobo 4.3, some sort of Audio related device: http://sites.google.com/site/lofturj/mobo4_3
+ *  - NES Controller USB modification: http://projects.peterpolidoro.net/video/NESUSB.htm
+ *  - MakeTV Episode Dispenser: http://www.youtube.com/watch?v=BkWUi18hl3g
+ *  - Opendous-JTAG, an open source JTAG device: http://code.google.com/p/opendous-jtag/
+ *  - Openkubus, an open source hardware-based authentication dongle: http://code.google.com/p/openkubus/
+ *  - Orbee, a USB connected RGB Orb for notifications: http://www.franksworkshop.com.au/Electronics/Orbee/Orbee.htm
+ *  - Programmable XBOX controller: http://richard-burke.dyndns.org/wordpress/pan-galactic-gargantuan-gargle-brain-aka-xbox-360-usb-controller/
+ *  - Reprap with LUFA, a LUFA powered 3D printer: http://code.google.com/p/at90usb1287-code-for-arduino-and-eclipse/
+ *  - SEGA Megadrive/Genesis Development Cartridge: http://www.makestuff.eu/wordpress/?page_id=398
+ *  - SEGA Megadrive/Super Nintendo Cartridge Reader: http://www.snega2usb.com
+ *  - Stripe Snoop, a Magnetic Card reader: http://www.ossguy.com/ss_usb/
+ *  - USB Interface for Playstation Portable Devices: http://forums.ps2dev.org/viewtopic.php?t=11001
+ *  - Userial, a USB to Serial converter with SPI, I2C and other protocols: http://www.tty1.net/userial/
+ * 
+ *  \section Sec_LUFACommercialProjects Projects Using LUFA (Commercial)
+ *
+ *  The following is a list of known commercial products using LUFA. Some of these are open source, although many are "black-box"
+ *  solutions with no source code given.
+ *
+ *  - ARPS Locator: http://la3t.hamradio.no/lab//?id=tracker_en
+ *  - BAP, A tiny LUFA based AVR Programmer: http://www.busware.de/tiki-index.php?page=BAP
+ *  - Digital Survey Instruments Magnetometer and Pointer: http://www.digitalsurveyinstruments.com/
+ *  - Lightweight CC110x USB dongle for 868MHz Protocols: http://busware.de/tiki-index.php?page=CUL
+ */

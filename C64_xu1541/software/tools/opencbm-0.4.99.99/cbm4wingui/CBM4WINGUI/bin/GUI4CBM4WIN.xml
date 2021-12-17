@@ -1,0 +1,43 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+GUI4CBM4WIN
+</name>
+</assembly>
+<members>
+<member name="P:GUI4CBM4WIN.My.Resources.Resources.ResourceManager">
+	<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:GUI4CBM4WIN.My.Resources.Resources.Culture">
+	<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="P:GUI4CBM4WIN.My.Resources.Resources.ABOUT">
+	<summary>
+  Looks up a localized string similar to GUI4CBM4WIN by Leif Bloomquist (no support anymore) &amp; 
+adoption to OpenCBM 0.4.0 by Wolfgang (http://d81.de/)
+
+This is a simple GUI front-end for OpenCBM by 
+Spiro Trikaliotis (www.trikaliotis.net/cbm4win/)
+
+OpenCBM itself is heavily based on cbm4linux written by 
+Michael Klein (http://www.lb.shuttle.de/puffin/)
+
+This is version {0} of the GUI, which is currently 
+maintained by Payton Byrd (payton@paytonbyrd.com) 
+and is distributed under the BSD OpenSource license..
+</summary>
+</member><member name="P:GUI4CBM4WIN.My.Resources.Resources.CANCELSTRING">
+	<summary>
+  Looks up a localized string similar to ***CANCEL***.
+</summary>
+</member><member name="T:GUI4CBM4WIN.My.Resources.Resources">
+	<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member>
+</members>
+</doc>

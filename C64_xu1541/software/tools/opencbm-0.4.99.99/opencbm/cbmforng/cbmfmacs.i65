@@ -1,0 +1,361 @@
+; Copyright (C) 2005,2006 Wolfgang Moser (http://d81.de)
+; All rights reserved.
+;
+; cbmforng   - 6502 based fast formatting routine with probing for
+;              the Commodore 1541 floppy disk drive and compatibles
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+
+;****************************************************************************
+;
+;  Macro definitions that check branches for page crossing. An
+;  informational message is given out, if such a page cross occurs
+;  and therefore consumes an additional CPU clock cycles, what may
+;  disturb timing constraints.
+;
+;****************************************************************************
+
+.macro __syncBR
+    bvc *
+    .if >* - >(*-2) <> 0
+        .out .concat ("Info: timing critical 'bvc *' loop crosses page boundary at address: ", .string(*))
+    .endif
+.endmacro
+
+
+.macro __checkPageCrossing loopAddress
+    .if >* - >loopAddress <> 0
+        .out .concat ("Info: timing critical loop crosses page boundary at label: ", .string(loopAddress))
+    .endif
+.endmacro
+
+;****************************************************************************
+;
+;  Prepare a buffer pointed to by BUFPTR with 21 five byte GCR blocks
+;  containing the first sector header parts for the current track with
+;  the constants determined by HBID, A (track number), HDRID1 and HDRID2
+;
+;  input:  A            - track number to prepare the headers for
+;
+;  output: A            - arbitrary
+;          X            - MAXNOSECTR
+;          Y            - arbitrary
+;          C            - set
+;
+;****************************************************************************
+
+.macro __PrepareHeaderBuffer
+    sta CVTBBF+3        ;;; this is a per track constant
+
+    ldx HBID            ;;; this is a per disk constant ($08)
+    stx CVTBBF          ;;; but maybe overwritten ?
+
+    ldx #<CGCRBUF
+                        ;;; start of the GCR encoded 1st part headers
+    stx BPOFFS          ;;; pointer to last converted byte in buffer
+
+    ldx #>CGCRBUF
+    stx BUFPTR+1        ;;; prepare the buffer pointer high byte
+
+.if (>CGCRBUF <> $01)
+    ldx #$00            ;;; sector counter
+.else
+    dex
+.endif                  ;;; maybe this could be _assumed_ to be $00
+    stx BUFPTR          ;;; and does not needed to be set explicitly
+
+PrepHdr
+    txa
+    sta CVTBBF+2        ;;; store the current sector number
+
+    eor CVTBBF+3
+    eor HDRID2
+    eor HDRID1
+
+    sta CVTBBF+1        ;;; header checksum
+
+    jsr CNV4T5  ; convert 4 BIN bytes to 5 GCR ones and store to buffer ($30)
+        ; A, X got destroyed, Y contains the new value of BPOFFS
+
+    ldx CVTBBF+2
+    inx
+    cpx #MAXNOSECTR     ;;; compare with max sector number per track
+    bcc PrepHdr
+.endmacro
+
+;****************************************************************************
+;
+;  Prepare all track dependent parameters and buffer pointers for the
+;  following track format pattern sequencer
+;
+;  input:  A            - track number to prepare the headers for
+;
+;  output: A            - number of sectors for this track
+;          X            - speed zone number for this track
+;          Y            - debug buffer pointer, if defined, arbitrary otherwise
+;
+;****************************************************************************
+
+.macro __PrepareTrackParameters
+
+    lda TRACK0          ;;; load track number to prepare the headers for
+
+    ldx #<CPRMBUF+FormatParameters::CDBGST1
+    ldy #<CPRMBUF+FormatParameters::CDBGEN1
+
+    cmp #1
+    beq TrackSpecificPatterns
+
+    ldx #<CPRMBUF+FormatParameters::CDBGSTN ; prepare the buffer pointers to the data
+    ldy #<CPRMBUF+FormatParameters::CDBGENN ; block start and end sequences
+
+.if 0
+    cmp #18                                 ; idea for later use, directly apply the
+    beq TrackSpecificPatterns               ; correct pattern for the directory
+
+    ldx #<CPRMBUF+FormatParameters::CDBGST8 ; prepare the buffer pointers to the data
+    ldy #<CPRMBUF+FormatParameters::CDBGEN8 ; block start and end sequences
+.endif
+
+TrackSpecificPatterns
+    stx CDBSPTR
+    sty CDBEPTR
+
+
+    __PrepareHeaderBuffer                   ; TRACK0 already loaded into A
+
+
+    lda TRACK0  ; get current track number
+
+.ifdef DebugFormat
+    ldy DBGBPTR
+    sta DebugFormatBuffer,y
+.endif
+
+    ldx #$03    ; four predefined bitspeed zones
+CompareNextZone
+    cmp ZONEBND,x
+    bcc CurrentZoneFound
+    dex
+    bne CompareNextZone     ; if X is 0, TRACK0 is greater than 31
+CurrentZoneFound
+
+    lda DC_SETTINGS
+    and #$9f
+
+    eor SpdMask,x           ; costless LED flipping
+    sta DC_SETTINGS
+
+    and #$10                ; check for write protect
+    beq WriteProtectError   ; included from the subroutiens above
+
+    lda SpdADD,x
+        ; Carry is cleared, if X>0. And set, if X==0
+    adc BASEGAP
+    sta GAPLEN
+
+.ifdef DebugFormat
+    sta DebugFormatBuffer+1,y
+.endif
+
+    lda ZONESCT,x
+    sta SECTCNT             ; write format pattern sector counter
+    sta MAXSECT             ; maximum number of sector for this track
+                            ; as well as verify sector counter
+.endmacro
+
+;****************************************************************************
+;
+;  Switch the drive electronics into write mode
+;
+;  output: A            - $ff
+;
+;****************************************************************************
+
+.macro __SwitchToWriteMode
+    lda #$ce                ; switch to write mode
+    sta DC_PCR              ; $1c0c
+    lda #$ff                ; switch data direction to output mode
+    sta DC_DATADDR
+.endmacro
+
+;****************************************************************************
+;
+;  Track format pattern sequencer, this loop writes out all the bytes
+;  needed to compose a fully formatted track layout onto disk
+;
+;  output: A            - $ff
+;          X            - arbitrary
+;          Y            - [CDBEPTR]+5
+;          C            - cleared
+;
+;****************************************************************************
+
+.macro __ComposeTrackFormat
+    lda #<CGCRBUF           ; reset the pointer to the
+    sta HEADCNT             ; compressed header buffer
+
+    ; A clc is not needed here since it is totally unimportant, if
+    ; there are written out five bytes (C=0) or six bytes (C=1) on the
+    ; very first data block write process (overlap area cleanout)
+
+    ; start with writing a data block without header, so that there
+    ; cannot be found a SYNC mark within the overlap area
+
+FullBlockLoop
+    ldy CDBSPTR             ;       (from loop)   +3
+    jsr BufferedWrite       ; out:  12      in: +6+8=34
+    lda #$3e                ;       +2              ****
+    sta CDBICNT             ;       +3
+
+DataBlockLoop
+    ldy #<CPRMBUF+FormatParameters::CDBGIMT
+                            ;       +2                           +2
+    jsr BufferedWrite       ; in: +6+8=33   out: 12  in(loop): +6+8=36
+    dec CDBICNT             ;         ****       +5                ####
+    bpl DataBlockLoop       ;                    +3/2
+
+    __checkPageCrossing DataBlockLoop
+
+    ldy CDBEPTR             ;                    +3
+    jsr BufferedWrite       ;              in: +6+8=36     out:  12
+    dec SECTCNT             ;                      ####          +5
+
+    bmi BlockloopExit       ;                                    +2(/3)
+
+    lda GAPLEN              ;                                    +3
+    jsr WriteGAPnSYNC       ; out:  14                    in:  +6+8=36
+    ldy HEADCNT             ;       +3                             ####
+    jsr BufferedWrite       ; in: +6+8=31   out:  12
+    sty HEADCNT             ;         ****        +3
+    ldy #<CPRMBUF+FormatParameters::CHDR2ND
+                            ;                     +2
+    jsr BufferedWrite       ; out:   12     in: +6+8=31
+    lda #$09*2              ;        +2             ****
+    jsr WriteGAPnSYNC       ; in:  +6+8=28  out:  14
+    bcc FullBlockLoop       ;          ****       +3    (unconditional)
+    __checkPageCrossing FullBlockLoop
+
+BlockloopExit               ;                                      =20
+.endmacro
+
+;****************************************************************************
+;
+;  Track format pattern verifier, this loop compares all the bytes
+;  formerly written to disk with the buffer contents again
+;
+;  output: A            - arbitrary
+;          X            - arbitrary
+;          Y            - arbitrary
+;          C            - cleared
+;
+;****************************************************************************
+
+.macro __VerifyTrackFormat StartCompareLabel
+
+DoReloadHeaderPtr
+    ldy #<CGCRBUF       ; the buffer start pointer
+
+CompareLoop
+
+    lda #$09            ; set error handler to header block verify error
+    sta ERREXCP
+
+    jsr BufferedCompare     ;  out: 14
+    sty HEADCNT             ;       +3
+
+    ldy #<CPRMBUF+FormatParameters::CHDR2ND
+                            ;       +2
+    jsr BufferedCompare     ; in: +6+4=29      out: 14
+
+
+StartCompareLabel:
+    lda CPRMBUF+FormatParameters::P_VRIFY   ; check if we should verify
+    beq SkipVerify      ; no, skip verify
+
+        ; The header of the second header sector is already compared
+        ; we are inmid the header GAP now. So start with waiting for
+        ; the data block's SYNC mark
+
+    jsr WaitForNextSYNC     ; wait for data block SYNC
+
+    lda #$05            ; set error handler to data block verify error
+    sta ERREXCP
+
+
+    ldy CDBSPTR             ;       +3
+    jsr BufferedCompare     ; in: +6+4=13           out: 14
+    lda #$3e                ;                            +2
+    sta CDBICNT             ;                            +3
+DataBlockCmpLoop
+
+    ldy #<CPRMBUF+FormatParameters::CDBGIMT
+                            ;               +2           +2
+    jsr BufferedCompare     ;  in (loop): +6+4=34  in: +6+4=31  out: 14
+    dec CDBICNT             ;                 ####         ****      +5
+    bpl DataBlockCmpLoop    ;                                        +3/2
+
+    __checkPageCrossing DataBlockCmpLoop
+
+    ldy CDBEPTR             ;                                        +3
+
+.ifndef DontWaitForDummy
+    jsr BufferedCompare     ;                                  in: +6+4=34
+.else                       ;                                          ####
+        ; dont compare the last (dummy/filler) byte of each data block
+    ldx #$02                ;                                        +2
+    jsr BufferedCmpLoop     ;                                  in: +6+2=34
+.endif                      ;                                          ####
+
+    jsr WaitForNextSYNC     ; wait for header block SYNC
+                            ; we are inmid the SYNC here, so there's some
+                            ; time left for calculations
+    ldy HEADCNT
+
+    dec MAXSECT
+    beq DoReloadHeaderPtr   ; if there was an overwrap to the very first
+                            ; sector of this track, reload the buffer ptr
+    bpl CompareLoop         ; otherwise simply compare with the next header
+
+    __checkPageCrossing CompareLoop
+
+.ifdef DebugFormat
+    ldy DBGBPTR                 ; Save the result of the SYNC check.
+    dey                         ; Decrease Y, because we already did
+    lda DebugFormatBuffer,y     ; advance the pointer
+    ora #$80                    ; Mark bits 6 and 7 of the remainder
+    sta DebugFormatBuffer,y     ; complementary
+.endif
+
+SkipVerify
+
+.endmacro
+
+;****************************************************************************

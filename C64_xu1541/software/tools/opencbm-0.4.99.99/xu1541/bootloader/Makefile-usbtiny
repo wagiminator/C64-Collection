@@ -1,0 +1,28 @@
+# ======================================================================
+# Makefile for usbtiny based xu1541 bootloader
+#
+# Copyright (C) 2006 Till Harbaum
+#
+# This is free software, licensed under the terms of the GNU General
+# Public License as published by the Free Software Foundation.
+# ======================================================================
+
+include Makefile.common
+LDFLAGS += $(LDFLAGS_BOOTLOADER)
+
+DUSBVERSION     = -DUSBTINY
+USBTINY         = ./usbtiny
+TARGET_ARCH     = -DF_CPU=12000000 -DAVR $(DUSBVERSION) -mmcu=atmega8
+#OBJECTS         = biostable.o main.o
+CABLE           = stk200
+#CABLE           = usbasp
+AVRDUDE         = avrdude
+#AVRDUDE         = sudo /usr/local/avr/bin/avrdude
+FLASH_CMD       = $(AVRDUDE) -c $(CABLE) -p atmega8 -U lfuse:w:0x9f:m -U hfuse:w:0xc8:m -U flash:w:bootldr-usbtiny.hex
+STACK           = 32
+FLASH           = 8192
+SRAM            = 1024
+
+.INTERMEDIATE: crc.o int.o usb.o $(OBJECTS)
+
+include $(USBTINY)/common.mk

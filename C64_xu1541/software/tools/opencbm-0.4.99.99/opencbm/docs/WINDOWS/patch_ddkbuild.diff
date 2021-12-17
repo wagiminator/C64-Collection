@@ -1,0 +1,12 @@
+--- ddkbuild.orig.bat	2003-05-19 12:14:04.000000000 +0200
++++ ddkbuild.bat	2004-07-12 10:32:55.584312000 +0200
+@@ -553,6 +553,9 @@
+ @echo =============== build warnings ======================
+ if exist build%W2kEXT%.log findstr "warning.*[CLU][0-9]*" build%W2kEXT%.log
+ 
++@echo =============== build errors ========================
++if exist build%W2kEXT%.log findstr "error.*[CLU][0-9]*" build%W2kEXT%.log
++
+ @echo. 
+ @echo. 
+ @echo build complete

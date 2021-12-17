@@ -1,0 +1,433 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+
+<HTML>
+<HEAD>
+	
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 2.0  (Win32)">
+	<META NAME="CREATED" CONTENT="20041109;23561700">
+	<META NAME="CHANGEDBY" CONTENT="Wolfgang Moser">
+	<META NAME="CHANGED" CONTENT="20060127;18301000">
+	
+	<STYLE>
+		<!-- 
+		BODY,DIV,TABLE,THEAD,TBODY,TFOOT,TR,TH,TD,P { font-family:"Arial"; font-size:x-small }
+		 -->
+	</STYLE>
+	
+</HEAD>
+
+<BODY TEXT="#000000">
+<TABLE FRAME=VOID CELLSPACING=0 COLS=4 RULES=GROUPS BORDER=1>
+	<COLGROUP><COL WIDTH=230><COL WIDTH=97><COL WIDTH=729><COL WIDTH=127></COLGROUP>
+	<TBODY>
+		<TR>
+			<TD COLSPAN=3 WIDTH=1056 HEIGHT=17 ALIGN=LEFT>/* define the various flags for debugging */</TD>
+			<TD WIDTH=127 ALIGN=LEFT>0x15030007</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT BGCOLOR="#E6E6E6">Literal definition, flag name</TD>
+			<TD ALIGN=LEFT BGCOLOR="#E6E6E6">Applies to:</TD>
+			<TD ALIGN=LEFT BGCOLOR="#E6E6E6">Debug flag description, Comments from C source code</TD>
+			<TD ALIGN=LEFT>Selection (1 or 0)</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT>Enable bit position</TD>
+			<TD COLSPAN=2 ALIGN=LEFT>Recommendations for general purpose debug logging</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=10 ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=10 ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=18 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_BREAK</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF0000">/*! debugging flag: generate breakpoints */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=34 ALIGN=LEFT VALIGN=MIDDLE>0x80000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Must not be used without a kernel debugger (WinDBG or SoftICE) running in the background,                              BSODs are generated otherwise</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_ENTER</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFCC99">/*! debugging flag: show entering of functions */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x40000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Not recommended for all-purpose debug logging due to too much output (Driver and Dll for e.g. parallel transfers)</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_LEAVE</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF0000">/*! debugging flag: show leaving of functions without return value */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x20000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Doesn't work for DLL and driver, breaks communication (don't use for testing real communications)</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_LEAVE_FAILURE</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#3DEB3D">/*! debugging flag: show leaving of functions with return value NTSTATUS, if it is not STATUS_SUCCESS */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x10000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Does work only, if DBGF_ENTER is not enabled, recommended for all-purpose debug logging (calling history)</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_PARAM</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFCC99">/*! debugging flag: show parameters of entered functions */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x08000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Not recommended for all-purpose debug logging due to too much output (mostly driver related)</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_IEC</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E64C">/*! debugging flag: show IEC protocol related output */</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x04000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Recommended for protocol related problems, not recommended for IEC reliability tests</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_IRQ</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show IRQ related output */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x02000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Not recommended for all-purpose debug logging</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6"><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>#define DBGF_ASSERTIRQL</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#23FF23">/*! debugging flag: show ASSERTs for IRQL */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x01000000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Always recommended to be enabled</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_PORT</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF0000">/*! debugging flag: show port accesses (values written to or read from the parallel port registers) */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00800000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Should be disabled due to debug output overload</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_THREAD</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show thread related debugging output */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00400000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Not recommended, do use for special problems only that depend on the DPC behaviour</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_IRPPATH</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show IRP path */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00200000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Currently unneccessary since this code part seems to be stable</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_IRP</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show IRP */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00100000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Currently unneccessary since this code part seems to be stable</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_DPC</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show DPC related output (signal generation for cbmiec_wait_for_listener) */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00080000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Not recommended, do use for special problems only that depend on the DPC behaviour</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_DBGMEMBUFF</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#23FF23">/*! debugging flag: output debugging info debug into Memory Buffer */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00020000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Always recommended for all-purpose debug logging</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_DBGPRINT</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FFFF99">Driver only</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E64C">/*! debugging flag: output debugging info via DbgPrint */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00010000</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Recommended for smaller logging outputs and on-demand log viewing (DebugView)</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_PPORT</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#FF9966">/*! debugging flag: show parallel port related output (querying parport.sys) */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00000010</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Only needed for parallel port related problems like initialization, not recommended for all-purpose debug logging</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_SUCCESS</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E64C">/*! debugging flag: show SUCCESS messages */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00000008</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>May produce too much logging output, but recommended for all-purpose debug logging</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_WARNING</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#3DEB3D">/*! debugging flag: show WARNINGS */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00000004</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Recommended for all-purpose debug logging</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_ERROR</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#23FF23">/*! debugging flag: show ERRORS */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00000002</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Always recommended for all-purpose debug logging</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE><BR></TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#E6E6E6">#define DBGF_ASSERT</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#CCFFFF">Driver+Dll</TD>
+			<TD ALIGN=LEFT VALIGN=MIDDLE BGCOLOR="#23FF23">/*! debugging flag: show ASSERTs (without creating a breakpoint, if DBGF_BREAK is not set) */</TD>
+			<TD ALIGN=LEFT><BR></TD>
+		</TR>
+		<TR>
+			<TD HEIGHT=17 ALIGN=LEFT VALIGN=MIDDLE>0x00000001</TD>
+			<TD COLSPAN=2 ALIGN=LEFT VALIGN=MIDDLE>Always recommended to be enabled</TD>
+			<TD ALIGN=RIGHT SDVAL="1" SDNUM="1031;">1</TD>
+		</TR>
+	</TBODY>
+</TABLE>
+<!-- ************************************************************************** -->
+</BODY>
+
+</HTML>

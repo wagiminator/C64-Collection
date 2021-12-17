@@ -1,0 +1,3416 @@
+  opencbm 0.4.99.99 Users Guide
+  Michael Klein, nip@c64.org, Spiro Trikaliotis,
+  cbm4win@trikaliotis.net, Wolfgang Moser d81.de, Arnd Menge
+  arnd(at)jonnz(dot)de,
+  2016-01-13
+
+  This document describes the opencbm package, which can be used to con-
+  trol and use serial devices as userd by most Commodore (CBM) 8-bit
+  machines.  The latest version of the document can be found online at
+  http://opencbm,trikaliotis.net/.  OpenCBM consists of a kernel module
+  ("driver") for Linux and Windows for cables connected via the parallel
+  port, which is almost obsolete on modern PC hardware. Additionally, it
+  has support software and tools to access these old parallel port based
+  cables as well as more modern USB replacements.  On top of that, a few
+  user space support programs to control and use serial devices as used
+  by most Commodore (CBM) 8-bit machines are included.  The document
+  also contains descriptions for the corresponding cables, namely, the
+  XU1541 adapter, the XUM1541 adapter (a.k.a. "ZoomFloppy"), and the
+  XA1541/XM1541 adapter.
+  ______________________________________________________________________
+
+  Table of Contents
+
+
+  1. Overview
+     1.1 Introduction to opencbm
+     1.2 Supported operating systems
+     1.3 Supported CBM hardware
+     1.4 Cables
+        1.4.1 USB cables
+        1.4.2 Parallel port based cables
+
+  2. News/Changelog
+  3. Installation
+     3.1 Quick installation walk-through
+        3.1.1 Linux installation walk-through
+        3.1.2 Mac OS X installation walk-through
+        3.1.3 Windows installation walk-through
+           3.1.3.1 USB driver installation
+           3.1.3.2 OpenCBM tool installation
+     3.2 Installing opencbm on Mac OS X (USB cable)
+     3.3 Installing opencbm on Linux or FreeBSD
+        3.3.1 Prerequisites
+           3.3.1.1 XUM1541 cable (a.k.a. ZoomFloppy) and XU1541 cable
+           3.3.1.2 XA1541 cable or XM1541 cable
+           3.3.1.3 Any cable type
+        3.3.2 Compile-time configuration
+        3.3.3 Compilation
+        3.3.4 Loading the module (XA1541/XM1541 only)
+        3.3.5 udev rules so that you can access the cables as non-root
+              user (Linux only)
+        3.3.6 Troubleshooting
+        3.3.7 Device access
+        3.3.8 Runtime configuration (Applies to XA1541 and XM1541 cables
+              only!)
+     3.4 Installing opencbm on Windows (cbm4win)
+
+  4. Checking if the installation is complete
+  5. Uninstall
+     5.1 Quick uninstallation walk-through
+        5.1.1 Linux uninstallation walk-through
+        5.1.2 Mac OS X uninstallation walk-through
+        5.1.3 Windows uninstallation walk-through
+
+  6. Utilities
+     6.1 instcbm (Windows only)
+        6.1.1 instcbm invocation
+        6.1.2 instcbm Examples
+     6.2 cbmctrl
+        6.2.1 Command structure
+           6.2.1.1 Global options
+           6.2.1.2 Actions overview
+           6.2.1.3 Common action arguments
+        6.2.2 Actions
+        6.2.3 cbmctrl Examples
+     6.3 cbmformat
+        6.3.1 cbmformat invocation
+        6.3.2 cbmformat Notes for 1571 drives
+        6.3.3 cbmformat Examples
+     6.4 cbmforng
+        6.4.1 cbmforng invocation
+        6.4.2 cbmforng Notes for 1571 drives
+        6.4.3 cbmforng Examples
+     6.5 d64copy
+        6.5.1 d64copy invocation
+        6.5.2 d64copy Examples
+     6.6 d82copy
+        6.6.1 d82copy invocation
+        6.6.2 d82copy Examples
+     6.7 imgcopy
+        6.7.1 imgcopy invocation
+        6.7.2 imgcopy Examples
+     6.8 cbmcopy
+        6.8.1 cbmcopy invocation
+        6.8.2 cbmcopy Examples
+     6.9 rpm1541
+        6.9.1 rpm1541 usage
+        6.9.2 rpm1541 Example
+     6.10 flash
+        6.10.1 flash usage
+        6.10.2 flash Example
+     6.11 morse
+        6.11.1 morse usage
+        6.11.2 morse Examples
+     6.12 cbmlinetester
+        6.12.1 cbmlinetester invocation
+     6.13 tape routines
+
+  7. opencbm API
+  8. Known bugs and problems
+  9. WARNINGS
+     9.1 Proper power-on sequence
+        9.1.1 Power-on sequence for USB based adapters
+        9.1.2 Power-on sequence for PC parallel port based adapters
+
+  10. Misc
+     10.1 Credits
+     10.2 Contributions
+     10.3 Feedback
+
+
+  ______________________________________________________________________
+
+  11..  OOvveerrvviieeww
+
+  _P_l_e_a_s_e _r_e_a_d _t_h_e _s_e_c_t_i_o_n _`_`_W_A_R_N_I_N_G_S_'_' _a_t _t_h_e _e_n_d _o_f _t_h_i_s _d_o_c_u_m_e_n_t
+  _b_e_f_o_r_e _p_r_o_c_e_e_d_i_n_g_. _I_m_p_r_o_p_e_r _u_s_e _o_f _t_h_e _c_a_b_l_e _a_d_a_p_t_e_r_s _(_X_A_1_5_4_1_, _X_U_1_5_4_1_,
+  _X_U_M_1_5_4_1_) _m_a_y _d_a_m_a_g_e _y_o_u_r _d_r_i_v_e_s _o_r _t_h_e _c_a_b_l_e_s _t_h_e_m_s_e_l_v_e_s_.
+
+  The popular Commodore 8-bit home-computers like the C-64 and the
+  VIC-20 are using a custom serial bus to talk to attached devices (disk
+  drive, printer).  This proprietary serial bus protocol is not natively
+  supported by modern hard- or software.
+
+  opencbm provides an interface to this so-called IEC bus at the level
+  of simple TALK and LISTEN commands, similar to the one provided by the
+  Commodore kernel routines. Additionally, some higher and lower level
+  bus control is available as well, allowing for full control of the
+  bus.
+
+  The CBM serial devices are connected to the PC either to the parallel
+  port via an XM1541 or XA1541 cable and, optionally, an XP1541 or
+  XP1571 add-on cable.  Alternatively, more modern USB cable solutions
+  like XU1541 or XUM1541 (a.k.a.  ZoomFloppy) are supported. For cables,
+  cf. ``cable''.
+
+  opencbm has a plugin concept which allows to additionally add custom
+  build cables.
+
+  opencbm can be used on PCs on Linux and Windows (all cables).
+  Additioanlly, USB based cables are supported on FreeBSD and on Mac OS
+  X.
+
+  11..11..  IInnttrroodduuccttiioonn ttoo ooppeennccbbmm
+
+  This is version 0.4.99.99 of opencbm, a support package for retro
+  devices that communicate with the serial CBM bus protocol, known from
+  the C64, VIC-20, etc.  Opencbm runs on Linux, Windows, FreeBSD and Mac
+  OS X. opencbm 0.4.0 was a re-join of the two projects cbm4linux
+  (latest standalone version: 0.3.2) and cbm4win (latest standalone
+  version: 0.1.0a). It should be noted that both projects were highly
+  related from the beginning, as cbm4win 0.1.0 was based on cbm4linux
+  0.3.2.
+
+  Opencbm should work with any devices that understand the "normal" talk
+  and listen commands of the CBM IEC bus. It has been tested with
+  several 1541, 1541-II, 1570, 1571 and 1581 drives, and a MPS-1200
+  printer. 1541 clones like the Oceanic OC-118 have also been reported
+  to work.
+
+  The following cable types are supported:
+
+
+  ·  XUM1541 (opencbm version >= 0.4.99.x)
+
+  ·  XU1541 (opencbm version >= 0.4.99.x)
+
+  ·  XM1541 and XA1541 (cbm4linux version >= 0.2.1, cbm4win version >=
+     0.1.0)
+
+  ·  XP1541 (cbm4linux version >= 0.2.0, cbm4win version >= 0.1.0)
+
+  ·  XP1571 (cbm4linux version >= 0.2.4, cbm4win version >= 0.1.0)
+
+  ·  Modified XE1541 (only on Linux, obsoleted by the XM1541, see
+     `opencbm/LINUX/config.make')
+
+  More information on the different cable types can be found in
+  ``cable''.
+
+  This package is provided `as is', no warranty of any kind will be
+  taken for any damage or data loss caused by it or by any use of it.
+
+  _*_*_* _W_A_R_N_I_N_G _*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+  _H_O_T_P_L_U_G_G_I_N_G _c_a_n _K_I_L_L _y_o_u_r _h_a_r_d_w_a_r_e_.
+
+  _D_o _n_o_t _c_o_n_n_e_c_t _a_n_y_t_h_i_n_g _t_o _t_h_e _p_a_r_a_l_l_e_l _p_o_r_t _w_h_i_l_e _t_h_e _s_y_s_t_e_m _o_r _a
+  _d_r_i_v_e _i_s _u_p_.
+
+   _A_l_w_a_y_s _S_H_U_T _D_O_W_N_, _C_O_N_N_E_C_T_, _R_E_B_O_O_T_.
+
+  _A_g_a_i_n_, _a_b_s_o_l_u_t_e_l_y _N_O _W_A_R_R_A_N_T_Y_.
+
+  _*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*
+
+  11..22..  SSuuppppoorrtteedd ooppeerraattiinngg ssyysstteemmss
+
+  _o_p_e_n_c_b_m supports the following operating systems:
+
+
+  ·  For USB based cables: Any Linux, FreeBSD or MacOS X variant that
+     support libusb-0.1 should be supported. Linux, FreeBSD and Mac OS X
+     have been explicitly tested.
+
+  ·  For parallel port based cables: Linux 3.x and 2.6 variants. 2.0,
+     2.2 and 2.4 might still work, but have not been tested for ages.
+     For Linux, i386 and AMD64 architectures are supported.
+
+  ·  For parallel port based as well as USB based cables: Windows NT
+     4.0, 2000, XP and Server 2003, Vista, 7 and 8. For USB based
+     cables, NT 4.0 is not supported, though.  The i386 architecture
+     a.k.a "x86" ("32 bit") is fully supported; additionally, 64 bit
+     Windows ("x64", "x86_64") versions are supported.  Itanium-based
+     Windows ("iA64") are _n_o_t supported, though.
+
+  11..33..  SSuuppppoorrtteedd CCBBMM hhaarrddwwaarree
+
+  Currently, opencbm supports the following CBM devices:
+
+
+  ·  VIC 1541, VIC1540 (all variants, including clones)
+
+  ·  VIC 1570, VIC 1571 (including the 1571CR and the 1571 inside of a
+     C128DCR)
+
+  ·  VIC 1581 (not with d64copy (``d64copy''), not with cbmformat
+     (``cbmformat'') or cbmforng (``cbmforng''))
+
+  ·  other CBM IEC drives, printers, and compatibles (only with cbmctrl
+     (``cbmctrl''))
+
+  ·  VIC 8250, 8050, 4040, 2031, SFD 1001, and possibly other IEEE
+     drives with an IEC to IEEE converter (for example, IEC2IEEE from
+     Jochen Adler, cf. http://www.nlq.de/, or with a ZoomFloppy
+     extension that lets you use IEEE devices directly.
+
+  11..44..  CCaabblleess
+
+  Since the last opencbm release, the PC market has changed
+  considerably. Modern PCs do not contain parallel ports anymore, nor do
+  they have ISA type connectors for extension cards. Additionally,
+  parallel port cards connected via PCI, PCIe or other modern
+  replacements are reported not to work with OpenCBM.
+
+  Also, devices that allow you to connect your parallel port printer to
+  the USB port of your PC cannot work, either.
+
+  Thus, there was a need for newer cable replacements. While OpenCBM
+  still supports parallel port based cables, more modern USB variants
+  are supported, too, and they should be preferred to the parallel port
+  based ones.
+
+  11..44..11..  UUSSBB ccaabblleess
+
+  There are two types of USB cables currently supported. The XU1541
+  cable is a simple cable, optimised for ease of building and low costs.
+  Its big downside is that transfers with this cable are very slow. In
+  fact, the parallel port based solutions for the XA1541 or XM1541
+  (a.k.a. XAP1541 or XMP1541) were faster than the XU1541 cable. Thus,
+  it can be recommended only if you do not plan to use the XU1541
+  regularly, but only for a limited time.
+
+  If you have the money to spend and plan to use your CBM equipment
+  regularly, it is highly suggested to use a XUM1541 cable, for example,
+  in the incarnation of the ZoomFloppy.
+
+  Building these cables is beyond the scope of this document. We refer
+  to the appropriate links on the web for instrutions how to build or
+  order them.
+
+  11..44..22..  PPaarraalllleell ppoorrtt bbaasseedd ccaabblleess
+
+  As parallel ports more and more vanish from modern PC hardware, it is
+  recommended not to use these cables for new projects, but to use ``USB
+  based cables'' instead.
+
+  Another problem for Windows machines is that using such cables
+  requires a kernel mode driver. For 64 bit Windows machines (with the
+  exception of Win XP 64 bit), in order to load kernel mode drivers,
+  these drivers have to be signed.  Signing a driver not only costs
+  money; it also requires you to have a company in order to get the
+  needed certificate. Thus, the OpenCBM drivers currently are not
+  signed, thus, you will not be able to use parallel port based cables
+  with 64 bit versions of Windows.
+
+  This is not completely true, as you can switch off the driver
+  signature enforcement in windows. Normally, this is used for driver
+  development only.  Use at your own risk! Instructions on disabling the
+  driver signature enforcement can be found on the web.
+
+  These cables are still supported on 32 bit Windows variants, and they
+  will remain as long as the developers have access to the necessary
+  infrastructure.
+
+  _P_l_e_a_s_e _n_o_t_e _t_h_a_t _U_S_B_-_t_o_-_p_a_r_a_l_l_e_l _c_o_n_v_e_r_t_e_r_s _t_h_a_t _a_r_e _d_e_s_i_g_n_e_d _t_o _l_e_t
+  _y_o_u _a_c_c_e_s_s _y_o_u_r _p_a_r_a_l_l_e_l _p_o_r_t _b_a_s_e_d _p_r_i_n_t_e_r_s _o_n _t_h_e _P_C _w_i_l_l _d_e_f_i_n_i_t_e_l_y
+  _n_o_t _w_o_r_k_!  _I_f _y_o_u_r _P_C _d_o_e_s _n_o_t _h_a_v_e _a _n_a_t_i_v_e _p_a_r_a_l_l_e_l _p_o_r_t_, _p_l_e_a_s_e
+  _c_o_n_s_i_d_e_r _u_s_i_n_g _a_n _X_U_1_5_4_1 _o_r _X_U_M_1_5_4_1 _c_a_b_l_e _i_n_s_t_e_a_d_!
+
+  Also note that a standard X(E)1541 cable won't work with _this_
+  driver. In fact, there will probably never be a multitasking OS which
+  works with one of these, that's why we call it XM1541, M for
+  Multitasking. Anyway, if you have a XE1541, the necessary modification
+  is simple:
+
+  EExxcchhaannggee ppiinnss 55 && 66 oonn tthhee CCoommmmooddoorree DDIINN pplluugg
+
+  The ACK line is the only line on a PC parallel port that can generate
+  a hardware interrupt. This way, we get an interrupt when the device
+  releases the DATA line to signal "ready to receive". Without an
+  interrupt, you would have to poll for this signal about every 100us,
+  which is inacceptable for any multitasking system.
+
+  Be sure to have your parallel port configured to use an IRQ, usually 7
+  or 5, but both are often also used by soundcards.
+
+  (ASCII art taken from the StarCommander README :))
+
+  The PC parallel plug (male DB-25 connector):
+
+
+
+               PaperEnd   Busy
+           SelectIn   |   |   Ack        Data 7 - Data 0       Strobe
+                  |   |   |   |   +-------------+-------------+   |
+                  V   V   V   V   |                           |   V
+               +------------------------------------------------------+
+               | 13  12  11  10   9   8   7   6   5   4   3   2   1   |
+               |  o   o   o   o   o   o   o   o   o   o   o   o   o   |
+               +-+                                                  +-+
+                 |  o   o   o   o   o   o   o   o   o   o   o   o   |
+                 | 25  24  23  22  21  20  19  18  17  16  15  14   |
+                 +--------------------------------------------------+
+                    |                           |   ^   ^   ^   ^
+                    +-------------+-------------+   |   |   |   |
+                               Ground          Select   |   |   AutoFeed
+                                                     Init   Error
+
+
+
+  The Commodore drive serial bus plug (male 6-pin DIN connector) looks
+  like:
+
+
+
+                                        Reset
+                                          |
+                                          V
+                                 +-------+ +-------+
+                               +-+       +-+       +-+
+                               |     5         1     |
+                      Data --> |     o    6    o     | <-- SrqIn
+                               |          o          |
+                               |     4         2     |
+                       Clk --> |     o    3    o     | <-- Gnd
+                               |          o          |
+                               +-+                 +-+
+                                 +-----------------+
+                                          ^
+                                          |
+                                         Atn
+
+
+
+  This is the XE1541 cable (won't work with this driver):
+
+
+
+           CBM drive serial port   PC parallel port
+
+               2  Gnd ---------- 18-25  Ground
+               3  Atn --------+---- 13  SelectIn
+                              +->|-- 1  Strobe
+               4  Clk --------+---- 12  PaperEnd
+                              +->|- 14  AutoFeed
+               5  Data -------+---- 11  Busy
+                              +->|- 17  SelectIn
+               6  Reset ------+---- 10  Ack
+                              +->|- 16  Init
+
+
+
+  This is the XM1541 (pins 5 & 6 on the CBM end exchanged)
+
+
+
+           CBM drive serial port   PC parallel port
+
+               2  Gnd ---------- 18-25  Ground
+               3  Atn --------+---- 13  SelectIn
+                              +->|-- 1  Strobe
+               4  Clk --------+---- 12  PaperEnd
+                              +->|- 14  AutoFeed
+               6  Reset ------+---- 11  Busy
+                              +->|- 17  SelectIn
+               5  Data -------+---- 10  Ack
+                              +->|- 16  Init
+
+
+
+  Besides the XM1541, a XA1541 cable is also supported. That cable
+  consists of the same connections as the XM1541, but instead of using
+  diodes, it uses transistors which drive the lines better. Because of
+  this difference, the logic for outputs is reversed between the XA1541
+  and the XM1541.
+
+  Additionally to the cable types above, opencbm also supports XP1541
+  and XP1571 parallel cables, which have to be used _i_n _c_o_n_j_u_n_c_t_i_o_n with
+  the XM1541 or XA1541 cable.
+
+  For more information about the different supported cables (XM1541,
+  XA1541, XP1541, XP1571) can be obtained on the Star Commander homepage
+  (http://sta.c64.org/xcables.html)
+
+  22..  NNeewwss//CChhaannggeelloogg
+
+
+     ooppeennccbbmm vv00..44..9999..9999::
+
+        ·  New tool xum1541cfg, because the old one was severely
+           outdated
+
+
+        ooppeennccbbmm vv00..44..9999..9988::
+
+           ·  TBD @@@
+
+        ooppeennccbbmm vv00..44..00::
+
+           ·  General:
+
+              ·  Reorganized structure so cbm4win and cbm4linux compile
+                 from the same sources
+
+              ·  Fixed many minor and major errors
+
+              ·  Added mnib36 (http://rittwage.com/c64pp/dp.php?pg=mnib)
+                 support
+
+              ·  _c_b_m_f_o_r_n_g: New tool, cf. ``cbmforng''
+
+              ·  _r_p_m_1_5_4_1: New tool, cf. ``rpm1541''
+
+
+           ·  General, Windows specific:
+
+              ·  Use a free build instead of a checked build. This
+                 significantly reduces the memory footprint.
+
+              ·  compiles for AMD64, iA64, i386 (Windows only)
+
+              ·  VDD to allow DOS programs to access cbm4win
+
+              ·  new unit file for Delphi, to allow to access cbm4win
+                 from Delphi
+
+              ·  New project opencbmvice for debugging with the help of
+                 VICE (http://www.viceteam.org/). For this, a special
+                 version of VICE is needed.
+
+
+           ·  Linux driver:
+
+              ·  Fixed kernel source directory (Dirk Jagdmann)
+
+              ·  Fixed installation with GNU coreutils head (Dirk
+                 Jagdmann)
+
+              ·  Added correct module installation dir for Linux 2.6
+                 (Dirk Jagdmann)
+
+              ·  Added descriptions for module parameters (_m_o_d_i_n_f_o _c_b_m)
+                 (Dirk Jagdmann)
+
+              ·  Added "smart reset" for cbm4linux: Delay the reset
+                 until all drives are ready.
+
+
+           ·  Windows driver:
+
+              ·  Only access the bus if the parallel port was
+                 successfully acquired.
+
+              ·  Added ECP and EPP support into NT4 driver (allowing
+                 XP1541 cable to be used there)
+
+              ·  On reset, do not wait a fixed timeout anymore, just
+                 wait until all drives are ready again
+
+
+
+           ·  instcbm:
+
+              ·  _-_-_l_o_c_k, _-_-_c_a_b_l_e_t_y_p_e: New options
+
+              ·  _-_-_a_u_t_o_m_a_t_i_c is default now, new option _-_-_o_n_-_d_e_m_a_n_d for
+                 old behaviour
+
+              ·  Added _-_V (_-_-_v_e_r_s_i_o_n) command-line option
+
+              ·  Reworked start of driver. It was unloaded and loaded
+                 before, which does not make sense
+
+
+           ·  cbmctrl:
+
+              ·  _c_b_m_c_t_r_l _p_o_p_e_n, _c_b_m_c_t_r_l _p_c_o_m_m_a_n_d to do ASCII -> PETSCII
+                 conversions
+
+              ·  _c_b_m_c_t_r_l _s_t_a_t_u_s, _c_b_m_c_t_r_l _d_i_r: Output the status on
+                 stdout, not stderr
+
+              ·  _c_b_m_c_t_r_l _l_o_c_k, _c_b_m_c_t_r_l _u_n_l_o_c_k: New commands
+
+              ·  _c_b_m_c_t_r_l _r_e_a_d, _c_b_m_c_t_r_l _w_r_i_t_e: New commands
+
+              ·  Added _-_-_v_e_r_s_i_o_n and _-_-_h_e_l_p command-line arguments.
+
+              ·  _c_b_m_c_t_r_l _c_h_a_n_g_e _d_r_i_v_e: New function (heavily based on
+                 Joe Forster/STA's "TDCHANGE" from SC, used with
+                 permission)
+
+              ·  _c_b_m_c_t_r_l _d_e_t_e_c_t outputs whether we have a parallel cable
+
+
+           ·  cbmcopy:
+
+              ·  Fixed some timing problems which resulted in hanging in
+                 rare cases;
+
+              ·  Cosmetical fix: The device status is written on a
+                 separate line on exit.
+
+              ·  Fixed some races between PC and drive code in the
+                 transfer functions serial1, serial2, parallel
+
+              ·  New option _-_-_t_r_a_n_s_f_e_r_=_a_u_t_o, which is default and finds
+                 out the best transfer method for the current setup.
+
+              ·  Do not use $14 in the floppy drive as temporary
+                 variable, but $86. This fixes a problem with Rex-DOS.
+
+              ·  Do not trash the file on the PC side if aborted with
+                 Ctrl+C.
+
+
+           ·  d64copy:
+
+              ·  Fixed some timing problems which resulted in hanging in
+                 rare cases;
+
+              ·  _-_-_w_a_r_p is default now; New option _-_-_n_o_-_w_a_r_p for
+                 disabling it.
+
+              ·  did not recognize .d71 files as valid images; fixed
+                 that.
+
+              ·  Fixed some races between PC and drive code in the
+                 transfer functions _s_e_r_i_a_l_1, _s_e_r_i_a_l_2, _p_a_r_a_l_l_e_l
+
+              ·  New option _-_-_t_r_a_n_s_f_e_r_=_a_u_t_o, which is default and finds
+                 out the best transfer method for the current setup.
+
+              ·  Do not use $14 in the floppy drive as temporary
+                 variable, but $86. This fixes a problem with Rex-DOS.
+
+              ·  Do not trash the file on the PC side if aborted with
+                 Ctrl+C.
+
+
+           ·  API:
+
+              ·  cbm_detect_xp1541(): New function
+
+              ·  cbm_iec_setrelease(): New function
+
+              ·  cbm_iec_set(), cbm_iec_release(): Extended API to allow
+                 setting/resetting more than one line at the same time
+
+
+           ·  Build process (Windows):
+
+              ·  reworked build process (_D_D_K_B_U_I_L_D___S_T_A_R_T_._B_A_T)
+
+              ·  _D_D_K_B_U_I_L_D___L_O_C_A_L_._B_A_T contains settings for the CC65 build
+                 process, now.
+
+              ·  _d_d_k_b_u_i_l_d___l_o_c_a_l_._b_a_t_._s_a_m_p_l_e added as sample for a
+                 DDKBUILD_LOCAL.BAT file
+
+              ·  _p_o_s_t_b_u_i_l_d___l_o_c_a_l_._b_a_t_._s_a_m_p_l_e added as sample for a
+                 POSTBUILD_LOCAL.BAT file
+
+
+           ·  Build process (Linux):
+
+              ·  Moved makefiles into LINUX directory; thus, use _m_a_k_e _-_f
+                 _L_I_N_U_X_/_M_a_k_e_f_i_l_e to compile now.
+
+
+        ccbbmm44lliinnuuxx 00..33..33 ((NNEEVVEERR RREELLEEAASSEEDD!!))
+
+           ·  documentation in _-_-_h_e_l_p for _d_6_4_c_o_p_y and _c_b_m_c_o_p_y fixed:
+              now, it is clearly stated that a XP cable must be used in
+              combination with a serial cable, not as only one. (Spiro
+              Trikaliotis)
+
+           ·  fixed crash with unkown long options in d64copy, cbmformat
+              and maybe cbmcopy (Spiro Trikaliotis)
+
+           ·  _c_b_m_c_t_r_l _u_p_l_o_a_d accepts _- as filename now (read from stdin)
+
+           ·  _c_b_m_c_t_r_l _d_o_w_n_l_o_a_d takes optionally a file name argument
+              (Spiro Trikaliotis)
+
+           ·  _l_i_b_d_6_4_c_o_p_y failed to recognize .d71 images as valid
+              images. Because of this, you could not write a .d71 image
+              back to a real floppy drive
+
+           ·  _d_6_4_c_o_p_y: If you copy a disk to an image which already
+              exists, the error information was not removed from the
+              file if necessary. This is fixed now.  (Spiro Trikaliotis)
+
+           ·  _l_i_b_d_6_4_c_o_p_y: Fixed a crash on exit of d64copy if a .d64
+              file grows.
+
+           ·  parport_enumerate()-fix for kernels>=2.6.4
+
+           ·  new ioctl CBMCTRL_CLEAR_EOI and API function
+              cbm_clear_eoi() (Robert Norris)
+
+           ·  minor (still compatible) API changes (Spiro Trikaliotis)
+
+           ·  _c_b_m_f_o_r_m_a_t: make sure disk name is 0-terminated (Spiro
+              Trikaliotis)
+
+
+     33..  IInnssttaallllaattiioonn
+
+     DDeeppeennddiinngg oonn tthhee ssyysstteemm yyoouu aarree rruunnnniinngg ooppeennccbbmm oonn,, tthheerree aarree
+     ddiiffffeerreenntt wwaayyss ttoo iinnssttaallll ooppeennccbbmm.. UUssee tthhee aapppprroopprriiaattee ccaatteeggoorryy ffoorr
+     yyoouu::
+
+     33..11..  QQuuiicckk iinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     IIff yyoouu wwaanntt ttoo iinnssttaallll OOppeennCCBBMM aass ffaasstt aass ppoossssiibbllee,, bbuutt yyoouu aarree nnoott
+     iinntteerreesstteedd iinn tthhee ddeettaaiillss,, jjuusstt uussee tthhee iinnssttrruuccttiioonnss ffrroomm tthhiiss
+     sseeccttiioonn aanndd iiggnnoorree tthhee rreesstt ooff tthhiiss cchhaapptteerr uunnlleessss yyoouu eennccoouunntteerr
+     aannyy pprroobblleemmss..
+
+     IIff yyoouu aarree mmoorree iinntteerreesstteedd ffoorr aa cclleeaann iinnssttaallllaattiioonn,, sskkiipp tthhiiss
+     sseeccttiioonn aanndd rreeaadd tthhee rreesstt ooff tthhiiss cchhaapptteerr..
+
+     33..11..11..  LLiinnuuxx iinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     PPeerrffoorrmm tthhee ffoolllloowwiinngg sstteeppss ttoo iinnssttaallll OOppeennCCBBMM oonn yyoouurr LLiinnuuxx
+     mmaacchhiinnee::
+
+
+        ·  Get the sources from the tarball at
+           http://www.trikaliotis.net/Download/opencbm-0.4.99.99/opencbm-0.4.99.99-source.tar.bz2.
+
+        ·  Unpack them into a directory (i.e., _~_/_o_p_e_n_c_b_m_-_0_._4_._9_9_._9_9, with
+           0.4.99.99 being the version number of OpenCBM).
+
+        ·  _c_d into the directory: _c_d _~_/_o_p_e_n_c_b_m_-_0_._4_._9_9_._9_9
+
+        ·  Compile OpenCBM and the appropriate plugin: _m_a_k_e _-_f
+           _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m _p_l_u_g_i_n_-_X_X_X, with _X_X_X being one of
+           _x_a_1_5_4_1, _x_u_1_5_4_1 or _x_u_m_1_5_4_1, depending upon which adapter you
+           are using:
+
+           ·  XXUUMM11554411 ++ ZZoooommffllooppppyy oonnllyy:: _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m
+              _p_l_u_g_i_n_-_x_u_m_1_5_4_1
+
+           ·  XXUU11554411 oonnllyy:: _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m _p_l_u_g_i_n_-_x_u_1_5_4_1
+
+           ·  XXAA11554411 ++ XXMM11554411 oonnllyy:: _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m
+              _p_l_u_g_i_n_-_x_a_1_5_4_1
+
+        ·  Now, install the OpenCBM package. You must perform this as
+           root, either by using _s_u_d_o, or by explicitly becoming root
+           with _s_u. The following command assumes you are using _s_u_d_o:
+           _s_u_d_o _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _i_n_s_t_a_l_l _i_n_s_t_a_l_l_-_p_l_u_g_i_n_-_X_X_X, with
+           _X_X_X being the same one of _x_a_1_5_4_1, _x_u_1_5_4_1 or _x_u_m_1_5_4_1 as above:
+
+           ·  XXUUMM11554411 ++ ZZoooommffllooppppyy oonnllyy:: _s_u_d_o _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e
+              _o_p_e_n_c_b_m _i_n_s_t_a_l_l_-_p_l_u_g_i_n_-_x_u_m_1_5_4_1
+
+           ·  XXUU11554411 oonnllyy:: _s_u_d_o _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m _i_n_s_t_a_l_l_-
+              _p_l_u_g_i_n_-_x_u_1_5_4_1
+
+           ·  XXAA11554411 ++ XXMM11554411 oonnllyy:: _s_u_d_o _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m
+              _i_n_s_t_a_l_l_-_p_l_u_g_i_n_-_x_a_1_5_4_1
+
+        ·  Connect your cable (XU1541, XUM1541, XA1541, XM1541) to your
+           CBM IEC device:
+
+           ·  XXUUMM11554411 ++ ZZoooommffllooppppyy ++ XXUU11554411 oonnllyy:: Plug your XU1541 or
+              XUM1541 into the USB port
+
+           ·  XXAA11554411 ++ XXMM11554411 oonnllyy:: Plug your XA1541 or XM1541 cable to
+              the parallel port
+
+        ·  Switch on your CBM IEC device.
+
+        ·  XXAA11554411 ++ XXMM11554411 oonnllyy:: Load the kernel module:
+
+           ·  _s_u_d_o _/_s_b_i_n_/_d_e_p_m_o_d _-_a
+
+           ·  _s_u_d_o _/_s_b_i_n_/_m_o_d_p_r_o_b_e _p_a_r_p_o_r_t (this one might fail if you
+              have the parallelport compiled into the kernel instead of
+              being a module)
+
+           ·  _s_u_d_o _/_s_b_i_n_/_i_n_s_m_o_d _c_b_m
+
+           ·  Now, check the file _/_v_a_r_/_l_o_g_/_m_e_s_s_a_g_e_s if your cable was
+              correctly recognized.
+
+        ·  You are almost done. Check if the command _c_b_m_c_t_r_l _r_e_s_e_t
+           resets your drive, or if the command _c_b_m_c_t_r_l _d_e_t_e_c_t prints
+           out your device with your device number. If this works, you
+           are done! If not, please proceed:
+
+        ·  If you get an error message that libopencbm cannot be found,
+           you must add it to your linker path. In order to do so, enter
+           the command _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _l_d_c_o_n_f_i_g
+
+        ·  Now, everything should be working, and you should be able to
+           use the OpenCBM tools even as non-root.
+
+     33..11..22..  MMaacc OOSS XX iinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     PPlleeaassee cchheecckk tthhee iinnssttrruuccttiioonnss aatt
+     hhttttpp::////llaallllaaffaa..ddee//bblloogg//cc6644--pprroojjeeccttss//ooppeennccbbmm--oonn--mmaacc// aavvaaiillaabbllee oonn
+     tthhee bblloogg ooff CChhrriissttiiaann VVooggeellggssaanngg,, wwhhoo aaccttuuaallllyy ppoorrtteedd OOppeennCCBBMM ttoo
+     tthhee MMaacc.. HHiiss ssiittee sshhoouulldd bbee yyoouurr pprriimmaarryy ssoouurrccee ffoorr iinnssttrruuccttiioonnss..
+
+     33..11..33..  WWiinnddoowwss iinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     YYoouu nneeeedd tthhee WWiinnddoowwss bbiinnaarriieess ffrroomm
+     hhttttpp::////wwwwww..ttrriikkaalliioottiiss..nneett//DDoowwnnllooaadd//ooppeennccbbmm--00..44..9999..9999//ooppeennccbbmm--00..44..9999..9999..zziipp
+     iinn oorrddeerr ttoo iinnssttaallll OOppeennCCBBMM..
+
+     FFoorr WWiinnddoowwss,, yyoouu hhaavvee ttoo iinnssttaallll tthhee UUSSBB ddrriivveerrss ffiirrsstt iiff yyoouu wwaanntt
+     ttoo uussee tthhee ZZoooommFFllooppppyy,, XXUUMM11554411 oorr XXUU11554411 ddeevviicceess..
+
+     33..11..33..11..  UUSSBB ddrriivveerr iinnssttaallllaattiioonn
+
+     FFoorr pprreevviioouuss vveerrssiioonn ooff OOppeennCCBBMM aanndd 6644 bbiitt vveerrssiioonnss ooff WWiinnddoowwss,,
+     tthhaatt mmeeaanntt yyoouu hhaadd ttoo ffiiddddllee aarroouunndd wwiitthh tthhee ddrriivveerr ssiiggnnaattuurree
+     eennffoorrcceemmeenntt iinn oorrddeerr ttoo ggeett tthhiiss ddoonnee..
+
+     FFoorr vv00..44..9999..9999,, wwee rreellyy oonn aann eexxtteerrnnaall ttooooll wwhhiicchh mmaakkeess iitt mmuucchh
+     eeaassiieerr ffoorr yyoouu..
+
+     PPlleeaassee pprroocceeeedd aass ffoolllloowwss::
+
+
+        ·  Attach your XUM1541/ZoomFloppy or XU1541 device to your PC
+           via USB.
+
+        ·  Download the zadig tool from http://zadig.akeo.ie/.  Note
+           that there are different versions for Windows XP and later
+           versions for Windows; download the appropriate one!
+
+        ·  Unpack the tool in a directory and start it. You might get an
+           UAC prompt (Vista and later, ``''), which you must confirm.
+
+        ·  You should see your USB device (XUM1541, XU1541) mentioned in
+           the screen.  If you do not, please select, ``''. This is
+           especially true if you installed the drivers for the USB
+           device before.
+
+        ·  Now, adjust some settings.
+
+           ·  XXUUMM11554411 ++ ZZoooommFFllooppppyy oonnllyy:: Make sure that zadig tells you
+              it found the "xum1541 floppy adapter", and that it wants
+              to install the libusb-win32 driver. The USB id is 16D0
+              (vendor) and 0504 (product).  Your screen should look like
+              figure ``''.
+
+           ·  XXUU11554411 oonnllyy:: Make sure that zadig tells you it found the
+              "xu1541", and that it wants to install the libusb-win32
+              driver. The USB id is 0403 (vendor) and C632 (product).
+              Your screen should look like figure ``''.
+
+        ·  Now, press "install driver".
+
+        ·  Wait until you get the message "The driver was installed
+           successfully." ``''
+
+     NNoottee:: zadig does not rely on the OpenCBM files at all!
+     Specifically, it contains its own version of the USB drivers
+     embedded into the executable; thus, you do not have to specify a
+     link to the driver files, or put them at a specific location. Just
+     use it "as is".
+
+
+
+                    UAC for zadig which must be confirmed
+
+
+
+                     Enable "List all devices" for zadig
+
+
+
+               zadig settings for installing an xum1541 device
+
+
+
+               zadig settings for installing an xu1541 device
+
+
+
+           zadig message that it installed the driver successfully
+
+     Now, proceed with installation the OpenCBM tools.
+
+     33..11..33..22..  OOppeennCCBBMM ttooooll iinnssttaallllaattiioonn
+
+     IInn oorrddeerr ttoo iinnssttaallll OOppeennCCBBMM,, pprroocceeeedd aass ffoolllloowwss::
+
+
+        ·  Download the OpenCBM package binary for Windows from
+           http://www.trikaliotis.net/Download/opencbm-0.4.99.99/opencbm-0.4.99.99.zip
+           Note that unlike previous versions of OpenCBM, v0.4.99.99 now
+           contains one package for all supported architectures (i386
+           vs. amd64, 32 bit vs. 64 bit). You do not have to choose
+           which one to get.
+
+        ·  Unpack it into a directory of your liking
+
+        ·  Start a cmd.exe shell as administrator. The exact procedure
+           varies among the different Windows versions.
+
+        ·  Go to the directory where you unpacked the OpenCBM
+           installation package (with the "cd" command)
+
+        ·  Enter
+
+           ·  ZZoooommFFllooppppyy oonnllyy:: _i_n_s_t_a_l_l _z_o_o_m_f_l_o_p_p_y (this is also default,
+              that it, it suffices if you enter _i_n_s_t_a_l_l only)
+
+           ·  XXUUMM11554411 oonnllyy:: _i_n_s_t_a_l_l _x_u_m_1_5_4_1
+
+           ·  XXUU11554411 oonnllyy:: _i_n_s_t_a_l_l _x_u_1_5_4_1
+
+           ·  XXAA11554411 oonnllyy:: _i_n_s_t_a_l_l _x_a_1_5_4_1
+
+        ·  If you want to use the OpenCBM tool whenever you are in the
+           cmd.exe shell, you have to add the directory that is printed
+           in the last line of the install.cmd output to your PATH
+           environment variable. In many cases, it will be C:\Program
+           Files\OpenCBM.
+
+     33..22..  IInnssttaalllliinngg ooppeennccbbmm oonn MMaacc OOSS XX ((UUSSBB ccaabbllee))
+
+     FFoorr MMaacc OOSS XX,, tthheerree aarree ssppeecciiaall iinnssttaallllaattiioonn iinnssttrruuccttiioonnss aavvaaiillaabbllee
+     oonn tthhee bblloogg ooff CChhrriissttiiaann VVooggeellggssaanngg,, wwhhoo aaccttuuaallllyy ppoorrtteedd OOppeennCCBBMM ttoo
+     tthhee MMaacc.. HHiiss ssiittee sshhoouulldd bbee yyoouurr pprriimmaarryy ssoouurrccee ffoorr iinnssttrruuccttiioonnss..
+
+     33..33..  IInnssttaalllliinngg ooppeennccbbmm oonn LLiinnuuxx oorr FFrreeeeBBSSDD
+
+     TThhee iinnssttaallllaattiioonn ooff OOppeennCCBBMM ddiiffffeerrss aa lliittttllee bbiitt ddeeppeennddiinngg oonn tthhee
+     ccaabbllee uusseedd ttoo ccoonnnneecctt yyoouurr CCBBMM eeqquuiippmmeenntt.. TThhee ffoolllloowwiinngg
+     iinnssttrruuccttiioonnss ttrryy ttoo sshhooww tthhee iinnssttaallllaattiioonn pprroocceedduurree aass ssttrraaiigghhtt--
+     ffoorrwwaarrdd aass ppoossssiibbllee..  AAtt ffiirrsstt,, II wwiillll ddeessccrriibbee tthhee pprreerreeqquuiissiitteess
+     ffoorr eeaacchh ccaabbllee ttyyppee.. AAfftteerrwwaarrddss,, II wwiillll ddeessccrriibbee tthhee iinnssttaallllaattiioonn
+     bbiittss tthhaatt aarree ccoommmmoonn ttoo aallll ccaabbllee ttyyppeess..  AAtt llaasstt,, II wwiillll ddeessccrriibbee
+     ssoommee ssppeecciiaall ppoossttpprroocceessssiinngg sstteeppss tthhaatt aarree nneeeeddeedd ffoorr ssoommee ccaabbllee
+     ttyyppeess..
+
+     33..33..11..  PPrreerreeqquuiissiitteess
+
+     33..33..11..11..  XXUUMM11554411 ccaabbllee ((aa..kk..aa.. ZZoooommFFllooppppyy)) aanndd XXUU11554411 ccaabbllee
+
+     TThheessee ttwwoo ccaabblleess aarree rraatthheerr eeaassyy.. IInn oorrddeerr ttoo ccoommppiillee tthheemm,, yyoouu
+     nneeeedd tthhee lliibbuussbb ppaacckkaaggeess ((lliibbuussbb 00..11,, _n_o_t 1.0) and the
+     corresponding libusb development package. For Debian based systems,
+     it is enough to install the package `libusb-dev'.
+
+     33..33..11..22..  XXAA11554411 ccaabbllee oorr XXMM11554411 ccaabbllee
+
+     TThhee XXAA11554411 ccaabbllee aanndd tthhee XXMM11554411 ccaabbllee nneeeedd aa kkeerrnneell mmoodduullee ((ccbbmm..oo))
+     wwhhiicchh aaccttss aass aa ddrriivveerr ffoorr tthhee ppaarraalllleell ppoorrtt bbaasseedd ccaabblleess..
+
+     TThhee kkeerrnneell mmoodduullee ((ccbbmm..oo)) ddooeess nnoott rreeqquuiirree aannyy kkeerrnneell ppaattcchheess aanndd
+     sshhoouulldd ccoommppiillee rriigghhtt oouutt ooff tthhee bbooxx,, aatt lleeaasstt wwiitthh kkeerrnneell 33..xx aanndd
+     22..66..xx,, bbuutt 22..00..xx,, 22..22..xx aanndd 22..44..xx mmiigghhtt ssttiillll wwoorrkk aass wweellll.. TThheeyy
+     hhaavvee nnoott bbeeeenn tteesstteedd iinn aaggeess,, tthhoouugghh,, tthhuuss,, yyoouu aarree oonn yyoouurr oowwnn..
+
+     IInn oorrddeerr ttoo ccoommppiillee tthhee kkeerrnneell mmoodduullee,, yyoouu wwiillll nneeeedd tthhee hheeaaddeerrss
+     tthhaatt ccoorrrreessppoonndd ttoo yyoouurr ccuurrrreenntt rruunnnniinngg kkeerrnneell.. FFoorr ddeebbiiaann--bbaasseedd
+     ssyysstteemmss,, yyoouu ccaann aaccccoommpplliisshh tthhiiss bbyy rruunnnniinngg _a_p_t_i_t_u_d_e _i_n_s_t_a_l_l _l_i_n_u_x_-
+     _h_e_a_d_e_r_s_-_`_u_n_a_m_e _-_r_` as root.
+
+     33..33..11..33..  AAnnyy ccaabbllee ttyyppee
+
+     IIff yyoouu iinntteenndd ttoo mmooddiiffyy tthhee ddrriivvee rroouuttiinneess ffoorr ``dd6644ccooppyy'' aanndd
+     ``ccbbmmffoorrmmaatt'' yyoouu aallssoo nneeeedd aa ccrroossssaasssseemmbblleerr..
+     ``ooppeennccbbmm//LLIINNUUXX//ccoonnffiigg..mmaakkee'' ccoommeess wwiitthh rruulleess ffoorr UUllllrriicchh vvoonn
+     BBaasssseewwiittzz'' ``ccll6655'' ((ccoommeess wwiitthh cccc6655,, hhttttpp::////wwwwww..cccc6655..oorrgg//))..
+     SSttaarrttiinngg wwiitthh vveerrssiioonn ccbbmm44lliinnuuxx 00..22..33,, ooppeennccbbmm iinncclluuddeess pprreeccoommppiilleedd
+     66550022 bbiinnaarriieess,, ssoo aass lloonngg aass yyoouu ddoonn''tt ttoouucchh tthhee ..aa6655 ffiilleess,,
+     tthheerree''ss nnoo nneeeedd ffoorr aa ccrroossssaasssseemmbblleerr..
+
+     TThhiiss ppaacckkaaggee ccoommeess wwiitthh aa ..ssppeecc ffiillee ffoorr tthhoossee wwhhoo wwaanntt ttoo bbuuiilldd
+     bbiinnaarryy ..RRPPMMss..  SSeeee tthhee RRPPMM ddooccuummeennttaattiioonn ((oouuttssiiddee ooff tthhiiss ppaappeerr))
+     ffoorr ddeettaaiillss aabboouutt tthhee bbuuiilldd pprroocceessss.. AAddddiittiioonnaallllyy,, aallll ffiilleess nneeeeddeedd
+     ttoo bbuuiilltt DDeebbiiaann ..DDEEBB ppaacckkaaggeess aarree iinncclluuddeedd.. IIff yyoouu uuppggrraaddee ffrroomm aa
+     pprreevviioouuss ((nnoonn--RRPPMM aanndd nnoonn--DDEEBB)) vveerrssiioonn aanndd wwaanntt ttoo iinnssttaallll aa
+     ppaacckkeettiizzeedd bbiinnaarryy vveerrssiioonn ((RRPPMM oorr DDEEBB)),, ddoonn''tt ffoorrggeett ttoo rreemmoovvee tthhee
+     oolldd ffiilleess hhaannggiinngg aarroouunngg ((jjuusstt ddoo ""_m_a_k_e _u_n_i_n_s_t_a_l_l", preferably in
+     the *old* source directory. For a >= 0.4.0 version of opencbm,
+     change the line to "_m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _u_n_i_n_s_t_a_l_l".).
+
+     33..33..22..  CCoommppiillee--ttiimmee ccoonnffiigguurraattiioonn
+
+     TThhee ccoommppiillee--ttiimmee ccoonnffiigguurraattiioonn iiss llooccaatteedd iinn
+     ``ooppeennccbbmm//LLIINNUUXX//ccoonnffiigg..mmaakkee''.. CChheecckk tthhee KKEERRNN__FFLLAAGGSS lliinnee iiff yyoouu''rree
+     rruunnnniinngg kkeerrnneell 22..00..xx oorr iiff yyoouu ddoonn''tt wwaanntt ttoo uussee tthhee LLiinnuuxx ppaarrppoorrtt
+     ssuubbssyysstteemm ffoorr ssoommee rreeaassoonn.. SSaammee ggooeess ffoorr SSMMPP mmaacchhiinneess..
+
+     33..33..33..  CCoommppiillaattiioonn
+
+
+        ·  Type _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m _p_l_u_g_i_n_-_X_X_X (no root
+           privileges required)
+
+           (replacing XXX with either xum1541, xu1541 or xa1541,
+           depending upon the cable type you are using)
+
+           to build OpenCBM, which includes the libraries and utility
+           programs (no root privileges required).
+
+           Example: In case you are compiling for the xum1541 cable, use
+           _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _o_p_e_n_c_b_m _p_l_u_g_i_n_-_x_u_m_1_5_4_1
+
+        ·  If you are using an XA1541 or XM1541 cable, issue _m_a_k_e _-_f
+           _L_I_N_U_X_/_M_a_k_e_f_i_l_e _d_e_v (as root)
+
+           to create the character device "/dev/cbm" with major 10 and
+           minor 177 (this number is registered, so it shouldn't collide
+           with anything else :)).
+
+        ·  Finally, install everything by running _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e
+           _i_n_s_t_a_l_l _i_n_s_t_a_l_l_-_p_l_u_g_i_n_-_X_X_X (as root)
+
+           again replacing XXX with xum1541, xu1541 or xa1541, depending
+           upon the cable type you are using.
+
+           This will install all necessary stuff to /usr/local/... (can
+           be changed in `opencbm/LINUX/config.make')
+
+     33..33..44..  LLooaaddiinngg tthhee mmoodduullee ((XXAA11554411//XXMM11554411 oonnllyy))
+
+     TThhiiss iiss oonnllyy nneeeeddeedd iiff yyoouu aarree uussiinngg tthhee XXAA11554411 oorr XXMM11554411 ccaabblleess..
+     OOtthheerrwwiissee,, sskkiipp tthhiiss sseeccttiioonn
+
+     If you're using the parport subsystem (which is default), you
+     should now be able to load the driver module by issuing (as root)
+
+
+        ·  _/_s_b_i_n_/_d_e_p_m_o_d
+
+        ·  _/_s_b_i_n_/_m_o_d_p_r_o_b_e _p_a_r_p_o_r_t (unless compiled into the kernel)
+
+        ·  _/_s_b_i_n_/_i_n_s_m_o_d _c_b_m _l_p_=your_lp (usually 0, which is default)
+
+     or, when built with -DDIRECT_PORT_ACCESS:
+
+
+        ·  _/_s_b_i_n_/_i_n_s_m_o_d _c_b_m _p_o_r_t_=_y_o_u_r___i_o_p_o_r_t _i_r_q_=_y_o_u_r___i_r_q (default is
+           0x378 for port, 7 for irq)
+
+     Check /var/log/messages if the correct cable type was recognized
+     (XA1541/XM1541).
+
+     33..33..55..  uuddeevv rruulleess ssoo tthhaatt yyoouu ccaann aacccceessss tthhee ccaabblleess aass nnoonn--rroooott
+     uusseerr ((LLiinnuuxx oonnllyy))
+
+     NNoorrmmaallllyy,, yyoouu wwiillll hhaavvee aacccceessss ttoo yyoouurr ddeevviiccee oonnllyy iiff yyoouu aarree
+     llooggggeedd iinn aass rroooott,, oorr iiff yyoouu uussee _s_u_d_o.  You might want to change
+     this behaviour. For this, OpenCBM includes udev rules that allow
+     you to customize who is able to access the devices.
+
+     These files are located in:
+
+        ·  _o_p_e_n_c_b_m_/_s_y_s_/_l_i_n_u_x_/_4_5_-_o_p_e_n_c_b_m_-_x_a_1_5_4_1_._r_u_l_e_s (for XA1541/XM1541
+           cables)
+
+        ·  _x_u_1_5_4_1_/_u_d_e_v_/_4_5_-_o_p_e_n_c_b_m_-_x_u_1_5_4_1_._r_u_l_e_s (for XU1541 cables)
+
+        ·  _x_u_m_1_5_4_1_/_u_d_e_v_/_4_5_-_o_p_e_n_c_b_m_-_x_u_m_1_5_4_1_._r_u_l_e_s (for XUM1541 cables)
+
+     The appropriate file(s) are copied into the directory
+     _/_e_t_c_/_u_d_e_v_/_r_u_l_e_s_._d_/ at installation time. They will allow any member
+     of the group _u_s_e_r to use the corresponding cable.
+
+     If you want to use another group, just change the files
+     accordingly.
+
+     33..33..66..  TTrroouubblleesshhoooottiinngg
+
+     FFiinnddiinngg tthhee ccaauussee ooff aa ffaaiilluurree ccoonnddiittiioonn ccaann bbee hhaarrdd.. AAnnyywwaayy,, tthhee
+     ffoolllloowwiinngg ttiippss mmiigghhtt hheellpp yyoouu::
+
+
+        ·  Check /var/log/messages; it might give you some hints.
+
+        ·  For XU1541 and XUM1541 cable:
+
+           ·  Did you install libusb? You need v0.1, a v1.0 libusb will
+              not work unless you install the v0.1 compatibility layer,
+              too.
+
+
+        ·  For XA1541 and XM1541 cable:
+
+           ·  If you are using the parport subsystem (no
+              -DDIRECT_PORT_ACCESS):
+
+
+              ·  the port might be occupied by another device (e.g.
+                 `lp.o') cbm.o does NOT support port sharing (wouldn't
+                 work anyway).  Enter _c_a_t _/_p_r_o_c_/_p_a_r_p_o_r_t_/_p_o_r_t_/_d_e_v_i_c_e_s to
+                 find out.
+
+              ·  parport_pc might not use an IRQ.  _/_e_t_c_/_m_o_d_u_l_e_s_._c_o_n_f
+                 should contain something like:
+
+
+                          alias parport_lowlevel parport_pc
+                          options parport_pc io=0x378 irq=7
+
+
+
+              Check the interrupts with _c_a_t _/_p_r_o_c_/_i_n_t_e_r_r_u_p_t_s.
+
+
+           ·  Using direct port access (with -DDIRECT_PORT_ACCESS):
+
+
+              ·  The port/IRQ might occupied by another driver (e.g.
+                 parport.o) Enter _c_a_t _/_p_r_o_c_/_i_n_t_e_r_r_u_p_t_s and _c_a_t
+                 _/_p_r_o_c_/_i_o_p_o_r_t_s to find out.
+
+     33..33..77..  DDeevviiccee aacccceessss
+
+     AAss aa ffiirrsstt tteesstt,, ttrryy ssoommeetthhiinngg ssiimmppllee lliikkee
+
+
+        ·  _c_b_m_c_t_r_l _c_o_m_m_a_n_d _8 _I_0_: (assuming drive 8)
+
+        ·  _c_b_m_c_t_r_l _s_t_a_t_u_s _8
+
+     (no root privileges required)
+
+     Failure can be caused by:
+
+        ·  Possibly, the shared library in /usr/local/lib/ cannot be
+           found; in this case, add /usr/local/lib/ to /etc/ld.so.conf
+           and execute _l_d_c_o_n_f_i_g (as root).
+
+        ·  You might not have the necessary rights to the /dev/cbm
+           device; try _c_h_m_o_d _7_7_7 _/_d_e_v_/_c_b_m
+
+        ·  incorrect module parameters
+
+        ·  wrong BIOS settings (esp. IRQ)
+
+        ·  broken cable
+
+     33..33..88..  RRuunnttiimmee ccoonnffiigguurraattiioonn ((AApppplliieess ttoo XXAA11554411 aanndd XXMM11554411 ccaabblleess
+     oonnllyy!!))
+
+     MMoosstt pprroobbaabbllyy,, yyoouu wwiillll wwaanntt ttoo aadddd tthhiiss ttoo /etc/modules.conf to
+     have the driver loaded on demand: (the file is called
+     /etc/conf.modules on some older SuSE systems)
+
+
+
+              alias char-major-10-177 cbm
+              options cbm [options]
+
+
+
+     With [options] being one or more of:
+
+
+        ·  _l_p_=_*_l_p_* (parport only, as used in _/_s_b_i_n_/_i_n_s_m_o_d above)
+
+        ·  _i_r_q_=_*_i_r_q_* (direct port only, as used in _/_s_b_i_n_/_i_n_s_m_o_d above)
+
+        ·  _p_o_r_t_=_*_p_o_r_t_* (direct port only, as used in _/_s_b_i_n_/_i_n_s_m_o_d above)
+
+        ·  _c_a_b_l_e_=_*_n_* force cable type:
+
+           ·  -1 for autodetection (default)
+
+           ·  0 for XM1541 (non-inverting)
+
+           ·  1 for XA1541 (inverting)
+
+        ·  _r_e_s_e_t_=_*_n_* initializing behaviour:
+
+           ·  -1 smart IEC reset (direct port default); only change the
+              status of the reset line if it was set on start
+
+           ·  0 no IEC reset on driver start
+
+           ·  1 force IEC reset (parport default); always reset the
+              device on driver start
+
+     Congratulation, you have successfully set up your opencbm
+     installation!
+
+     33..44..  IInnssttaalllliinngg ooppeennccbbmm oonn WWiinnddoowwss ((ccbbmm44wwiinn))
+
+     _W_A_R_N_I_N_G_! _I_f _y_o_u _h_a_v_e _a_l_r_e_a_d_y _i_n_s_t_a_l_l_e_d _a _p_r_e_v_i_o_u_s _v_e_r_s_i_o_n _o_f
+     _O_p_e_n_C_B_M _o_n _y_o_u_r _m_a_c_h_i_n_e_, _y_o_u _h_a_v_e _t_o _u_n_i_n_s_t_a_l_l _i_t _b_e_f_o_r_e _i_n_s_t_a_l_l_i_n_g
+     _a _n_e_w _v_e_r_s_i_o_n_. _F_o_r _t_h_i_s_, _g_o _t_o _t_h_e _d_i_r_e_c_t_o_r_y _w_h_e_r_e _t_h_e _o_l_d _(_!_)
+     _v_e_r_s_i_o_n _i_s _l_o_c_a_t_e_d_, _a_n_d _e_n_t_e_r _i_n_s_t_c_b_m _-_-_r_e_m_o_v_e_.
+
+     First of all, Windows must know about the driver. For this, we must
+     install it with the instcbm tool. This is done as follows:
+
+
+        ·  Make sure you have a supported operating system up and
+           running.
+
+        ·  You need administrator privileges on the Windows machine to
+           perform the following actions.
+
+        ·  At first, you have to make sure you have the needed hardware
+           ready. Do the following:
+
+
+           ·  Get your supported drive ``supported drive''.
+
+           ·  Moving cables with equipment turned on can damage either
+              your PC, and/or the drive, so, be carefull!
+
+           ·  Thus, switch off your PC and your VIC 15xx drive!
+
+           ·  Connect your XA1541 or XM1541 cable to your PC. If you
+              have a parallel port cable (XP1541), connect that one,
+              too.
+
+           ·  Connect your VIC 15xx floppy drive to the cable
+
+           ·  Switch on the PC.
+
+
+        ·  Just download the binary package, and unpack it into an
+           arbitrary directory.
+
+        ·  Get a command-line (Start/Run, and type "_c_m_d_._e_x_e"), change
+           into the directory you unpackaged the drivers into (with
+           "_c_d").
+
+        ·  Type "_c_d _e_x_e"
+
+        ·  The next step depends upon the cable type you are using.
+
+           ·  If you are using an XUM1541 cable (a.k.a. ZoomFloppy),
+              type "_i_n_s_t_c_b_m _x_u_m_1_5_4_1"
+
+           ·  If you are using an XU1541 cable, type "_i_n_s_t_c_b_m _x_u_1_5_4_1"
+
+           ·  If you are using an XA1541 or XM1541 cable, type "_i_n_s_t_c_b_m
+              _x_a_1_5_4_1"
+
+        ·  In any case, check the outputs of the _i_n_s_t_c_b_m command. Its
+           last line should look like _N_o _p_r_o_b_l_e_m_s _f_o_u_n_d _i_n _c_u_r_r_e_n_t
+           _c_o_n_f_i_g_u_r_a_t_i_o_n. In this case, you are done. In some rare
+           cases, _i_n_s_t_c_b_m will suggest a reboot, which you should
+           follow.
+
+        ·  You might want to have a look at the possible options for
+           instcbm. They are available by typing "_i_n_s_t_c_b_m _-_-_h_e_l_p". Also,
+           cf. ``instcbm''.
+
+        ·  If you had to reboot in the previous step, do the following:
+
+
+           ·  Go to a command-line, and change into the directory you
+              unpackaged the drivers into again.
+
+           ·  Type "_c_d _e_x_e"
+
+     44..  CChheecckkiinngg iiff tthhee iinnssttaallllaattiioonn iiss ccoommpplleettee
+
+     AAfftteerr yyoouu iinnssttaalllleedd ooppeennccbbmm ((ccff.. ````IInnssttaallllaattiioonn'''',, iitt iiss wwiissee ttoo
+     cchheecckk iiff tthhee iinnssttaallllaattiioonn wwoorrkkss aass eexxppeecctteedd.. FFoorr tthhiiss,, ddoo tthhee
+     ffoolllloowwiinngg::
+
+
+        ·  Switch on the floppy drive. Depending on the type of cable
+           you are using (XA1541 or XM1541) and the parallel port of
+           your PC, the drive might keep spinning endless now, because
+           it is continuously resetted.
+
+        ·  Type "_c_b_m_c_t_r_l _r_e_s_e_t" and press enter. If it does not already,
+           the red floppy drive LED should light up, and the drive
+           should start spinning. After approximately one second (up to
+           five seconds in the case of a 1581), the red LED should
+           switch off again, and the drive stops spinning.
+
+        ·  Type "_c_b_m_c_t_r_l _s_t_a_t_u_s _8" to get the status (error) code from
+           the attached floppy drive. If everything works fine, your
+           drive should answer with its identification string. For a
+           1541, this is something like _7_3_,_c_b_m _d_o_s _v_2_._6 _1_5_4_1_,_0_0_,_0_0,
+           while for a 1571, this line looks like _7_3_,_c_b_m _d_o_s _v_3_._0
+           _1_5_7_1_,_0_0_,_0_0.  There might also be some variant of this line,
+           depending on the firmware version of your drive.
+
+        ·  Type "_c_b_m_c_t_r_l _s_t_a_t_u_s _8" to get the status (error) code from
+           the floppy drive again. As the power on message has been
+           read, your drive should answer with a _0_0_, _o_k_,_0_0_,_0_0 string.
+
+        ·  Type "_c_b_m_c_t_r_l _d_e_t_e_c_t". This command tries to detect the types
+           of drive which are connected on the cable. You should see the
+           drive which you posess.
+
+        ·  We want to check if we can send anything to the floppy drive.
+           Remove any diskette from the drive and press "_c_b_m_c_t_r_l _o_p_e_n _8
+           _1_5 _I_0". (Make sure the "I" is an upper-case "I". A lower-case
+           "I" will not work!) This command tries to initialize the
+           disk. Anyway, since there isn't a disk in the drive, an error
+           occurs. You should hear the floppy spinning, and in case of a
+           1541, the R/W-head should start bumping. After some seconds,
+           the red LED starts starts flashing, indicating that an error
+           occurred.
+
+        ·  Try again "_c_b_m_c_t_r_l _s_t_a_t_u_s _8" to get the status (error) code
+           from the floppy drive. As an error occurred before, an error
+           string should be displayed. For my setup, it is the "_2_1_,_r_e_a_d
+           _e_r_r_o_r_,_1_8_,_0_0" string. Furthermore, the red LED should stop
+           flashing.
+
+     If you have come so far, you are sure that you send commands to the
+     floppy, and receive answers from it. This is very good so far.
+     Furthermore, don't panic: you do not have to enter these commands
+     over and over again, these are only tests to make sure that
+     anything is correctly installed.
+
+     If you have a D64 file or a floppy disk ready, you can try
+     transferring it over the cable. Do not use all of the following
+     commands, but only the ones you want to perform.
+
+
+        ·  If you want to transfer an existing floppy from the drive to
+           the PC, use the following command: "_d_6_4_c_o_p_y _8 _A_._D_6_4", while
+           replacing A.D64 by the name you want to give to the file.
+
+        ·  WWAARRNNIINNGG TTHHEE FFOOLLLLOOWWIINNGG CCOOMMMMAANNDD OOVVEERRWWRRIITTEESS AANNYYTTHHIINNGG TTHHAATT WWAASS OONN
+           TTHHEE FFLLOOPPPPYY BBEEFFOORREE,, ssoo mmaakkee ssuurree yyoouu ddoo nnoott nneeeedd tthhaatt ffllooppppyy
+           aannyymmoorree..
+
+           If you have a D64 or D71 on your PC, and you want to write it
+           to a new, already formatted disk, enter "_d_6_4_c_o_p_y _A_._D_6_4 _8" if
+           the file is called A.D64.
+
+        ·  WWAARRNNIINNGG TTHHEE FFOOLLLLOOWWIINNGG CCOOMMMMAANNDD OOVVEERRWWRRIITTEESS AANNYYTTHHIINNGG TTHHAATT WWAASS OONN
+           TTHHEE FFLLOOPPPPYY BBEEFFOORREE,, ssoo mmaakkee ssuurree yyoouu ddoo nnoott nneeeedd tthhaatt ffllooppppyy
+           aannyymmoorree..
+
+           If you have a disk you want to format, you have two options:
+           Either use the command "_c_b_m_c_t_r_l _c_o_m_m_a_n_d _8 _N_0_:_N_A_M_E_,_I_D", or use
+           the cbmformat program, cf.  ``cbmformat'', or the cbmforng
+           program, cf. ``cbmforng''.
+
+     You can have a look at the available cbmctrl commands by issuing
+     cbmctrl on your command line, or look at ``cbmctrl''. For the other
+     programs, you get help by issuing the "--help" option, or look at
+     the appropriate section in ``utilities''.
+
+     55..  UUnniinnssttaallll
+
+     DDeeppeennddiinngg oonn tthhee ssyysstteemm yyoouu aarree rruunnnniinngg ooppeennccbbmm oonn,, tthheerree aarree
+     ddiiffffeerreenntt wwaayyss ttoo uunniinnssttaallll ooppeennccbbmm.. UUssee tthhee aapppprroopprriiaattee ccaatteeggoorryy
+     ffoorr yyoouu::
+
+     55..11..  QQuuiicckk uunniinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     IIff yyoouu wwaanntt ttoo uunniinnssttaallll OOppeennCCBBMM aass ffaasstt aass ppoossssiibbllee,, bbuutt yyoouu aarree
+     nnoott iinntteerreesstteedd iinn tthhee ddeettaaiillss,, jjuusstt uussee tthhee iinnssttrruuccttiioonnss ffrroomm tthhiiss
+     sseeccttiioonn aanndd iiggnnoorree tthhee rreesstt ooff tthhiiss cchhaapptteerr uunnlleessss yyoouu eennccoouunntteerr
+     aannyy pprroobblleemmss..
+
+     IIff yyoouu aarree mmoorree iinntteerreesstteedd iinn aa cclleeaann uunniinnssttaallllaattiioonn,, sskkiipp tthhiiss
+     sseeccttiioonn aanndd rreeaadd tthhee rreesstt ooff tthhiiss cchhaapptteerr..
+
+     55..11..11..  LLiinnuuxx uunniinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     PPeerrffoorrmm tthhee ffoolllloowwiinngg sstteeppss ttoo uunniinnssttaallll OOppeennCCBBMM oonn yyoouurr LLiinnuuxx
+     mmaacchhiinnee::
+
+
+        ·  I assume you already have an installation directory for
+           OpenCBM handy.  Let's assume it is _~_/_o_p_e_n_c_b_m_-_0_._4_._9_9_._9_9, with
+           0.4.99.99 being the version number of OpenCBM.
+
+        ·  _c_d into the directory: _c_d _~_/_o_p_e_n_c_b_m_-_0_._4_._9_9_._9_9
+
+        ·  Enter: _s_u_d_o _m_a_k_e _-_f _L_I_N_U_X_/_M_a_k_e_f_i_l_e _u_n_i_n_s_t_a_l_l
+
+        ·  Now, everything should be uninstalled.
+
+     55..11..22..  MMaacc OOSS XX uunniinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     PPlleeaassee cchheecckk tthhee iinnssttrruuccttiioonnss aatt
+     hhttttpp::////llaallllaaffaa..ddee//bblloogg//cc6644--pprroojjeeccttss//ooppeennccbbmm--oonn--mmaacc// aavvaaiillaabbllee oonn
+     tthhee bblloogg ooff CChhrriissttiiaann VVooggeellggssaanngg,, wwhhoo aaccttuuaallllyy ppoorrtteedd OOppeennCCBBMM ttoo
+     tthhee MMaacc.. HHiiss ssiittee sshhoouulldd bbee yyoouurr pprriimmaarryy ssoouurrccee ffoorr iinnssttrruuccttiioonnss..
+
+     55..11..33..  WWiinnddoowwss uunniinnssttaallllaattiioonn wwaallkk--tthhrroouugghh
+
+     IInn oorrddeerr ttoo uunniinnssttaallll OOppeennCCBBMM,, pprroocceeeedd aass ffoolllloowwss::
+
+
+        ·  If you ddiidd follow the quick installation walk-through:
+
+           ·  Go to the control panel, select _P_r_o_g_r_a_m_s, and have a look
+              at the list of installed programs ``''.
+
+           ·  Right-click on the entry "OpenCBM", and select "uninstall"
+              ``''.
+
+           ·  If you added the OpenCBM installation directory to your
+              path, you should undo this.
+
+
+        ·  If you did nnoott follow the quick installation walk-through:
+
+           ·  Open a cmd.exe shell with administrator privileges.
+
+           ·  _c_d into the directory where OpenCBM is installed.
+
+           ·  Enter _i_n_s_t_c_b_m _-_-_r_e_m_o_v_e to uninstall OpenCBM.
+
+           ·  If you added the OpenCBM installation directory to your
+              path, you should undo this.
+
+
+
+                   OpenCBM as installed program on Windows
+
+
+
+                       Uninstall OpenCBM from Windows
+
+     66..  UUttiilliittiieess
+
+     AAss tthhee kkeerrnneell ddrriivveerr iiss qquuiittee uusseelleessss ffoorr iittsseellff,, tthhee ffoolllloowwiinngg
+     uuttiilliittyy pprrooggrraammss aarree iinncclluuddeedd wwiitthh tthhiiss ppaacckkaaggee::
+
+
+        ·  _c_b_m_c_t_r_l (cf. ``cbmctrl'')
+
+           command line utility for direct device access at talk/listen
+           level.
+
+        ·  _c_b_m_f_o_r_m_a_t (cf. ``cbmformat'')
+
+           fast 1541 disk formatter (for 1541, 1570 and 1571 drives).
+
+        ·  _c_b_m_f_o_r_n_g (cf. ``cbmforng'')
+
+           fast 1541 disk formatter (for 1541, 1570 and 1571 drives).
+
+        ·  _d_6_4_c_o_p_y (cf. ``d64copy'')
+
+           copies .d64 images to 1541 compatible drives and vice versa.
+           Type `d64copy -h' to get a list of valid options. Use the
+           device number to address the disk drive, e.g. `d64copy -t
+           serial2 8 img.d64'.
+
+           This version contains the StarCommander Turbo and Warp
+           routines and custom transfer routines as well as parallel
+           cable (XP1541) support. These are the benchmarks for Michael
+           Klein's old Pentium-200/MMX system (seconds)
+
+
+
+              mode               write     read
+
+              parallel turbo     54.02    53.30
+              parallel warp      32.47    29.56
+              serial1 turbo     168.59   168.58
+              serial1 warp      183.57   158.87
+              serial2 turbo      95.02    95.26
+              serial2 warp       88.29    80.57
+
+
+
+        ·  _d_8_2_c_o_p_y (cf. ``d82copy'')
+
+           Like ``d64copy'', but for d80 and d82 images with a CBM 8250
+           drive or compatibles.
+
+        ·  _i_m_g_c_o_p_y (cf. ``imgcopy'')
+
+           Tries to integrate the functionality of ``d64copy'' and
+           ``d82copy'' into one generic application.
+
+        ·  _c_b_m_c_o_p_y (cf. ``cbmcopy'')
+
+           fast 1541/1570/1571/1581 file copier.
+
+        ·  _r_p_m_1_5_4_1 demo (cf. ``rpm1541'')
+
+           determines the drive rotation speed of 1541, 1570 and 1571
+           drives.
+
+        ·  _f_l_a_s_h demo (cf. ``flash'')
+
+           flashes the LED of 1541, 1570 and 1571 drives.
+
+        ·  _m_o_r_s_e demo (cf. ``morse'')
+
+           morses arbitrary texts with the help of the LED of 1541, 1570
+           and 1571 drives.
+
+        ·  _c_b_m_l_i_n_e_t_e_s_t_e_r debugging aid (cf. ``cbmlinetester'')
+
+           is a debugging aid which helps you set the IEC lines to
+           specific values and read out the current state of the lines.
+
+     66..11..  iinnssttccbbmm ((WWiinnddoowwss oonnllyy))
+
+     _i_n_s_t_c_b_m is used on Windows to install the opencbm driver.
+
+     _P_l_e_a_s_e _n_o_t_e _t_h_a_t _t_h_e _s_y_n_t_a_x _o_f _i_n_s_t_c_b_m _h_a_s _c_h_a_n_g_e_d _c_o_n_s_i_d_e_r_a_b_l_y _i_n
+     _v_0_._4_._9_9_._9_9 _w_i_t_h _r_e_s_p_e_c_t _t_o _t_h_e _s_y_n_t_a_x _u_s_e_d _u_n_t_i_l _v_e_r_s_i_o_n _v_0_._4_._2_!
+
+     66..11..11..  iinnssttccbbmm iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: instcbm {_[_g_l_o_b_a_l_-_o_p_t_i_o_n_s_] _[_p_l_u_g_i_n_] _[_p_l_u_g_i_n_-_o_p_t_i_o_n_s_]_}_*
+
+     Where the following _[_g_l_o_b_a_l_-_o_p_t_i_o_n_s_] are possible:
+
+        --hh,, ----hheellpp
+           display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           display version information about OpenCBM.
+
+        --rr,, ----rreemmoovvee
+           remove (uninstall) the driver.
+
+        --uu,, ----uuppddaattee
+           update parameters if driver is already installed.
+
+        --nn,, ----nnooccooppyy
+           do not copy the driver files into the system directory. This
+           is not recommended.
+
+        --cc,, ----cchheecckk
+           only check if the installation is ok. Do not install or
+           uninstall anything.
+
+        --@@,, ----aaddaapptteerr==[[pplluuggiinn]]
+           Define the specified plugin as default plugin.
+
+
+     The _[_p_l_u_g_i_n_] is one of _x_a_1_5_4_1, _x_u_1_5_4_1 or _x_u_m_1_5_4_1. For each plugin,
+     there are plugin specific options possible.
+
+     For the _x_a_1_5_4_1 plugin, the following _[_p_l_u_g_i_n_-_o_p_t_i_o_n_s_] are possible:
+
+        --hh,, ----hheellpp
+           display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           display version information about the xa1541 plugin.
+
+        --ll,, ----llpptt==**nnoo**
+           set default LPT port to number _*_n_o_*. For example, for LPT2,
+           use _-_-_l_p_t_=_2.
+
+           If not specified, or _-_-_l_p_t_=_0 is specified, use the first
+           parallel port.
+
+        --tt,, ----ccaabblleettyyppee==**TTYYPPEE**
+           set cabletype to _*_T_Y_P_E_*, which can be _a_u_t_o, _x_a_1_5_4_1 or _x_m_1_5_4_1.
+
+           If not specified, _-_-_c_a_b_l_e_t_y_p_e_=_a_u_t_o is assumed.
+
+        --LL,, ----lloocckk==**WWHHAATT**
+           automatically lock the driver. _*_W_H_A_T_* can be _y_e_s
+           (automatically lock) or _n_o (do not automatically lock).
+
+           If not specified, _-_-_l_o_c_k_=_y_e_s is assumed.
+
+        --FF,, ----ffoorrcceenntt44
+           force the NT4 driver on a Win 2000, XP, or newer systems (NOT
+           RECOMMENDED!).  This option is only available on i386
+           architectures; AMD64 and iA64 do not support it.
+
+        --AA,, ----aauuttoommaattiicc
+           (default) automatically start the driver on system boot.
+
+           The driver can be used from a normal user, no need for
+           administrator rights.  The opposite of _-_-_o_n_-_d_e_m_a_n_d.
+
+        --OO,, ----oonn--ddeemmaanndd
+           start the driver only on demand.
+
+           The opposite of _-_-_a_u_t_o_m_a_t_i_c.
+
+     For the _x_u_1_5_4_1 plugin, the following _[_p_l_u_g_i_n_-_o_p_t_i_o_n_s_] are possible:
+
+        --hh,, ----hheellpp
+           display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           display version information about the xu1541 plugin.
+
+     For the _x_u_m_1_5_4_1 plugin, the following _[_p_l_u_g_i_n_-_o_p_t_i_o_n_s_] are
+     possible:
+
+        --hh,, ----hheellpp
+           display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           display version information about the xum1541 plugin.
+
+     66..11..22..  iinnssttccbbmm EExxaammpplleess
+
+     IInnssttaallll tthhee XXAA11554411//XXMM11554411 ddrriivveerr aanndd tthhee DDLLLL oonn tthhee mmaacchhiinnee.. TThhee
+     ddrriivveerr aanndd tthhee DDLLLL aarree ccooppiieedd iinnttoo tthhee WWiinnddoowwss ssyysstteemm ddiirreeccttoorryy,, ssoo
+     ooppeennccbbmm ccaann bbee uusseedd ffrroomm eevveerryy pprrooggrraamm::
+
+     ___________________________________________________________________
+     instcbm xa1541
+     ___________________________________________________________________
+
+
+
+     Install the driver, like above. Additionally, specify that you are
+     using an XM1541 cable:
+
+     ___________________________________________________________________
+     instcbm xa1541 --cabletype=xm1541
+     ___________________________________________________________________
+
+
+
+     Check if the installation was set up successfully:
+
+     ___________________________________________________________________
+     instcbm --check
+     ___________________________________________________________________
+
+
+
+     Install OpenCBM ready for use with the XU1541 cable:
+
+     ___________________________________________________________________
+     instcbm xu1541
+     ___________________________________________________________________
+
+
+
+     Install OpenCBM ready for use with the XUM1541 (a.k.a. ZoomFloppy)
+     cable:
+
+     ___________________________________________________________________
+     instcbm xum1541
+     ___________________________________________________________________
+
+
+
+     Install OpenCBM for all the XA1541, XU1541 and XUM1541 cables at
+     once, making the xum1541 cable the default adapter:
+
+     ___________________________________________________________________
+     instcbm xum1541 xu1541 xa1541
+     ___________________________________________________________________
+
+
+
+     ___________________________________________________________________
+     instcbm --adapter=xum1541
+     ___________________________________________________________________
+
+
+
+     Change the default adapter after OpenCBM was already installed:
+
+     ___________________________________________________________________
+     instcbm --update --adapter=xa1541
+     ___________________________________________________________________
+
+
+
+     Remove the driver including _a_l_l plugins from the system. You will
+     not be able to use opencbm after this command, unless you re-
+     install it. If files were copied into the Windows system directory,
+     they will be removed:
+
+     ___________________________________________________________________
+     instcbm --remove
+     ___________________________________________________________________
+
+
+
+     After opencbm has been installed (with _i_n_s_t_c_b_m>), change the
+     parallel port to be used to 2:
+
+     ___________________________________________________________________
+     instcbm --update xa1541 --lpt=2
+     ___________________________________________________________________
+
+
+
+     Install opencbm, directly specifying LPT3 as the parallel port to
+     use:
+
+     ___________________________________________________________________
+     instcbm xa1541 --lpt=3
+     ___________________________________________________________________
+
+
+
+     Install the DLL and the driver on the machine. Do not copy the
+     files to the Windows system directory, but leave them "where they
+     are". If you use this option, the directory where your files
+     resides must be accessible for the system while booting. For
+     example, network drives, USB drives or FireWire drives are not
+     allowed.
+
+     ___________________________________________________________________
+     instcbm --nocopy
+     ___________________________________________________________________
+
+
+
+     66..22..  ccbbmmccttrrll
+
+     _c_b_m_c_t_r_l is used to send commands to external devices. It can
+     control all kinds of serial CBM devices like floppy drives and
+     printers. So far, it has been successfully tested with the disk
+     drives 1541(-II), 1571 and a MPS-1200 printer.
+
+     66..22..11..  CCoommmmaanndd ssttrruuccttuurree
+
+     TThhee oovveerraallll ffoorrmmaatt ooff aallll _c_b_m_c_t_r_l actions is:
+
+     Synopsis: cbmctrl _[_g_l_o_b_a_l___o_p_t_i_o_n_s_] ACTION _[_a_c_t_i_o_n___a_r_g_s_]
+
+        gglloobbaall__ooppttiioonnss
+           Some options that are related to _c_b_m_c_t_r_l in general of which
+           affect the oervall behaviour of all actions
+
+        aaccttiioonn
+           One of a bunch of different subcommands that direct _c_b_m_c_t_r_l
+           what to do
+
+        aaccttiioonn__aarrggss
+           Arguments that are required for the subcommand _a_c_t_i_o_n to work
+
+     66..22..11..11..  GGlloobbaall ooppttiioonnss
+
+     _c_b_m_c_t_r_l understands the following global options
+
+
+        --hh _[_A_C_T_I_O_N_], --help _[_A_C_T_I_O_N_]
+           Outputs the help screen with a short listing of all available
+           actions. If the optional _A_C_T_I_O_N name is given also, you
+           retrieve more information on a special action together with
+           its arguments and parameters
+
+        --VV,, ----vveerrssiioonn
+           Output version information as well as the built date and time
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --ff,, ----ffoorrggeett
+           Future extension, unused at the moment
+
+        --pp,, ----ppeettsscciiii ((ddeeffaauulltt ffoorr aallll aaccttiioonnss bbuutt _o_p_e_n and
+           _c_o_m_m_a_n_d)" Convert input or output parameter from CBM format
+           (PETSCII)
+
+           When specifying texts to be sent to the floppy or when
+           receiving texts from the floppy, convert them from/to petscii
+           before outputting.  This way, small letters on the PC side
+           are small letters on the CBM side.  The opposite is -r,
+           --raw.
+
+        --rr,, ----rraaww ((ddeeffaauulltt ffoorr _o_p_e_n and _c_o_m_m_a_n_d
+           Do not convert data between CBM and PC side.
+
+
+     66..22..11..22..  AAccttiioonnss oovveerrvviieeww
+
+     _c_b_m_c_t_r_l understands the following subcommand actions
+
+        rreesseett
+           Reset all drives on the IEC bus
+
+        ddeetteecctt
+           Detect all drives on the IEC bus
+
+        lloocckk
+           Lock the parallel port for opencbm (cbm4linux/cbm4win) use
+
+        uunnlloocckk
+           Unlock the parallel port from exclusive usage
+
+        lliisstteenn
+           Perform a listen on the IEC bus
+
+        ttaallkk
+           Perform a talk on the IEC bus
+
+        uunnlliisstteenn
+           Perform an unlisten on the IEC bus
+
+        uunnttaallkk
+           Perform an untalk on the IEC bus
+
+        ooppeenn
+           Perform an open on the IEC bus
+
+        ppooppeenn
+           Same as open, but with ASCII to PETSCII conversion.  Its use
+           is deprecated, use the global option --petscii with _o_p_e_n
+           instead.
+
+        cclloossee
+           Perform a close on the IEC bus
+
+        rreeaadd
+           Get a stream of raw data from an IEC bus device
+
+        wwrriittee
+           Put a stream of raw data to an IEC bus device
+
+        ppuutt
+           Put specified data to the IEC bus device.  In contrast to
+           _w_r_i_t_e, it allows you to specify the data as decimal,
+           hexadecimal or octal values.
+
+        ssttaattuuss
+           Give the status of a specified drive
+
+        ccoommmmaanndd
+           Issue a command to a specified drive
+
+        ppccoommmmaanndd
+           Same as command, with ASCII to PETSCII conversion Its use is
+           deprecated, use the global option --petscii with _c_o_m_m_a_n_d
+           instead.
+
+        ddiirr
+           Output the directory of a disk in a specified drive
+
+        ddoowwnnllooaadd
+           Download memory contents from a floppy drive
+
+        uuppllooaadd
+           Upload memory contents to a floppy drive
+
+        cchhaannggee
+           Wait for a disk to be changed in a specified drive
+
+     66..22..11..33..  CCoommmmoonn aaccttiioonn aarrgguummeennttss
+
+     MMaannyy ooff tthhee _c_b_m_c_t_r_l subcommands understand the following common
+     arguments:
+
+        [[DDEEVVIICCEE]]
+           Advice _c_b_m_c_t_r_l to direct its communication to the IEC bus
+           device with the number _[_D_E_V_I_C_E_]. IEC bus device numbers can
+           be denoted in the range from 0 to 30, although no Commodore
+           device is known to use device numbers 0 to 3. Most commonly
+           used are the numbers 4 (printer) and 8 to 11 (disk drives).
+           Device number 31 is used to denote the UNTALK respectively
+           the UNLISTEN command code on the IEC bus instead of the TALK
+           respectively LISTEN command code, therefore device address 31
+           cannot be used in general.
+
+        [[SSEECCAADDRR]]
+           With several _c_b_m_c_t_r_l actions the secondary address parameter
+           _[_S_E_C_A_D_R_] denotes a dedicated logical communication channel
+           for the specifed _[_D_E_V_I_C_E_] . IEC bus channel numbers can be
+           denoted in the range from 0 to 15. Take note that for floppy
+           disk drive devices some secondary addresses are interpreted
+           in a special way. Secondary address 0 is used, when a program
+           is loaded, address 1, when a program is saved. Address number
+           15 represents the command channel of the disk drive, so
+           effectively, for bulk data transfers to and from disk drives,
+           only the logical channel numbers 2 to 14 can be used.
+
+     66..22..22..  AAccttiioonnss
+
+     _c_b_m_c_t_r_l understands the following actions:
+
+
+        rreesseett
+           This action performs a hardware reset of all devices attached
+           to the IEC bus.  Control is returned after it is made sure
+           that all devices are ready.
+
+        ddeetteecctt
+           This action tries to detect all devices attached to the IEC
+           bus.  For this, this subcommand accesses all possible devices
+           and tries to read some bytes from its memory. If a devices is
+           detected, its name is output. Additionally, this routine
+           determines if the device is connected via a parallel cable
+           (XP1541 companion cable for XA1541/XM1541 cables, or the
+           equivalent option for the XU1541 or XUM1541 cables; may be
+           true for disk drives only).
+
+        lloocckk
+           This command locks the parallel port for the use by opencbm,
+           so that sequences of e.g. _t_a_l_k/_r_e_a_d/_u_n_t_a_l_k _o_r
+           _l_i_s_t_e_n_w_r_i_t_e/_u_n_l_i_s_t_e_n are not broken by concurrent processes
+           wanting to access the parallel port.
+
+           You should issue _c_b_m_c_t_r_l _l_o_c_k before doing any access to
+           opencbm tools, and _c_b_m_c_t_r_l _u_n_l_o_c_k after you are done.
+
+        uunnlloocckk
+           This command unlocks the parallel port after the use by
+           opencbm.
+
+           You should issue _c_b_m_c_t_r_l _l_o_c_k before doing any access to
+           opencbm tools, and _c_b_m_c_t_r_l _u_n_l_o_c_k after you are done.
+
+        lliisstteenn _d_e_v_i_c_e _s_e_c_a_d_r
+           Tell device _d_e_v_i_c_e to listen on secondary address _s_e_c_a_d_r.
+           Until the next _u_n_l_i_s_t_e_n command, everything output with
+           _c_b_m_c_t_r_l _w_r_i_t_e will be received by this device.
+
+           This command corresponds to the following 6502 assembly code
+           on a C64:
+
+           _____________________________________________________________
+           lda #device
+           jsr $ffb1
+           lda #secadr
+           ora #$60
+           jsr $ff93
+           _____________________________________________________________
+
+
+
+        ttaallkk _d_e_v_i_c_e _s_e_c_a_d_r
+           Tell device _d_e_v_i_c_e to talk on secondary address _s_e_c_a_d_r. Until
+           the next _u_n_t_a_l_k command, data from this device can be
+           received device by using the command _c_b_m_c_t_r_l _r_e_a_d.
+
+           This command corresponds to the following 6502 assembly code
+           on a C64:
+
+           _____________________________________________________________
+           lda #device
+           jsr $ffb4
+           lda #secadr
+           ora #$60
+           jsr $ff96
+           _____________________________________________________________
+
+
+
+        uunnlliisstteenn
+           Ends communication with listening devices after a _l_i_s_t_e_n
+           command. This corresponds to the C64 kernel routine $ffae.
+
+        uunnttaallkk
+           Ends communication with talking devices after a _t_a_l_k command.
+           This corresponds to the C64 kernel routine $ffab.
+
+        ooppeenn _d_e_v_i_c_e _s_e_c_a_d_r _f_i_l_e_n_a_m_e
+           Open file _f_i_l_e_n_a_m_e on device _d_e_v_i_c_e. After opening, data can
+           be read/written by sending a _t_a_l_k resp. _l_i_s_t_e_n command with
+           the secondary address _s_e_c_a_d_r.
+
+           If _s_e_c_a_d_r is greater than 1, the file type and access mode
+           must also be specified by appending ,type,mode to _f_i_l_e_n_a_m_e.
+           Valid types are D, P, S, U, R (DEL, PRG, SEQ, USR, REL),
+           valid modes are R for reading and W for writing.
+
+           Depending upon if _-_-_p_e_t_s_c_i_i or _-_-_r_a_w is specified, the file
+           name is converted before being sent on the IEC bus.
+
+           Note: You cannot do an open without a filename. Although a
+           CBM machine (i.e., a C64) allows this, this is an internal
+           operation for the Computer only. It does not have any effect
+           on the IEC bus.
+
+        ppooppeenn _d_e_v_i_c_e _s_e_c_a_d_r _f_i_l_e_n_a_m_e
+           Like _c_b_m_c_t_r_l _o_p_e_n, but converts the filename from ASCII to
+           PetSCII before sending it to the floppy.
+
+           Its use is deprecated, use _o_p_e_n with _-_-_p_e_t_s_c_i_i instead.
+
+        cclloossee _d_e_v_i_c_e _s_e_c_a_d_r
+           Close the file associated with secondary address _s_e_c_a_d_r on
+           device _d_e_v_i_c_e.
+
+        rreeaadd _[_f_i_l_e_]
+           This command reads raw data from the IEC bus and outputs it
+           into the given file, or to stdout if no file is given (or if
+           it is a simple dash, "-").
+
+           If _-_-_p_e_t_s_c_i_i is given, the output is converted from PETSCII
+           before being output to the file or to stdout.
+
+        wwrriittee _[_f_i_l_e_]
+           This command writes raw data to the IEC bus; the data is
+           taken from the given file, or from stdin if no filename is
+           given (or if it is a simple dash, "-").  If _-_-_p_e_t_s_c_i_i is
+           given, the output is converted to PETSCII before being output
+           to the IEC bus.
+
+        ppuutt _[_-_e_|_-_-_e_x_t_e_n_d_e_d_] _<_d_a_t_a_s_t_r_> _[_<_d_a_t_a_1_> _._._. _<_d_a_t_a_N_>_]
+           puts the specified data to the IEC bus
+
+           With this command, you can write raw data to the IEC bus.
+           <datastr> is the string to output to the IEC bus.  It must be
+           given, but may be empty by specifying it as "".
+
+           <data1>, ..., <dataN> are additional bytes to append to the
+           string <datastr>.  Single bytes can be given as decimal,
+           octal (0 prefix) or hexadecimal (0x prefix).
+
+           If the option _-_e or _-_-_e_x_t_e_n_d_e_d is given, an extended format
+           is used: You can specify extra characters by given their
+           ASCII value in hex, prepended with `%', that is: `%20' =>
+           SPACE, `%41' => `A', `%35' => `5', and-so-on. A `%' is given
+           by giving its hex ASCII: `%25' => `%'.
+
+           If using both _-_-_p_e_s_t_s_c_i_i and _-_-_e_x_t_e_n_d_e_d options, the bytes
+           given via the `%' meta-character or as <data1>, ..., <dataN>
+           are _n_o_t converted to petscii.
+
+        ssttaattuuss _d_e_v_i_c_e
+           Copies input from device _d_e_v_i_c_e, secondary address 15
+           (command/status channel), to the standard output stream. Note
+           that all upper case characters are changed to lower case.
+           Carriage return (0x0d) is also changed to the current
+           operating system's line ending convention (0x0a on Unix
+           oriented systems, 0x0d 0x0a on Windows oriented systems or
+           whatever else is appropriate for your operating system).
+
+           Assuming the device number is 8, this command is similar to
+           (in this case, no character conversions would be made)
+
+           _____________________________________________________________
+           cbmctrl lock
+           cbmctrl talk 8 15
+           cbmctrl read
+           cbmctrl untalk
+           cbmctrl unlock
+           _____________________________________________________________
+
+
+
+        The output depends upon if _-_-_p_e_t_s_c_i_i or _-_-_r_a_w is specified.
+
+        ccoommmmaanndd _d_e_v_i_c_e _c_m_d_s_t_r
+           Sends _c_m_d_s_t_r to device _d_e_v_i_c_e, secondary address 15
+           (command/status channel).
+
+           Depending upon if _-_-_p_e_t_s_c_i_i or _-_-_r_a_w is specified, the file
+           name is converted before being sent on the IEC bus. Be
+           careful, though, because the _-_-_p_e_t_s_c_i_i conversion might break
+           some commands like M-W and M-E. If in doubt, it is better to
+           use _-_-_r_a_w and use the commands in _u_p_p_e_r _c_a_s_e (kind of poor
+           man's PetSCII conversion).
+
+           Assuming the device number is 8, this command is identical to
+           (Note: This does not work on Windows, because _e_c_h_o there does
+           not know the _-_n option.)
+
+           _____________________________________________________________
+           cbmctrl lock
+           cbmctrl listen 8 15
+           cbmctrl put "cmdstr"
+           cbmctrl unlisten
+           cbmctrl unlock
+           _____________________________________________________________
+
+
+
+        Note that the command _c_b_m_c_t_r_l _p_u_t _"_c_m_d_s_t_r_" replaced the older
+        variant _e_c_h_o _-_n _c_m_d_s_t_r_|_c_b_m_c_t_r_l _w_r_i_t_e _-, which still works.
+
+        ppccoommmmaanndd _d_e_v_i_c_e _c_m_d_s_t_r
+           Like _c_o_m_m_a_n_d, but converts the data from ASCII to PetSCII
+           before sending it. Its use is deprecated, use _c_o_m_m_a_n_d with
+           _-_-_p_e_t_s_c_i_i instead.
+
+        ddiirr _d_e_v_i_c_e
+           Read directory from disk in device _d_e_v_i_c_e, print on standard
+           out.
+
+           The output depends upon if _-_-_p_e_t_s_c_i_i or _-_-_r_a_w is specified.
+
+        ddoowwnnllooaadd _d_e_v_i_c_e _a_d_d_r_e_s_s _c_o_u_n_t _[_f_i_l_e_]
+           Read _c_o_u_n_t bytes from drive memory, starting at _a_d_d_r_e_s_s via
+           one or more M-R commands. Memory contents are written to
+           standard output if _f_i_l_e is "-" or ommited.
+
+        uuppllooaadd _d_e_v_i_c_e _a_d_d_r_e_s_s _[_f_i_l_e_]
+           Send _f_i_l_e to drive memory, starting at _a_d_d_r_e_s_s via one or
+           more M-W commands. If _a_d_d_r_e_s_s is -1, the first two bytes from
+           _f_i_l_e are considered as start address. Reads standard input if
+           _f_i_l_e is "-" or ommited.
+
+        cchhaannggee _d_e_v_i_c_e
+           Wait for a disk to be changed in the specified device. It
+           waits for the current disk to be removed, for a new disk to
+           be inserted and for the drive door to be closed. It does not
+           return until the disk is ready to be read or written.
+
+     66..22..33..  ccbbmmccttrrll EExxaammpplleess
+
+     SSeenndd ffiillee ccoonntteennttss ttoo pprriinntteerr 44::
+
+     ___________________________________________________________________
+     cbmctrl lock
+     cbmctrl listen 4 0
+     cbmctrl write file
+     cbmctrl unlisten
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     Copy file to disk drive 8:
+
+     ___________________________________________________________________
+     cbmctrl lock
+     cbmctrl open 8 2 FILENAME,P,W
+     cbmctrl listen 8 2
+     cbmctrl write file
+     cbmctrl unlisten
+     cbmctrl close 8 2
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     Copy file from disk drive 8:
+
+     ___________________________________________________________________
+     cbmctrl lock
+     cbmctrl open 8 2 FILENAME,P,R
+     cbmctrl talk 8 2
+     cbmctrl read file
+     cbmctrl untalk
+     cbmctrl close 8 2
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     Dump 1541 ROM:
+
+     ___________________________________________________________________
+     cbmctrl download 8 0xc000 0x4000 > 1541.rom
+     ___________________________________________________________________
+
+
+     or
+
+     ___________________________________________________________________
+     cbmctrl download 8 0xc000 0x4000 1541.rom
+     ___________________________________________________________________
+
+
+
+     Write file buffer2.bin to drive 9, address 0x500:
+
+     ___________________________________________________________________
+     cbmctrl upload 9 0x500 buffer2.bin
+     ___________________________________________________________________
+
+
+
+     66..33..  ccbbmmffoorrmmaatt
+
+     _c_b_m_f_o_r_m_a_t is a fast low-level disk formatter for the 1541 and
+     compatible devices (1570, 1571, third-party clones). A 1581 drive
+     is not supported.
+
+     The drive routine was taken from the Star Commander ((C) Joe
+     Forster/STA) and highly improved.
+
+     There is also another, very similar tool, ``cbmforng''.
+
+     66..33..11..  ccbbmmffoorrmmaatt iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: cbmformat [OPTION]... DRIVE# NAME,ID
+
+     _D_R_I_V_E_# has to be the drive number of the disk drive, _N_A_M_E is a name
+     with up to 16 characters which will be the name of the disk after
+     formatting, _I_D is the 2-letter disk ID.
+
+     Note: Unlike the _N_0 command of the drive, the ID must be given
+     (thus, no so-called "short format" is possible).
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --nn,, ----nnoo--bbuummpp
+           Do not bump drive head at the beginning. Don't use this on
+           eventually misaligned drives.
+
+        --xx,, ----eexxtteennddeedd
+           Format a 40 track disk, the BAM format is compatible to
+           SpeedDOS.
+
+        --cc,, ----cclleeaarr
+           clear (demagnetize) this disk.  This is highly recommended if
+           the disk is used for the first time, or if it was previously
+           formatted for another system (i.e., MS-DOS).  Note that this
+           option takes much time.
+
+        --vv,, ----vveerriiffyy
+           verify each track after it is written.  As this needs an
+           extra round of the drive for each track, the formatting time
+           is almost doubled.
+
+           cf. ``cbmformat Notes for 1571 drives''
+
+        --oo,, ----oorriiggiinnaall
+           Fill sectors with the original pattern (0x4b, 0x01, 0x01...)
+           instead of zeroes.  The original pattern is probably due to a
+           bug in the drive ROM, apart from this, zeroing out unused
+           sectors should give (slightly) better results for compressed
+           disk images.
+
+           cf. ``cbmformat Notes for 1571 drives''
+
+        --ss,, ----ssttaattuuss
+           Display drive status after formatting. Normally, _c_b_m_f_o_r_m_a_t
+           exits after executing the drive code. With this option turned
+           on, _c_b_m_f_o_r_m_a_t waits until the drive has finished formatting
+           and prints the drive status after initializing the BAM on
+           standard out.
+
+        --pp,, ----pprrooggrreessss
+           Display a hash mark ('#') for each formatted track. Slows
+           formatting down a bit.
+
+     66..33..22..  ccbbmmffoorrmmaatt NNootteess ffoorr 11557711 ddrriivveess
+
+     WWee eennccoouunntteerreedd pprroobblleemmss wwiitthh ddeecceenntt rreevviissiioonn//mmeecchhaanniiccss ccoommbbiinnaattiioonnss
+     ooff tthhee 11557711 ddiisskk ddrriivveess wwhheenn uussiinngg ccbbmmffoorrmmaatt.. WWee hhiigghhllyy rreeccoommmmeenndd
+     ttoo uussee _-_-_o_r_i_g_i_n_a_l and _-_-_v_e_r_i_f_y with 1571 drives. From our
+     experience, with _-_-_o_r_i_g_i_n_a_l, the problem does not occur; with
+     _-_-_v_e_r_i_f_y, the drive tests each track after it was formatted and
+     ensures that the failure condition did not occur.
+
+     We did not encounter these problems with either of 1541 (1541-II,
+     1541C), 1570 or 1571CR (the drive which is part of the C128DCR)
+     drives, only with original 1571 drives.
+
+     In the current state, cbmformat is not able to format double-sided
+     disks on a 1571 drive.
+
+     66..33..33..  ccbbmmffoorrmmaatt EExxaammpplleess
+
+     FFoorrmmaatt ssttaannddaarrdd ddiisskk ((3355 ttrraacckkss)) iinn ddrriivvee 88::
+
+     ___________________________________________________________________
+     cbmformat 8 GAMES,42
+     ___________________________________________________________________
+
+
+
+     Format standard disk (35 tracks) in drive 9, use (buggy) 1541
+     sector pattern (for example, because this is a 1571 drive), show
+     drive status when done:
+
+     ___________________________________________________________________
+     cbmformat -os 9 1571disk,71
+     ___________________________________________________________________
+
+
+
+     SpeedDOS disk (40 tracks), show progress indicator, all sectors
+     zeroed out, no head banging:
+
+     ___________________________________________________________________
+     cbmformat -npx 8 "40 TRACKS,OK"
+     ___________________________________________________________________
+
+
+
+     66..44..  ccbbmmffoorrnngg
+
+     _c_b_m_f_o_r_n_g is a fast and reliable low-level disk formatter for the
+     1541 and compatible devices (1570, 1571, third-party clones). It
+     was based on ``cbmformat'' and is designed to become the designated
+     successor to ``cbmformat'', therefore its name: _C_B_M_-_F_o_r_m_a_t_t_e_r_, _t_h_e
+     _N_e_x_t _G_e_n_e_r_a_t_i_o_n.
+
+     _c_b_m_f_o_r_n_g does not support a 1581 drive.
+
+     Because this is the first official release of _c_b_m_f_o_r_n_g and because
+     it was not used in the field by a wider user group, it still
+     contains additional measurement routines and informational output
+     after the formatting process was done. When _c_b_m_f_o_r_n_g prooved its
+     matureness and got back some features currently missing (progress
+     bar), it will replace _c_b_m_f_o_r_m_a_t.
+
+     To date _c_b_m_f_o_r_n_g should be considered as the more reliable
+     formatter of both; whenever you should encounter any difficulties
+     with _c_b_m_f_o_r_m_a_t, go for _c_b_m_f_o_r_n_g. If you like additional
+     informational messages like e.g.  the RPM value each formatted
+     track was measured, then _c_b_m_f_o_r_n_g is the tool you want to use. Your
+     feedback helps us to decide, if this additional output which was
+     needed for developing may find its way into future releases.
+
+     66..44..11..  ccbbmmffoorrnngg iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: cbmforng [OPTION]... DRIVE# NAME,ID
+
+     _D_R_I_V_E_# has to be the drive number of the disk drive, _N_A_M_E is a name
+     with up to 16 characters which will be the name of the disk after
+     formatting, _I_D is the 2-letter disk ID.
+
+     Note: Unlike the _N_0 command of the drive, the ID must be given
+     (thus, no so-called "short format" is possible).
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit.
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --nn,, ----nnoo--bbuummpp
+           Do not bump drive head at the beginning. Don't use this on
+           eventually misaligned drives.
+
+        --rr,, ----rreettrriieess nn
+           Set the maximum number of retries on errors. This accounts
+           for all errors that may happen when formatting all the tracks
+           of the whole disk.
+
+        --xx,, ----eexxtteennddeedd
+           Format a 40 track disk, the BAM format is compatible to
+           SpeedDOS.
+
+        --cc,, ----cclleeaarr
+           clear (demagnetize) this disk.  This is highly recommended if
+           the disk is used for the first time, or if it was previously
+           formatted for another system (i.e., MS-DOS).  Note that this
+           option takes much time.
+
+        --vv,, ----vveerriiffyy
+           verify each track after it is written.  As this needs an
+           extra round of the drive for each track, the formatting time
+           is almost doubled.
+
+           cf. ``cbmforng Notes for 1571 drives''
+
+        --oo,, ----oorriiggiinnaall
+           Fill sectors with the original pattern (0x4b, 0x01, 0x01...)
+           instead of zeroes.  The original pattern is probably due to a
+           bug in the drive ROM, apart from this, zeroing out unused
+           sectors should give (slightly) better results for compressed
+           disk images. In comparison to _c_b_m_f_o_r_m_a_t, the pattern used
+           with _c_b_m_f_o_r_n_g is a little bit more original than the one from
+           its predecessor. On track one the pattern consists of: 0x00,
+           0x01, 0x01, ...  instead of the first byte beeing 0x4b. This
+           perfectly reflects the original 1541 ROM format bug.
+
+           cf. ``cbmforng Notes for 1571 drives''
+
+        --ss,, ----ssttaattuuss
+           In addition to the informational output of internal values
+           from the formatting process, the drive status is displayed.
+
+     66..44..22..  ccbbmmffoorrnngg NNootteess ffoorr 11557711 ddrriivveess
+
+     WWee eennccoouunntteerreedd rraarree ffaaiilluurree ccoonnddiittiioonnss wwiitthh ddeecceenntt
+     rreevviissiioonn//mmeecchhaanniiccss ccoommbbiinnaattiioonnss ooff tthhee 11557711 ddiisskk ddrriivveess wwhheenn uussiinngg
+     ccbbmmffoorrnngg.. WWee hhiigghhllyy rreeccoommmmeenndd ttoo uussee _-_-_o_r_i_g_i_n_a_l and _-_-_v_e_r_i_f_y with
+     1571 drives. From our experience, with _-_-_o_r_i_g_i_n_a_l, the problem does
+     not occur. With _-_-_v_e_r_i_f_y, the drive tests each track after it was
+     formatted and ensures that the failure condition did not occur;
+     otherwise the same track is formatted again, as often as the
+     currently set retry value allows.
+
+     We did not encounter these problems with either of 1541 (1541-II,
+     1541C), 1570 or 1571CR (the drive which is part of the C128DCR)
+     drives, only with original 1571 drives.
+
+     In the current state, cbmforng is not able to format double-sided
+     disks on a 1571 drive.
+
+     66..44..33..  ccbbmmffoorrnngg EExxaammpplleess
+
+     FFoorrmmaatt ssttaannddaarrdd ddiisskk ((3355 ttrraacckkss)) iinn ddrriivvee 88::
+
+     ___________________________________________________________________
+     cbmforng 8 GAMES,42
+     ___________________________________________________________________
+
+
+
+     Format standard disk (35 tracks) in drive 9, use (buggy) 1541
+     sector pattern (for example, because this is a 1571 drive), show
+     drive status when done:
+
+     ___________________________________________________________________
+     cbmforng -os 9 1571disk,71
+     ___________________________________________________________________
+
+
+
+     SpeedDOS disk (40 tracks), verify formatted tracks, all sectors
+     zeroed out, no head banging:
+
+     ___________________________________________________________________
+     cbmforng -nvx 8 "40 TRACKS,OK"
+     ___________________________________________________________________
+
+
+
+     66..55..  dd6644ccooppyy
+
+     _d_6_4_c_o_p_y is a fast disk image transfer (both read and write) program
+     for the 1541 and compatible devices (1570, 1571, third-party
+     clones). A 1581 drive is _n_o_t supported! Maximum transfer speed is
+     achieved by custom drive- and transfer-routines based on the Star
+     Commander ((C) Joe Forster/STA) routines.
+
+     See also ``d82copy'' and ``imgcopy''.
+
+     66..55..11..  dd6644ccooppyy iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: d64copy [OPTION]... SOURCE TARGET
+
+     Either SOURCE or TARGET must be an external drive, valid names are
+     8, 9, 10 and 11. The other parameter specifies the file name of the
+     .d64 image.
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --qq,, ----qquuiieett
+           Quiet output, fewer messages (also suppresses warnings,
+           should not be used)
+
+        --vv,, ----vveerrbboossee
+           Verbose output, more messages (can be repeated)
+
+        --nn,, ----nnoo--pprrooggrreessss
+           Omit progress display
+
+        --ss,, ----ssttaarrtt--ttrraacckk==_s_t_a_r_t _t_r_a_c_k
+           Set start track (defaults to 1)
+
+        --ee,, ----eenndd--ttrraacckk==_E_n_d _t_r_a_c_k
+           Set end track (default is 35 for .d64 images, 70 for .d71
+           images). _d_6_4_c_o_p_y is able to access tracks 1-35 in original
+           transfer mode and 1-42 with serial1, serial2 and parallel.
+           The 1571 supports tracks 1-70 in double sided (.d71) mode.
+
+        --tt,, ----ttrraannssffeerr==_t_r_a_n_s_f_e_r _m_o_d_e
+           Set transfermode. Valid modes are:
+
+           ·  auto (default)
+
+           ·  original (slowest)
+
+           ·  serial1
+
+           ·  serial2
+
+           ·  parallel (fastest)
+
+           original and serial1 should work in any case.  serial2 won't
+           work with more than one device connected to the IEC bus, par-
+           allel requires an additional XP1541/XP1571 cable.
+
+           If auto is used, d64copy itself determines the best transfer
+           mode usable with the current setup, and uses that one. Thus,
+           you will seldom want to manually overdrive the _t_r_a_n_s_f_e_r _m_o_d_e
+           option.
+
+        --ii,, ----iinntteerrlleeaavvee==_i_n_t_e_r_l_e_a_v_e
+           Set interleave value. This is ignored when reading in warp
+           mode. Default is 16 for transfer mode original, for turbo and
+           warp write as follows:
+
+
+
+                       turbo (r/w)    warp (write only)
+             serial1       3                 5
+             serial2      12                11
+             parallel      6                 3
+
+
+
+        Lower values might slightly reduce transfer times, but if set a
+        bit to low, transfer times will dramatically increase.
+
+        --ww,, ----wwaarrpp
+           Enable warp mode. This is default now; this option is only
+           supported for backward-compatibility with opencbm
+           (cbm4linux/cbm4win) versions before 0.4.0.
+
+        ----nnoo--wwaarrpp
+           Disable warp mode. Warp mode is usually a good idea for
+           transferring disk images unless you have a very slow CPU
+           and/or bad disk material. Warp mode sends raw GCR data over
+           the bus, which assures data integrity on the PC side and
+           relieves the drive's CPU. Thus, it is unlikely you will want
+           to use that option.
+
+        --bb,, ----bbaamm--oonnllyy
+           BAM-only copy. Only blocks marked as allocated are copied.
+           For extended tracks (36-40), SpeedDOS BAM format is assumed.
+           Use with caution, at least one wide-spread directory editor
+           tends to forget to allocate some directory blocks.
+
+        --BB,, ----bbaamm--ssaavvee
+           Safe BAM-only copy. This is like the -b option but always
+           copies the entire directory track (18, 18 and 53 in double-
+           sided mode).
+
+        --dd,, ----ddrriivvee--ttyyppee==type
+           Skip drive type detection. 0 or 1541 specifies 1541 mode (1
+           MHz, parallel cable at VIA $1800), 1 or 1571 forces 1571 mode
+           (2 MHz, parallel cable at CIA $4000).
+
+        --22,, ----ttwwoo--ssiiddeedd
+           Double-sided mode for copying .d71 images to/from a 1571
+           drive. Warp mode is not supported (yet).
+
+        --rr,, ----rreettrryy--ccoouunntt==count
+           Number of retries.
+
+        --EE,, ----eerrrroorr--mmaapp==mode
+           Controls whether error is appended to the disk image
+           (15x1->PC only).  Allowed values for mode are (abbreviations
+           allowed):
+
+           ·  always
+
+           ·  on_error (default)
+
+           ·  never
+
+
+     66..55..22..  dd6644ccooppyy EExxaammpplleess
+
+     RReeaadd aa DD6644 ddiisskk iimmaaggee ffrroomm tthhee ffllooppppyy iinn ddrriivvee 88 ttoo tthhee ffiillee
+     iimmaaggee..dd6644,, aauuttoommaattiiccaallllyy sseelleeccttiinngg tthhee ffaasstteesstt ttrraannssffeerr mmeetthhoodd::
+
+     ___________________________________________________________________
+     d64copy 8 image.d64
+     ___________________________________________________________________
+
+
+
+     Copy the D64 disk image in image.d64 to the floppy in drive 9,
+     automatically selecting the fastest transfer method:
+
+     ___________________________________________________________________
+     d64copy image.d64 9
+     ___________________________________________________________________
+
+
+
+     Copy a double-sided disk from a 1571 drive 9 to image.d71, using
+     serial1 transfer method and only reading the blocks which are
+     marked as used in the BAM:
+
+     ___________________________________________________________________
+     d64copy -2 -B --transfer=serial1 9 image.d64
+     ___________________________________________________________________
+
+
+
+     66..66..  dd8822ccooppyy
+
+     _d_8_2_c_o_p_y is a fast disk image transfer (both read and write) program
+     for the 8050, 8250 and SFD 1001.
+
+     See also ``d64copy'' and ``imgcopy''.
+
+     66..66..11..  dd8822ccooppyy iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: d82copy [OPTION]... SOURCE TARGET
+
+     Either SOURCE or TARGET must be an external drive, valid names are
+     8, 9, 10 and 11. The other parameter specifies the file name of the
+     .d80 or .d82 image.
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --qq,, ----qquuiieett
+           Quiet output, fewer messages (also suppresses warnings,
+           should not be used)
+
+        --vv,, ----vveerrbboossee
+           Verbose output, more messages (can be repeated)
+
+        --nn,, ----nnoo--pprrooggrreessss
+           Omit progress display
+
+        --ss,, ----ssttaarrtt--ttrraacckk==_s_t_a_r_t _t_r_a_c_k
+           Set start track (defaults to 1)
+
+        --ee,, ----eenndd--ttrraacckk==_E_n_d _t_r_a_c_k
+           Set end track (default is 77 for .d80 images, 154 for .d82
+           images).
+
+        --tt,, ----ttrraannssffeerr==_t_r_a_n_s_f_e_r _m_o_d_e
+           Set transfermode. Valid modes are:
+
+           ·  auto (default)
+
+           ·  original (slowest)
+
+           If auto is used, d82copy itself determines the best transfer
+           mode usable with the current setup, and uses that one. Thus,
+           you will seldom want to manually overdrive the _t_r_a_n_s_f_e_r _m_o_d_e
+           option.
+
+           Note that _d_8_2_c_o_p_y currently only supports _o_r_i_g_i_n_a_l mode;
+           thus, either _a_u_t_o or omitting the transfer mode will both
+           default to _o_r_i_g_i_n_a_l.
+
+        --ii,, ----iinntteerrlleeaavvee==_i_n_t_e_r_l_e_a_v_e
+           Set interleave value. This is ignored when reading in warp
+           mode. Default is 16 for transfer mode original, for turbo and
+           warp write as follows:
+
+
+
+             original     22
+
+
+
+        Lower values might slightly reduce transfer times, but if set a
+        bit to low, transfer times will dramatically increase.
+
+        --ww,, ----wwaarrpp
+           Enable warp mode. This is default now; this option is only
+           supported for backward-compatibility with opencbm
+           (cbm4linux/cbm4win) versions before 0.4.0.
+
+           Note that _d_8_2_c_o_p_y currently supports _o_r_i_g_i_n_a_l transfer mode
+           only; thus, _-_-_w_a_r_p and _-_-_n_o_-_w_a_r_p are ignored at the moment.
+
+        ----nnoo--wwaarrpp
+           Disable warp mode. Warp mode is usually a good idea for
+           transferring disk images unless you have a very slow CPU
+           and/or bad disk material. Warp mode sends raw GCR data over
+           the bus, which assures data integrity on the PC side and
+           relieves the drive's CPU. Thus, it is unlikely you will want
+           to use that option.
+
+           Note that _d_8_2_c_o_p_y currently supports _o_r_i_g_i_n_a_l transfer mode
+           only; thus, _-_-_w_a_r_p and _-_-_n_o_-_w_a_r_p are ignored at the moment.
+
+        --bb,, ----bbaamm--oonnllyy
+           BAM-only copy. Only blocks marked as allocated are copied.
+
+        --BB,, ----bbaamm--ssaavvee
+           Safe BAM-only copy. This is like the -b option but always
+           copies the entire directory track (18, 18 and 53 in double-
+           sided mode).
+
+        --dd,, ----ddrriivvee--ttyyppee==type
+           Skip drive type detection. Possible values are: 8050, 8250 or
+           1001.
+
+        --11,, ----oonnee--ssiiddeedd
+           Single-sided mode (D80).
+
+        --22,, ----ttwwoo--ssiiddeedd
+           Double-sided mode (D82); requires a VIC 8250 or SFD 1001
+           drive.
+
+        --rr,, ----rreettrryy--ccoouunntt==count
+           Number of retries.
+
+        --EE,, ----eerrrroorr--mmaapp==mode
+           Controls whether error is appended to the disk image
+           (15x1->PC only).  Allowed values for mode are (abbreviations
+           allowed):
+
+           ·  always
+
+           ·  on_error (default)
+
+           ·  never
+
+
+     66..66..22..  dd8822ccooppyy EExxaammpplleess
+
+     RReeaadd aa DD8822 ddiisskk iimmaaggee ffrroomm tthhee ffllooppppyy iinn ddrriivvee 88 ttoo tthhee ffiillee
+     iimmaaggee..dd8822,, aauuttoommaattiiccaallllyy sseelleeccttiinngg tthhee ffaasstteesstt ttrraannssffeerr mmeetthhoodd::
+
+     ___________________________________________________________________
+     d82copy -2 8 image.d82
+     ___________________________________________________________________
+
+
+
+     Copy the D80 disk image in image.d80 to the floppy in drive 9,
+     automatically selecting the fastest transfer method:
+
+     ___________________________________________________________________
+     d82copy -1 image.d80 9
+     ___________________________________________________________________
+
+
+
+     Copy a double-sided disk from a 1001 drive 9 to image.d82, only
+     reading the blocks which are marked as used in the BAM:
+
+     ___________________________________________________________________
+     d82copy -2 -B --drive-type=1001 9 image.d82
+     ___________________________________________________________________
+
+
+
+     66..77..  iimmggccooppyy
+
+     _i_m_g_c_o_p_y is a fast disk image transfer (both read and write) program
+     for various CBM disk drives, namely, VIC 1540, 1541, 1570, 1571,
+     1581, 2031, 2040, 3040, 4031, 4040, 8050, 8250, and SFD 1001.
+
+     See also ``d64copy'' and ``d82copy''.
+
+     66..77..11..  iimmggccooppyy iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: imgcopy [OPTION]... SOURCE TARGET
+
+     Either SOURCE or TARGET must be an external drive, valid names are
+     8, 9, 10 and 11. The other parameter specifies the file name of the
+     image file.
+
+     The extension of the image file determines the default
+     Imagefiletype (.d64, .d71, .d80, .d81, .d82)
+
+        ·  .d64 1540, 1541, 1570, 1571 (single-sided) or 2031 image
+
+        ·  .d71 1571 image (double-sided)
+
+        ·  .d81 1581 image
+
+        ·  .d80 8050 image (single-sided)
+
+        ·  .d82 8250 or 1001 image (double-sided)
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --qq,, ----qquuiieett
+           Quiet output, fewer messages (also suppresses warnings,
+           should not be used)
+
+        --vv,, ----vveerrbboossee
+           Verbose output, more messages (can be repeated)
+
+        --nn,, ----nnoo--pprrooggrreessss
+           Omit progress display
+
+        --ss,, ----ssttaarrtt--ttrraacckk==_s_t_a_r_t _t_r_a_c_k
+           Set start track (defaults to 1)
+
+        --ee,, ----eenndd--ttrraacckk==_E_n_d _t_r_a_c_k
+           Set end track (default depends upon the file image type).
+
+        --tt,, ----ttrraannssffeerr==_t_r_a_n_s_f_e_r _m_o_d_e
+           Set transfermode. Valid modes are:
+
+           ·  auto (default)
+
+           ·  original (slowest)
+
+           ·  serial1
+
+           ·  serial2
+
+           ·  serial3
+
+           ·  parallel (fastest)
+
+           Not all modes are supported with all drives!
+
+           If auto is used, imgcopy itself determines the best transfer
+           mode usable with the current setup, and uses that one. Thus,
+           you will seldom want to manually overdrive the _t_r_a_n_s_f_e_r _m_o_d_e
+           option.
+
+        --ii,, ----iinntteerrlleeaavvee==_i_n_t_e_r_l_e_a_v_e
+           Set interleave value. This is ignored when reading in warp
+           mode.  The default depends upon the file image type.
+
+           Lower values might slightly reduce transfer times, but if set
+           a bit to low, transfer times will dramatically increase.
+
+        --ww,, ----wwaarrpp
+           Enable warp mode. This is default now; this option is only
+           supported for backward-compatibility with opencbm
+           (cbm4linux/cbm4win) versions before 0.4.0.
+
+        ----nnoo--wwaarrpp
+           Disable warp mode. Warp mode is usually a good idea for
+           transferring disk images unless you have a very slow CPU
+           and/or bad disk material. Warp mode sends raw GCR data over
+           the bus, which assures data integrity on the PC side and
+           relieves the drive's CPU. Thus, it is unlikely you will want
+           to use that option.
+
+        --bb,, ----bbaamm--oonnllyy
+           BAM-only copy. Only blocks marked as allocated are copied.
+
+        --BB,, ----bbaamm--ssaavvee
+           Safe BAM-only copy. This is like the -b option but always
+           copies the entire directory track (18, 18 and 53 in double-
+           sided mode).
+
+        --dd,, ----ddrriivvee--ttyyppee==type
+           Skip drive type detection. Possible values are: 1541, 1571,
+           1581, 2031, 2040, 3040, 4031, 4040, 8050, 8250 or 1001.
+
+        --11,, ----oonnee--ssiiddeedd
+           Single-sided mode (D80).
+
+        --22,, ----ttwwoo--ssiiddeedd
+           Double-sided mode (D82); requires a VIC 8250 or SFD 1001
+           drive.
+
+        --rr,, ----rreettrryy--ccoouunntt==count
+           Number of retries.
+
+        --EE,, ----eerrrroorr--mmaapp==mode
+           Controls whether error is appended to the disk image
+           (15x1->PC only).  Allowed values for mode are (abbreviations
+           allowed):
+
+           ·  always
+
+           ·  on_error (default)
+
+           ·  never
+
+
+     66..77..22..  iimmggccooppyy EExxaammpplleess
+
+     66..88..  ccbbmmccooppyy
+
+     _c_b_m_c_o_p_y is a fast file transfer program for various disk drives, in
+     particular the 1541, 1570, 1571 and 1581 devices.  Maximum transfer
+     speed is achieved by custom drive- and transfer-routines based on
+     the Star Commander ((C) Joe Forster/STA) routines.
+
+     66..88..11..  ccbbmmccooppyy iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: cbmcopy [OPTION]... DEVICE# FILE...
+
+     DEVICE# specifies the drive number for file copy.  The remaining
+     arguments specify the files to be sent to/read from the disk drive.
+     This version supports Raw, PC64 (P00) and T64 files. They are
+     recognized when sending files to the disk drive, files read from
+     external devices are always stored as raw binary data.
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           Display help and exit
+
+        --VV,, ----vveerrssiioonn
+           Display version information and exit.
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --qq,, ----qquuiieett
+           Quiet output, fewer messages (also suppresses warnings,
+           should not be used)
+
+        --vv,, ----vveerrbboossee
+           Verbose output, more messages (can be repeated)
+
+        --nn,, ----nnoo--pprrooggrreessss
+           Omit progress display
+
+        --rr,, ----rreeaadd
+           Operate in read-mode, i.e. read data from an external device.
+           Starting _c_b_m_c_o_p_y as _c_b_m_r_e_a_d has the same effect.
+
+        --ww,, ----wwrriittee
+           Operate in write-mode, i.e. send files to an external device.
+           Starting _c_b_m_c_o_p_y as _c_b_m_w_r_i_t_e has the same effect.
+
+        --tt,, ----ttrraannssffeerr==_t_r_a_n_s_f_e_r _m_o_d_e
+           Set transfermode. Valid modes are:
+
+           ·  auto (default)
+
+           ·  serial1 (slowest)
+
+           ·  serial2
+
+           ·  parallel (fastest, not possible with a 1581)
+
+           serial1 should work in any case.  serial2 won't work with
+           more than one device connected to the IEC bus, parallel
+           requires a XP1541/XP1571 cable in addition to the XM/XA1541.
+           If auto is given, or this option is completely omitted, cbm-
+           copy will automatically determine the fastest transfer method
+           possible with the current setup. Thus, you will seldom want
+           to manually overdrive the _t_r_a_n_s_f_e_r _m_o_d_e option.
+
+        --dd,, ----ddrriivvee--ttyyppee==type
+           Skip drive type detection.  Valid types are 1541, 1570, 1571
+           and 1581.
+
+        --oo,, ----oouuttppuutt==name
+           Specifies target name. ASCII/PetSCII conversion is performed
+           when in write-mode.
+
+        --aa,, ----aaddddrreessss==address
+           Overrides the file's first two bytes with _a_d_d_r_e_s_s.
+
+        --RR,, ----rraaww
+           Skip file type detection. File data is sent as is.  This
+           option is only valid in write-mode.
+
+        --ff,, ----ffiillee--ttyyppee==type
+           Specifies/overrides file type. Supported types are P, S, D,
+           U.  Raw files default to P, whereas the T64 format contains
+           meta data which includes the file type. For PC64 files,
+           _c_b_m_w_r_i_t_e tries to guess the file type from the file
+           extension.  This option is only valid in write-mode.
+
+
+     66..88..22..  ccbbmmccooppyy EExxaammpplleess
+
+     RReeaadd aa ffiillee ccaalllleedd _c_b_m_f_i_l_e from drive 8 and store its binary value
+     into the file file.bin, automatically selecting the fastest
+     transfer method:
+
+     ___________________________________________________________________
+     cbmcopy -r 8 cbmfile -o file.bin
+     ___________________________________________________________________
+
+
+
+     Write out the file file.p00 in P64 format to the disk in drive 9,
+     using serial1 transfer method:
+
+     ___________________________________________________________________
+     cbmcopy -w 9 file.p00
+     ___________________________________________________________________
+
+
+
+     66..99..  rrppmm11554411
+
+     _r_p_m_1_5_4_1 is a demo program. It finds out the rotation speed (in
+     rounds per minute, rpm) of the drive motor.  _r_p_m_1_5_4_1 supports a
+     1541, 1570 or 1571 drive.  A 1581 drive is _n_o_t supported.
+
+     For Linux, _r_p_m_1_5_4_1 is not installed automatically. You have to
+     compile it yourself (found in demo/rpm1541/) if you want to use it.
+     For Windows, it is part of the binary distribution.
+
+     This demo program does not allow you to specify a specific
+     adapter/plugin.  Instead, it always uses the default plugin.
+
+     66..99..11..  rrppmm11554411 uussaaggee
+
+     SSyynnooppssiiss:: rpm1541 _[_d_e_v_i_c_e_]
+
+     The optional parameter _d_e_v_i_c_e is the device number of the drive
+     which should be tested. If not specified, rpm1541 utilizes drive 8.
+
+     66..99..22..  rrppmm11554411 EExxaammppllee
+
+     FFiinndd oouutt tthhee rroottaattiioonn ssppeeeedd ooff ddrriivvee 1111::
+
+     ___________________________________________________________________
+     cbmctrl lock
+     rpm1541 11
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     66..1100..  ffllaasshh
+
+     _f_l_a_s_h is a demo program. It flashes the drive LED.  _f_l_a_s_h works
+     with 1541, 1570 or 1571 drives. A 1581 drive is _n_o_t supported.
+
+     For Linux, _f_l_a_s_h is not installed automatically. You have to
+     compile it yourself (found in demo/flash/) if you want to use it.
+     For Windows, it is part of the binary distribution.
+
+     This demo program does not allow you to specify a specific
+     adapter/plugin.  Instead, it always uses the default plugin.
+
+     66..1100..11..  ffllaasshh uussaaggee
+
+     SSyynnooppssiiss:: flash _[_d_e_v_i_c_e_]
+
+     The optional parameter _d_e_v_i_c_e is the device number of the drive
+     which should flash its LED. If not specified, flash utilizes drive
+     8.
+
+     66..1100..22..  ffllaasshh EExxaammppllee
+
+     LLeett tthhee ddrriivvee LLEEDD ffllaasshh oonn ddrriivvee 1100::
+
+     ___________________________________________________________________
+     cbmctrl lock
+     flash 10
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     66..1111..  mmoorrssee
+
+     _m_o_r_s_e is a demo program. It uses the drive LED to output a text in
+     morse code.  _m_o_r_s_e works with 1541, 1570 or 1571 drives. A 1581
+     drive is _n_o_t supported.
+
+     For Linux, _m_o_r_s_e is not installed automatically. You have to
+     compile it yourself (found in demo/morse/) if you want to use it.
+     For Windows, it is part of the binary distribution.
+
+     This demo program does not allow you to specify a specific
+     adapter/plugin.  Instead, it always uses the default plugin.
+
+     66..1111..11..  mmoorrssee uussaaggee
+
+     SSyynnooppssiiss:: morse _[_d_e_v_i_c_e_]
+
+     The optional parameter _d_e_v_i_c_e is the device number of the drive
+     which should flash its LED. If not specified, morse utilizes drive
+     8.
+
+     66..1111..22..  mmoorrssee EExxaammpplleess
+
+     MMoorrssee tthhee tteexxtt ""SSOOSS"",, ""HHEELLLLOO"" aanndd ""YYOOUU"" ((iinn tthhiiss oorrddeerr)) oonn ddrriivvee 99..
+
+     ___________________________________________________________________
+     cbmctrl lock
+     morse 9
+     cbmctrl command 9 U3:HELLO
+     cbmctrl command 9 U3:YOU
+     cbmctrl unlock
+     ___________________________________________________________________
+
+
+
+     66..1122..  ccbbmmlliinneetteesstteerr
+
+     TThhiiss ttooooll ccaann bbee uusseedd ffoorr ddeebbuuggggiinngg ppuurrppoosseess.. YYoouu ccaann uussee iitt ttoo
+     tteesstt aanndd cchheecckk iiff tthhee IIEECC lliinneess rreeaacctt oonn aaccttiioonnss ooff tthhee PPCC..
+
+     66..1122..11..  ccbbmmlliinneetteesstteerr iinnvvooccaattiioonn
+
+     SSyynnooppssiiss:: cbmlinetester [OPTION]
+
+     Set the IEC lines to specific values
+
+     Here's a complete list of known options:
+
+
+        --hh,, ----hheellpp
+           display help and exit
+
+        --VV,, ----vveerrssiioonn
+           display version information and exit
+
+        --@@,, ----aaddaapptteerr==<<pplluuggiinn>>[[::<<bbuuss>>]]
+           Specify the plugin to use. If you have installed more than
+           one plugin (XA1541, XU1541, XUM1541), you can specifiy which
+           one to use for this command.  This way, you can use all three
+           variants at the same time.
+
+           This requires an argument of the form <plugin>[:<bus>], where
+           <plugin> is the plugin's backend name (currently: _x_a_1_5_4_1,
+           _x_u_1_5_4_1, _x_u_m_1_5_4_1), and <bus> is the bus identifier, if it is
+           supported by the backend.
+
+        --ii,, ----iinntteerraaccttiivvee
+           Use the tool interactively (only with ncurses)
+
+        --pp,, ----ppoollll
+           Poll the values of the lines
+
+        --rr,, ----rreesseett
+           _s_e_t the RESET line (set to 0V)
+
+        --RR,, ----RREESSEETT
+           _r_e_l_e_a_s_e the RESET line (set to 5V)
+
+        --aa,, ----aattnn
+           _s_e_t the ATN line (set to 0V)
+
+        --AA,, ----AATTNN
+           _r_e_l_e_a_s_e the ATN line (set to 5V)
+
+        --cc,, ----cclloocckk
+           _s_e_t the CLOCK line (set to 0V)
+
+        --CC,, ----CCLLOOCCKK
+           _r_e_l_e_a_s_e the CLOCK line (set to 5V)
+
+        --dd,, ----ddaattaa
+           _s_e_t the DATA line (set to 0V)
+
+        --DD,, ----DDAATTAA
+           _r_e_l_e_a_s_e the DATA line (set to 5V)
+
+     66..1133..  ttaappee rroouuttiinneess
+
+     FFoorr WWiinnddoowwss,, ssppeecciiaall ttaappee rroouuttiinneess aarree aavvaaiibblleell ffoorr uussee wwiitthh tthhee
+     ZZoooommFFllooppppyy ccaabbllee.. CCuurrrreennttllyy,, tthhee oonnllyy ddooccuummeennttaattiioonn ffoorr tthhiiss ccaann bbee
+     ffoouunndd iinn tthhee ssoouurrccee ttaarrbbaallll aatt _o_p_e_n_c_b_m_/_t_a_p_e_/.
+
+     77..  ooppeennccbbmm AAPPII
+
+     TThhee OOppeennCCBBMM AAPPII iiss ddooccuummeenntteedd aass ddooxxyyggeenn ffiillee.. YYoouu ccaann ffiinndd iitt oonnllyy
+     oonn hhttttpp::////ooppeennccbbmm..ttrriikkaalliioottiiss..nneett//ddooxxyyggeenn//
+
+     88..  KKnnoowwnn bbuuggss aanndd pprroobblleemmss
+
+     TThheerree aarree ssoommee kknnoowwnn bbuuggss iinn ooppeennccbbmm::
+
+
+        ·  _c_b_m_c_o_p_y is still known to have some protocol races,
+           especially with 1581 drives; thus, it does not always work
+           reliably.
+
+        ·  _c_b_m_c_t_r_l _d_e_t_e_c_t as well as _c_b_m_c_o_p_y and _d_6_4_c_o_p_y do not
+           recognize the drive type if some custom ROM is used.
+           Whenever this happens, use _-_-_d_r_i_v_e_-_t_y_p_e for _c_b_m_c_o_p_y and
+           _d_6_4_c_o_p_y.  Furthermore, I would be happy if you could send me
+           a ROM dump of the floppy ROM so I can update the drive type
+           recognition for some future version of OpenCBM.
+
+        ·  Windows: If you have any other devices connected to your
+           parallel port, you cannot use them as long as OpenCBM is
+           installed. In this case, either remove opencbm whenever you
+           want to access that other device, or install opencbm with
+           _i_n_s_t_c_b_m _-_-_l_o_c_k_=_n_o and make sure to issue _c_b_m_c_t_r_l _l_o_c_k before
+           accessing the drive, and _c_b_m_c_t_r_l _u_n_l_o_c_k afterwards.
+
+        ·  Windows: No third party PCI or PCIe parallel port card does
+           work with opencbm on Windows currently; to say it with other
+           words: there is no proof or positive report that any third
+           party PCI or PCIe parallel port card does or did work with
+           opencbm on Windows. The exact failure reason is not known to
+           date, but we are investigating further since that feature is
+           a must, when integrated parallel ports were removed from
+           mainstream mainboards in the future.  Thus, it would be best
+           if you use XU1541 or XUM1541 adapters instead of XA1541 and
+           XM1541!
+
+        ·  Linux: PCI or PCIe based parallel port cards might work, but
+           there is no guarantee for this.  Thus, it would be best if
+           you use XU1541 or XUM1541 adapters instead of XA1541 and
+           XM1541!
+
+        ·  All: An XA1541 or XM1541 cable will definitely _n_o_t work with
+           a USB-to-parallel-port adapter. These are commonly used to
+           connect parallel port printers to modern PCs. However,
+           neither do they offer full access to all parallel port lines,
+           as it is needed for the XA1541/XM1541 cables, nor do they
+           allow for the tight timing needed for XA1541/XM1541 cables.
+
+        ·  Windows: The Star Commander is supported on 32 bit versions
+           of Windows. For this, a special VXD driver is installed. The
+           Star Commander then uses the VXD to communicate with the
+           drive.  This does not work for 64 bit Windows variants,
+           though.
+
+     99..  WWAARRNNIINNGGSS
+
+     YYoouu sshhoouulldd bbee ccaarreeffuull wwhheenn ooppeerraattiinngg tthhee aaddaapptteerrss,, iinn oorrddeerr ttoo
+     pprreevveenntt aannyy ddaammaaggee ttoo yyoouurr ddrriivvee oorr yyoouurr aaddaapptteerr.. TThhee ffoolllloowwiinngg
+     ggeenneerraall rruulleess aappppllyy ttoo aallll ooff tthhee XXAA11554411,, tthhee XXMM11554411,, tthhee XXUU11554411
+     aanndd tthhee XXUUMM11554411 ((ZZoooommFFllooppppyy)) ddeevviicceess,, uunnlleessss ssppeecciiffiieedd ootthheerrwwiissee..
+
+
+        ·  Do not plug or unplug any cables to the floppy drive when the
+           drive is powered on or the XU1541, XUM1541, or ZoomFloppy is
+           connected to a PC via USB, or the XA1541 is connected to the
+           PC via the parallel port. When the USB based adapters are
+           plugged into USB, they are powered on and could zap your
+           drive if you connect or remove a floppy drive. This is also
+           the same way you should treat floppy drives attached to your
+           Commodore computers.
+
+        ·  Do not attach more than 4 floppy drives to a single
+           ZoomFloppy. For the other adapters (XU1541, general XUM1541,
+           XA1541 or XM1541), other limits may be valid.  If you need
+           more drives, get another ZoomFloppy or other adapter. The
+           OpenCBM softare allows you to use more than one adapter at
+           the same time (subject to PC performance limitations). These
+           can be multiple adapters of the same type, or of different
+           ones.
+
+        ·  Do not connect more than one drive to the XU1541, XUM1541,
+           ZoomFloppy, or XAP1541/XMP1541 parallel ports. While there
+           are multiple connectors, only one should be used at a time.
+           Otherwise, chances are you will damage your floppy drive!
+
+        ·  When accessing floppy drives, all devices connected to the
+           same IEC bus must be turned on. Even if you are only going to
+           use one drive, for example, all other connected drives must
+           also be turned on. Unpowered IEC devices may interfere with
+           proper operation of other drives.
+
+        ·  Be careful of static electricity discharge when
+           plugging/unplugging any electronic components. Consider
+           getting a case for your XU1541, XUM1541 or ZoomFloppy board
+           if you are concerned about the environment you will be using
+           it on.
+
+     99..11..  PPrrooppeerr ppoowweerr--oonn sseeqquueennccee
+
+     WWee hhaavvee tteesstteedd lleeaavviinngg tthhee XXUU11554411,, XXUUMM11554411,, ZZoooommFFllooppppyy,, XXAA11554411 oorr
+     XXMM11554411 aaddaapptteerrss ccoonnnneecctteedd ttoo ppoowweerreedd--oonn ddrriivveess ffoorr ddaayyss wwiitthh nnoo
+     pprroobblleemmss,, eevveenn tthhoouugghh tthheeyy wweerree nnoott ccoonnnneecctteedd vviiaa UUSSBB oorr vviiaa tthhee
+     PPCC''ss ppaarraalllleell ppoorrtt.. YYoouu ccaann aallssoo lleeaavvee tthhee aaddaapptteerrss pplluuggggeedd iinnttoo
+     UUSSBB wwiitthh tthhee ddrriivvee((ss)) ooffff wwiitthh nnoo pprroobblleemmss.. BBuutt wwhhiillee tthhee
+     ZZoooommFFllooppppyy iiss ddeessiiggnneedd ttoo bbee rroobbuusstt,, yyoouu ccaann aavvooiidd uunnnneecceessssaarryy wweeaarr
+     bbyy ffoolllloowwiinngg tthheessee iinnssttrruuccttiioonnss ffoorr ssttaarrttiinngg uupp aanndd sshhuuttttiinngg iitt
+     ddoowwnn.. OOtthheerr aaddaapptteerrss ((XXUU11554411,, ootthheerr XXUUMM11554411 vvaarriiaannttss,, XXAA11554411 oorr
+     XXMM11554411)) mmaayy bbee eevveenn mmoorree ppiicckkyy tthhaann tthhee ZZoooommFFllooppppyy..
+
+     99..11..11..  PPoowweerr--oonn sseeqquueennccee ffoorr UUSSBB bbaasseedd aaddaapptteerrss
+
+     FFoorr UUSSBB bbaasseedd aaddaapptteerrss ((XXUU11554411,, XXUUMM11554411,, ZZoooommFFllooppppyy)),, tthhee ffoolllloowwiinngg
+     pprroocceedduurree iiss rreeccoommmmeennddeedd::
+
+
+        1. Start with drive off and XU1541, XUM1541, ZoomFloppy
+           unplugged from the PC's USB;
+
+        2. Plug in all cable(s) between XU1541, XUM1541, ZoomFloppy and
+           drive(s);
+
+        3. Plug in XU1541, XUM1541 or ZoomFloppy via USB;
+
+        4. Turn on drive power switch(es).
+
+     Turn off the equipment via the same sequence in reverse, at least
+     doing steps 4 and 3. You don't need to unplug the floppy drive from
+     XU1541, XUM1541 or ZoomFloppy while not in use.
+
+     The 15x1 drives with an internal power supply tend to get hot if
+     left on for a long time, so you may want to power them off when not
+     in use.
+
+     99..11..22..  PPoowweerr--oonn sseeqquueennccee ffoorr PPCC ppaarraalllleell ppoorrtt bbaasseedd aaddaapptteerrss
+
+     FFoorr tthhee ppaarraalllleell ppoorrtt bbaasseedd aaddaapptteerrss ((XXAA11554411,, XXMM11554411,, XXAAPP11554411,,
+     XXMMPP11554411)),, tthhee ffoolllloowwiinngg pprroocceedduurree iiss rreeccoommmmeennddeedd::
+
+
+        1. Start with drive off and XA1541, XM1541, XAP1541 or XMP1541
+           unplugged from the PC's parallel port. Furthermore, leave the
+           PC switched off;
+
+        2. Plug in all cable(s) between XA1541, XM1541, XAP1541 or
+           XMP1541 and drive(s);
+
+        3. Plug in XA1541, XM1541, XAP1541 or XMP154 to the PC's
+           parallel port;
+
+        4. Turn on the PC
+
+        5. Turn on drive power switch(es).
+
+     Turn off the equipment via the same sequence in reverse, at least
+     doing steps 5, 4 and 3. It is highly suggested to unplug the floppy
+     drive(s) from the parallel port while not in use, by removing the
+     XA1541, XM1541, XAP1541 or XMP1541 adapter from the PC, at least.
+
+     The 15x1 drives with an internal power supply tend to get hot if
+     left on for a long time, so you may want to power them off when not
+     in use.
+
+     1100..  MMiisscc
+
+     1100..11..  CCrreeddiittss
+
+     TThhee ffaasstt ffoorrmmaatt ddrriivvee rroouuttiinnee uusseedd bbyy tthhee oorriiggiinnaall ``ccbbmmffoorrmmaatt'' aanndd
+     tthhee ttuurrbboo aanndd wwaarrpp ddrriivvee rroouuttiinneess uusseedd iinn ``lliibbdd6644ccooppyy'' aanndd
+     ``lliibbccbbmmccooppyy'' aarree hheeaavviillyy bbaasseedd oonn JJooee FFoorrsstteerr//SSTTAAss SSttaarr CCoommmmaannddeerr
+     rroouuttiinneess..  TThhee ``ccbbmmffoorrmmaatt'' rroouuttiinneess wweerree hhiigghhllyy mmooddiiffiieedd
+     aafftteerrwwaarrddss.. TThhee ``ccbbmmffoorrnngg'' ddrriivvee rroouuttiinnee iiss ddeerriivveedd ffrroomm tthhiiss,, bbuutt
+     wwaass aa mmaassssiivvee rreewwrriittee bbyy WWoollffggaanngg MMoosseerr..
+
+     TThhee XXPP11554411 aanndd XXPP11557711 ccaabblleess ((CC)) bbyy JJooee FFoorrsstteerr//SSTTAA..  TThhee oorriiggiinnaall
+     XXEE11554411 ccaabbllee ((CC)) bbyy NNiiccoollaass WWeellttee aanndd WWoollffggaanngg MMoosseerr TThhee XXAA11554411
+     ccaabbllee ((CC)) bbyy MMiicchhaaeell KKlleeiinn aanndd NNiiccoollaass WWeellttee TThhee XXUU11554411 ccaabbllee iiss
+     ccooppyyrriigghhtt bbyy aa ppeerrssoonn wwhhoo ddooeess nnoott wwaanntt ttoo bbee mmeennttiioonneedd aannyymmoorree..
+     TThhee XXUUMM11554411 // ZZoooommFFllooppppyy ccaabbllee iiss ((CC)) JJiimm BBrraaiinn aanndd NNaattee LLaawwssoonn..
+
+     1100..22..  CCoonnttrriibbuuttiioonnss
+
+     PPeeooppllee wwhhoo ddiirreeccttllyy oorr iinnddiirreeccttllyy ccoonnttrriibbuutteedd ttoo ooppeennccbbmm ((iinn nnoo
+     ppaarrttiiccuullaarr oorrddeerr))::
+
+
+        ·  _M_i_c_h_a_e_l _K_l_e_i_n started the original cbm4linux work (which was
+           a very big part)
+
+        ·  _J_o_e _F_o_r_s_t_e_r_/_S_T_A made the Star Commander and supplied the
+           source and info about the X?1541 interfaces; who knows,
+           without this work, opencbm might never have appeared at all.
+
+        ·  _N_i_c_o_l_a_s _W_e_l_t_e helped with the XA1541 and XM1541 interfaces
+           and supplied a free factory-new 1571 mechanic for Michael
+
+        ·  _A_n_d_r_e_a_s _B_o_o_s_e _& _t_h_e _V_I_C_E _t_e_a_m made VICE
+
+        ·  _A_n_d_r_é _F_a_c_h_a_t made the xa 6502 crossassembler
+
+        ·  _U_l_l_r_i_c_h _v_o_n _B_a_s_s_e_w_i_t_z made the ca65 crossassembler as part of
+           the cc65 package
+
+        ·  _O_l_i_v_e_r _S_c_h_m_i_d_t took over the cc65 package (and, thus, the
+           ca65 crossassembler) after Ullrich von Bassewitz retired from
+           supporting it.
+
+        ·  _W_o_l_f_g_a_n_g _M_o_s_e_r contributed _m_a_n_y discussions, patches, and
+           hardware whenever it was needed.
+
+        ·  _S_p_i_r_o _T_r_i_k_a_l_i_o_t_i_s with discussions, lots of fixes and doing
+           an overall great review while porting the driver to "other"
+           operating systems ;-)
+
+        ·  _C_h_r_i_s_t_i_a_n _V_o_g_e_l_g_s_a_n_g made the MacOS port and documented it.
+
+        ·  _A _p_e_r_s_o_n _w_h_o _d_o_e_s _n_o_t _w_a_n_t _t_o _b_e _m_e_n_t_i_o_n_e_d _a_n_y_m_o_r_e for
+           building the XU1541 device as low-cost variant and proof-of-
+           concept that such a communication tool can be built as USB
+           device.
+
+        ·  _N_a_t_e _L_a_w_s_o_n for building the XUM1541 firmware, especially for
+           the ZoomFloppy, in a collaborative effort with _J_i_m _B_r_a_i_n who
+           built the ZoomFloppy hardware, which is the standard and best
+           tested implementation of the XUM1541 device.  _U_f_f_e _J_a_k_o_b_s_e_n
+           worked on FreeBSD ports and MacOS variants, and fixed many
+           other things especially for Linux.
+
+        ·  _F_r_é_d_é_r_i_c _B_r_i_è_r_e made some enhancements especially for the
+           Linux kernel module for the XA1541/XM1541 devices.
+
+        ·  _M_a_r_k_u_s _B_r_e_n_n_e_r wrote mnib, a parallel nibbler for DOS, that
+           was later ported by _A_r_n_d _M_e_n_g_e to also work with OpenCBM on
+           Windows and Linux.
+
+        ·  _P_e_t_e_r _'_P_e_t_e_' _R_i_t_t_w_a_g_e took over mnib, renamed it to nibtools,
+           and still supports it.
+
+        ·  _A_r_n_d _M_e_n_g_e not only ported mnib to the OpenCBM environment,
+           he also made many changes in many aspects, especially for the
+           Windows version, for the support of tape drives, and many
+           other small and big things. He also added the SRQ nibbling
+           support which allows to use the nibtools without a parallel
+           connection for some drives.
+
+        ·  _T_h_o_m_a_s _`_T_o_m_m_y_' _W_i_n_k_l_e_r wrote _d_8_2_c_o_p_y and _i_m_g_c_o_p_y and
+           implemented IEEE-488 support for the XUM1541.
+
+        ·  _J_o_c_h_e_n _A_d_l_e_r for the IEC2IEEE device http://www.nlq.de/ and
+           for sending me free hardware in order to test it with my
+           SFD1001 and VIC 8250LP.
+
+        ·  and anyone else who sent patches, suggestions, praises &
+           flames!
+
+     1100..33..  FFeeeeddbbaacckk
+
+     FFeeeell ffrreeee ttoo ddrroopp aa nnoottee iiff yyoouu hhaavvee iiddeeaass,, ppaattcchheess eettcc.. oorr iiff yyoouu
+     jjuusstt wwaanntt ttoo tteellll hhooww hhaappppyy yyoouu aarree wwiitthh tthhiiss pprrooggrraamm ;;--))
+
+     HHaavvee ffuunn,,
+
+     TThhee ooppeennccbbmm tteeaamm..
+
+
+

@@ -1,0 +1,120 @@
+; Copyright 1999-2005 Michael Klein <michael.klein@puffin.lb.shuttle.de>
+; All rights reserved.
+;
+; This file is part of OpenCBM
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+;     * Redistributions of source code must retain the above copyright
+;       notice, this list of conditions and the following disclaimer.
+;     * Redistributions in binary form must reproduce the above copyright
+;       notice, this list of conditions and the following disclaimer in
+;       the documentation and/or other materials provided with the
+;       distribution.
+;     * Neither the name of the OpenCBM team nor the names of its
+;       contributors may be used to endorse or promote products derived
+;       from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+
+Drive1541       = 1                     ;Compile for 1541 drives
+
+	.include "common.i65"
+
+        *=$0700
+
+        jmp gts         ; get track/sector
+        jmp gbyte
+        jmp gblk        ; receive block
+        jmp sbyte       ; send byte
+        jmp sblk        ; send block
+        
+        lda #IEC_PORT_CLK_IN
+i0      bit IEC_PORT
+        bne i0
+        asl
+        sta IEC_PORT
+i1      lda IEC_PORT
+        bpl i1
+        rts
+
+gts     jsr gbyte
+        pha
+        jsr gbyte
+        tay
+        pla
+        tax
+        rts
+
+gblk    jsr gbyte
+        sta (ptr),y
+        iny
+        bne gblk
+        rts
+
+sblk    lda (ptr),y
+        jsr sbyte
+        iny
+        bne sblk
+        rts
+
+sbyte   sta TMP1
+        ldx #$04
+write0
+write1  lda IEC_PORT
+        bmi write1
+        lda #0
+        lsr TMP1
+        rol
+        asl
+        sta IEC_PORT
+write2  lda IEC_PORT
+        bpl write2
+        lda #$06
+        lsr TMP1
+        rol
+        asl
+        sta IEC_PORT
+        dex
+        bne write0
+write3  lda IEC_PORT
+        bmi write3
+        lda #IEC_PORT_NONE
+        sta IEC_PORT
+write4  lda IEC_PORT
+        bpl write4
+        lda #IEC_PORT_CLK_OUT
+        sta IEC_PORT
+        rts
+
+gbyte   ldx #4
+read0   lda IEC_PORT
+        bmi read0
+        lda IEC_PORT
+        lsr
+        ror TMP1
+        lda #IEC_PORT_ATNA_OUT
+        sta IEC_PORT
+read1   lda IEC_PORT
+        bpl read1
+        lda IEC_PORT
+        lsr
+        ror TMP1
+        lda #IEC_PORT_CLK_OUT
+        sta IEC_PORT
+        dex
+        bne read0
+        lda TMP1
+        rts
