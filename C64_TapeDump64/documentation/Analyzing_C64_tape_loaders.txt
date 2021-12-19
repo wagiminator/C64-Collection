@@ -1,0 +1,1089 @@
+====== Analyzing C64 tape loaders ======
+(by [[wiki:user:tce|Luigi Di Fraia]])
+
+
+
+
+===== Preface =====
+
+This document is about C64 tape loaders. I do not pretend to be rigorous since I'm more interested in showing how things work, rather than leaving a historical note. Of course, my view point is not optimal, being very familiar with the subject, therefore you may find omissions here and there. Anyway I am more than happy to discuss corrections and enhancements.
+
+I think a short introduction about the C64 I/O hardware is required in order to deeply understand the meaning of data in Tap file format, which is not just a hardware-independent array of bytes.
+
+===== Data Encoding =====
+
+
+==== Introduction ====
+
+This paragraph describes data transfer between the C64 processor and the cassette unit ([[C2N]]). For a detailed discussion about this topic you may consult section 4.5 of the following book:
+
+"//The Commodore 64 Kernal and Hardware Revealed//"\\
+By: Nick Hampshire\\
+Published by: Collins\\
+Original price: £10.95 net
+
+I don't own this book, I just have 4 scans from its pages and it seems to be a professional and very detailed one.
+You can find a list of other interesting works from the same author at the end of this document.
+
+
+
+
+
+
+==== Data Encoding ====
+
+Each bit of data or program sent to the C2N is encoded by the operating system using audio frequencies: that means square waves with a 50% duty cycle, often referred to as //pulses// (this is also the term I'll often be using moving forward).\\
+A sequence of bits is therefore encoded as a sequence of square waves on tape, back-to-back.
+
+The standard Commodore encoding method uses three distinct pulses:
+
+  * "long pulses" with a frequency of 1488 Hz (period = 672 microseconds about),
+  * "medium pulses" at 1953 Hz (period = 512 microseconds about),
+  * "short pulses" at 2840 Hz (period = 352 microseconds about).
+
+It is evident that each name refers to the period (period = 1/frequency) of the square wave rather than to its frequency.\\
+Data bits are encoded by a couple of pulses (medium and short pulses are used). The structure of this loader is discussed in the [[loaders:ROM_Loader|CBM Loader]] page. You may give it a look when done with the following paragraph about Tap format. The software details of CBM loader are discussed in Nick Hampshire's book mentioned above.
+
+On the other side, a Turbo Loader usually uses just two pulses:
+
+  * "short pulse"
+  * "long pulse"
+
+whose frequencies are chosen by its designer. The length of a pulse saved on tape decides whether the bit is a 1 or a 0. In fact, these loaders don't usually use a sequence of pulses to encode a bit: just a single pulse does the job.
+
+**Sample of pulses coming from C2N READ pin during a CBM file reading:**
+
+<code>
+..      ____        ______      ____
+  |    |    |      |      |    |    |
+  |    |    |      |      |    |    |
+  |____|    |______|      |____|    |..
+</code>
+
+**Since pulse length detection triggers on descending (negative) edges, this sample produces the following sequence of pulses:**
+
+<code>
+   <-352 us-><-  512 us  -><-352 us->
+  |         |             |         |
+  |         |             |         |
+     short       medium      short
+
+Fig 1.1
+</code>
+
+NOTE about the Hardware: a thing to point out is that during a SAVE operation, on the WRITE line of the Datasette port, "pulse length" is intended as the time distance between two consecutive low-high transitions. During a LOAD operation, pulse length is the time distance between two consecutive high-low transitions, since the 6526 READ line triggers on negative edges. In other words, the signal from C2N to C64 is the negative version of the one from C64 to C2N. That's why tape duplication hardware consists in an inverter (with a BJT and 2 resistors used in a so called "common emitter" scheme): the signal from the C2N performing LOAD, intended for being sent to C64, needs being inverted before being sent to the C2N doing the SAVE operation.
+
+Check end of article (after the Terminator 2 loader analysis) for infomation on CIA 1 + 2 and Vectors.
+
+
+===== Tap Format =====
+
+
+==== Introduction ====
+
+This paragraph summarizes the Tap file format purposes. For a detailed discussion about this topic you may consult the "tapformat.html" file in your CCS64 Emulator folder or [[http://www.computerbrains.com/tapformat.html|online at the "computerbrains" CCS64 home page]].
+
+
+
+==== Tap Format ====
+
+ Designed by Per Hakan Sundell (author of the CCS64 C64 emulator) in 1997, this format attempts to duplicate the data stored on a C64 cassette tape, pulse after pulse.
+The difference from a WAV sampling of any C64 tape and its Tap file data is that Tap file is not a sampled version of the waveforms stored on tape.
+
+Each nonzero byte in the Tap file data area represents the time length of a single pulse. The conversion formula is given here:
+
+Tap Data Byte=Pulse length (expressed in seconds)*C64 PAL Frequency/8
+
+where "C64 Pal Frequency" is 985248 Hz. By calculating the constant 1E-6*C64 PAL Frequency/8, the following equivalent formula can be produced:
+
+Tap Data Byte=Pulse length (microseconds)*0.123156
+
+where "Pulse length" is the time interval between two negative edges of the received square wave.
+As example, CBM pulses correspond to the following TAP values:
+
+<code>
+short:  352 * 0.123156 = 43.35 = $2B
+medium: 512 * 0.123156 = 63.01 = $3F
+long:   672 * 0.123156 = 82.76 = $53
+</code>
+
+It is clear that this conversion introduces some information alteration due to quantization: two pulses with similar length may produce the same Tap value.
+
+NOTE about CBM pulses size: Tap imports of older tapes show a better consistence with the above mentioned values than younger ones. Anyway the operating system can produce a correction factor which allows a very wide variation in tape speed without affecting reading. In fact, the sequence of short pulses written on the CBM leader is used to synchronize the read routine timing to the timing on the tape.
+
+===== Turbo Loaders =====
+
+==== Introduction ====
+
+We'll have a general discussion here about Turbo Loaders and C64 I/O dedicated hardware. For a detailed discussion about this topic you may consult Nick Hampshire's book, "The Commodore 64 Kernal and Hardware Revealed". A detailed example can be found in next paragraph.
+
+
+==== Turbo Loaders ====
+
+Almost every marketed C64 tape software uses some form of Turbo Loader. The origin of these Turbo Loaders is rather obscure since many of the software houses use the same routines.
+
+A Turbo Loader is a routine which must be loaded into C64 RAM before being executed and therefore every Turbo Loader routine is stored in a Standard CBM encoded "boot" file.
+Usually a part of the Turbo Loader routines is stored in the CBM file Header and therefore loaded in the tape buffer (at $033C-$03FB). CBM file Data is often used both for other Turbo Loader routines and to modify the table of vectors in low RAM, to cause the autostart of the turbo loader itself (eg. it may modify $0326/$0327 where the output vector is located).
+When the standard LOAD ends, the operating system executes various operations, one of which is printing the "READY." message on the C64 screen. By default, at $0326/$0327 there's the start address of the onscreen print routine (remember any of the 64K memory addresses can be identified by 2 bytes, low significant part first and then most significant. As example, the couple of values 01-08 is a pointer to $0801).
+If CBM loader loads Data block overwriting this vector with the Turbo Loader start address, the operating system, instead of printing the "READY." message at the end of CBM LOAD, executes the Turbo Loader.
+
+When executed, a Turbo Loader "replaces" the existing LOAD and allows a program or data to be loaded from tape at a faster speed than the normal LOAD. This is achieved by simply reducing the length of pulses stored onto the tape, in order to allow a far greater density of information storage per inch of tape.
+
+Each bit is flagged in the interrupt register on the falling (negative) edge of the pulse. A widely used Turbo loader scheme runs with the interrupts disabled, sets a timer to between the two lengths (which we will refer as "threshold" value), and when the timer runs out, the interrupt register is checked to see if the pulse came in or not. If the falling edge of the pulse sets the relevant interrupt flag before the timer runs out then the pulse was a "short" pulse (usually identified with bit zero), otherwise it was a "long" one (bit one). Bits are then rotated into a byte storage until 8 bits have been read, thereby loading a full byte. This rotation may be to left or right, which establishes endianess: MSbF or LSbF.
+
+Before any byte can be read and stored, the Turbo Loader must set itself to be in sync with the bits on the tape. This is done by writing a certain string of bits at every byte interval. The routine then tries to align itself by recognising the value of the byte. An example of a header byte for aligning would be the value 64, hex $40 or in binary: 01000000. A series of these bytes is written as the header; only when this byte has been read in a number of times consecutively, the actual program can be read without risk of alignment errors.
+
+===== Non-IRQ Loader =====
+
+
+
+==== Introduction ====
+
+We document here a "nonIRQ based" loader step-by-step. Before starting with this reading it's necessary to have a good knowledge of CIA Timers. I reported in Appendix A and B an extract (I did some changes where needed) from MAPC6410.TXT (the Project 64 etext of the //"Mapping The Commodore 64 book"//). Those paragraphs just cover the CIAs use we are interested in.\\
+In addition to CIA Timers, you should have a copy of the //"Commodore 64 Programmer's Reference Guide"//, to consult it while studying the ASM code.
+
+
+
+
+==== Non-IRQ Loader ====
+
+Here we'll see how this Turbo Loader performs the operations we discussed before. Please consult the documentation about this loader (CHR Loader T1) coming with Stewart Wilson't Final TAP.
+Get a Tap version of "Cauldron" if you want to extract yourself the listings I report here.
+
+CHR Loader T1-T3 routines are partly stored in the CBM file Header. CBM file Data (loaded at $02A7-0303) stores other routines and is used to cause the autostart of this loader.
+The autostart feature is performed by using the IMAIN Vector at $0302-0303. By default, this vector points to the address of the main BASIC program loop at $A483. This is the routine that is operating when you are in the direct mode (READY.). It executes statements, or stores them as program lines.
+Cauldron Loader sets the IMAIN Vector to point to $02AE, therefore, when CBM LOAD ends, control is given to the Turbo Loader.
+
+Using Final TAP to exam the mentioned Tap file, you can get the following listings.
+
+<code>
+******************
+* CBM Data block *
+******************
+
+--New STOP routine (ignore it now)-
+02A7  A9  80      LDA #$80
+02A9  05  91      ORA $91
+02AB  4C  EF  F6  JMP $F6EF
+-----------------------------------
+
+************************
+* Start of this Loader *
+************************
+--Boot-----------------------------
+02AE  A9  A7      LDA #$A7
+02B0  78          SEI
+02B1  8D  28  03  STA $0328  ; Changes Vector to "Kernal STOP
+02B4  A9  02      LDA #$02   ; Routine" into $02A7
+02B6  8D  29  03  STA $0329
+
+02B9  58          CLI
+
+02BA  A0  00      LDY #$00   ; Inits some locations used by
+02BC  84  C6      STY $C6    ; this loader
+02BE  84  C0      STY $C0
+02C0  84  02      STY $02
+
+02C2  AD  11  D0  LDA $D011  ; Blanks screen
+02C5  29  EF      AND #$EF
+02C7  8D  11  D0  STA $D011
+
+02CA  CA          DEX        ; A small pause here
+02CB  D0  FD      BNE $02CA
+02CD  88          DEY
+02CE  D0  FA      BNE $02CA
+
+02D0  78          SEI        ; Sets interrupt disable
+                             ; status bit
+02D1  4C  51  03  JMP $0351
+-----------------------------------
+
+--Read Bit subroutine--------------
+02D4  AD  0D  DC  LDA $DC0D  ; Checks the interrupt register
+02D7  29  10      AND #$10   ; to see if the pulse (negative
+02D9  F0  F9      BEQ $02D4  ; edge on a C64) came in or not
+
+02DB  AD  0D  DD  LDA $DD0D  ; Checks the countdown (bit 2 will
+                             ; be 1 if countdown runned out)
+
+02DE  8E  07  DD  STX $DD07  ; Sets a new Timer B countdown
+
+02E1  4A          LSR        ; Move bit 2 to the Carry bit
+02E2  4A          LSR
+02E3  A9  19      LDA #$19   ; Starts Timer B (one shot, force
+02E5  8D  0F  DD  STA $DD0F  ; latch value being loaded)
+02E8  60          RTS
+-----------------------------------
+
+--Back to prompt-------------------
+02E9  20  8E  A6  JSR $A68E  ; Resets the CHRGET pointer
+
+02EC  A9  00      LDA #$00
+02EE  A8          TAY
+02EF  91  7A      STA ($7A),Y
+
+02F1  4C  74  A4  JMP $A474  ; Prints Ready and then
+                             ; processes keyboard buffer
+-----------------------------------
+
+--Tables---------------------------
+02F4  52 D5 0D    ;"R", "SHIFT+U", "RETURN" (stays for "RUN", followed by RETURN key)
+
+02F7  00 00 00 00 00 00 00 00 00
+
+0300  8B E3       ; default value, not changed
+
+0302  AE 02       ; used to perform the Autostart
+-----------------------------------
+</code>
+
+<code>
+********************
+* CBM Header block *
+********************
+
+033C-0350  File details (see CBM File header)
+
+-Loader's Core---------------------
+0351  78          SEI
+
+0352  A9  07      LDA #$07   ; Sets a Threshold value via
+0354  8D  06  DD  STA $DD06  ; Timer B countdown
+0357  A2  01      LDX #$01
+
+0359  20  D4  02  JSR $02D4  ; Tries to align bits of leader
+035C  26  F7      ROL $F7    ; with MSbF until...
+035E  A5  F7      LDA $F7
+0360  C9  63      CMP #$63   ; ... a Lead-in byte is found.
+0362  D0  F5      BNE $0359
+0364  A0  64      LDY #$64   ; Sync train start value
+
+0366  20  E7  03  JSR $03E7
+0369  C9  63      CMP #$63   ; Reads the whole leader
+036B  F0  F9      BEQ $0366
+
+036D  C4  F7      CPY $F7
+036F  D0  E8      BNE $0359
+0371  20  E7  03  JSR $03E7
+0374  C8          INY        ; Reads the whole Sync train
+0375  D0  F6      BNE $036D
+
+0377  C9  00      CMP #$00   ; After Sync there's a Check byte
+0379  F0  D6      BEQ $0351  ; if it is $00 then Reload
+
+037B  20  E7  03  JSR $03E7
+037E  99  2B  00  STA $002B,Y  ; Loads a 10 bytes header
+0381  99  F9  00  STA $00F9,Y  ; The following code (at $0392,
+0384  C8          INY          ; $039E, $03D1, $03C6) tells us
+0385  C0  0A      CPY #$0A     ; us they consist in: Load
+0387  D0  F2      BNE $037B    ; address, End address,
+                               ; Execution address and 2 flag
+                               ; bytes, which state if all
+                               ; turbo files were loaded and
+                               ; what to do once done
+
+0389  A0  00      LDY #$00   ; Inits locations used to store
+038B  84  90      STY $90    ; the Checksum info
+038D  84  02      STY $02
+
+--Load Loop------------------------
+038F  20  E7  03  JSR $03E7    ; Reads a new byte
+
+0392  91  F9      STA ($F9),Y  ; Stores it into RAM using the
+                               ; Load address locations as
+                               ; destination pointer
+
+0394  45  02      EOR $02      ; computes the XOR Checksum
+0396  85  02      STA $02      ; of Data
+
+0398  E6  F9      INC $F9      ; Increases dest. pointer
+039A  D0  02      BNE $039E
+039C  E6  FA      INC $FA
+
+039E  A5  F9      LDA $F9      ; Checks if dest. pointer (16
+03A0  C5  2D      CMP $2D      ; bits) equals End Address
+03A2  A5  FA      LDA $FA
+03A4  E5  2E      SBC $2E
+03A6  90  E7      BCC $038F    ; not yet finished? Restart!
+--End of Load Loop-----------------
+
+03A8  20  E7  03  JSR $03E7  ; Reads a closing byte (Checksum)
+
+03AB  C8          INY
+03AC  84  C0      STY $C0    ; Allows control of the motor
+                             ; via software
+03AE  58          CLI
+03AF  18          CLC
+
+03B0  A9  00      LDA #$00
+03B2  8D  A0  02  STA $02A0
+
+03B5  20  93  FC  JSR $FC93  ; Restores the Default IRQ
+                             ; Routine. This subroutine
+                             ; is used to turn the screen
+                             ; back on and stop the cassette
+                             ; motor.
+
+03B8  20  53  E4  JSR $E453  ; Calls this subroutine to copy
+                             ; the table of vectors to
+                             ; important BASIC routines
+                             ; to RAM, starting at location
+                             ; $300. This prevents the Turbo
+                             ; loader is executed again if
+                             ; control is given back to the
+                             ; BASIC interpreter.
+
+03BB  A5  F7      LDA $F7  ; Checks checksum
+03BD  45  02      EOR $02
+03BF  05  90      ORA $90
+03C1  F0  03      BEQ $03C6
+
+03C3  4C  E2  FC  JMP $FCE2  ; A wrong checksum causes a SOFT
+                             ; Reset
+
+03C6  A5  31      LDA $31    ; First flag byte: other files
+03C8  F0  03      BEQ $03CD  ; need to be loaded?
+03CA  4C  B9  02  JMP $02B9
+
+03CD  A5  32      LDA $32    ; Second flag byte: use the Exec.
+03CF  F0  03      BEQ $03D4  ; address or give back control
+                             ; to BASIC?
+
+
+03D1  6C  2F  00  JMP ($002F)  ; Jumps to Exec. address
+
+03D4  20  33  A5  JSR $A533  ; Relinks Lines of a BASIC
+                             ; Program.
+
+03D7  A2  03      LDX #$03   ; Puts 3 chars in the Keyboard
+03D9  86  C6      STX $C6    ; Buffer
+
+03DB  BD  F3  02  LDA $02F3,X  ; Those are "R", "SHIFT+U"
+03DE  9D  76  02  STA $0276,X  ; and "RETURN"
+03E1  CA          DEX
+03E2  D0  F7      BNE $03DB
+03E4  4C  E9  02  JMP $02E9
+
+--Read byte subroutine-------------
+03E7  A9  07      LDA #$07   ; 8 bits to read...
+03E9  85  F8      STA $F8
+03EB  20  D4  02  JSR $02D4
+03EE  26  F7      ROL $F7    ; ...grouping them with MSbF
+                             ; ROL retrieves the Carry
+                             ; bit where incoming bit was
+                             ; stored (code at $02E1)
+03F0  EE  20  D0  INC $D020  ; Performs border flashing
+03F3  C6  F8      DEC $F8
+03F5  10  F4      BPL $03EB
+03F7  A5  F7      LDA $F7
+03F9  60          RTS
+-----------------------------------
+03FA  00 00
+</code>
+
+As soon as I get my hands on the Tap file, I will add some Tap examining too.
+
+Other books from Nick Hampshire:
+
+<code>
+THE COMMODORE 64 ROM REVEALED
+ADVANCED COMMODORE 64 BASIC REVEALED
+ADVANCED COMMODORE 64 GRAPHICS AND SOUND
+THE COMMODORE 64 DISK DRIVE REVEALED
+</code>
+
+
+
+===== IRQ Loader =====
+
+Formerly known as The study of loader used in Terminator 2.
+(by [[wiki:user:tce|Luigi Di Fraia]])
+
+==== Introduction ====
+
+I'll assume you are familiar with hardware interrupts and ISRs (you don't absolutely require to know how they work on a C64, but a small knowledge about interrupts in general is enough).
+If you know about any data-link layer networking protocol, it can be useful (for understanding things better) to compare the datasette to a network adapter. Import the problems of framing you have on the data-link layer (which is equivalent to our loader) and adapt them to our study.
+
+
+
+
+==== Writing an IRQ-based loader ====
+
+First, here's a summary of what we need to do when writing an IRQ-based loader:
+
+We first need to disable the system of interrupts, by setting the interrupt disable status bit (this is done by a SEI instruction).
+
+Then we have to disable all interrupts individually (by WRITING to $DC0D, which is an Interrupt Control Register when written to) and clear any latched interrupt request (by READING the clear-on-read register $DC0D, which is an Interrupt Latch Register when read from- e.g. bit 1 reads 1 when CIA #1 Timer B countdown expires).
+
+Now we have to set the start value of the timer we'll be using to measure the length of the pulses coming from the tape (CIA #1 Timer A was chosen in the discussed loader). That's done by WRITING the start value in $DC04/$DC05 (which is the CIA #1 16-bit Timer A latch value). The timer will count down to zero starting from the value we just chose (one-shot mode). We'll restart the countdown every time we received a pulse, to measure the pulse that will come after the one we just measured.
+
+Then we have to enable the FLAG line interrupt (the interrupt that triggers when a pulse is read from the datasette). The interrupt won't trigger until we enable the system of interrupts. Before doing that, we have to declare where our Interrupt Service Routine is (by making the vector at $FFFE/$FFFF point to our ISR).
+
+After enabling interrupts (CLI instruction), we are ready to measure the pulses coming from the datasette, align our read routine with the bit stream (using the pilot byte information), syncronize (ie. know where exactly the turbo frame starts), and finally read the header which tells us where to store the following data bytes in the RAM.
+
+
+
+
+==== Disassembly ====
+
+Disassembly of the code stored in the CBM Header and Data files:
+
+<code>
+; ********************************************
+; * Loader Setup-Part 1                      *
+; * Description: Hardware setup instructions *
+; ********************************************
+02A7  78             SEI            ; Disable interrupts, since we are about to
+                                    ; change the vector table at $FFFA-$FFFF, whose
+                                    ; vectors point to 2 Interrupt Service Routines.
+
+02A8  A9 05          LDA #$05       ; Select ROM at $A000       (bit 0)
+02AA  85 01          STA $01        ; and switch in I/O devices (bit 2).
+
+02AC  A9 1F          LDA #$1F       ; CIA #1 Interrupt Control Register reset:
+02AE  8D 0D DC       STA $DC0D      ;  disable Timer A interrupt               (bit 0)
+                                    ;  disable Timer B interrupt               (bit 1)
+                                    ;  disable TOD clock alarm interrupt       (bit 2)
+                                    ;  disable serial shift register interrupt (bit 3)
+                                    ;  disable FLAG line interrupt             (bit 4)
+
+02B1  AD 0D DC       LDA $DC0D      ; Clear Interrupt Latch to prevent servicing
+                                    ; interrupt requests not requested by our program.
+                                    ; This register is clear-on-read.
+
+02B4  A9 7C          LDA #$7C       ; CIA #1 Timer A Latch value setup.
+02B6  8D 04 DC       STA $DC04
+02B9  A9 04          LDA #$04
+02BB  8D 05 DC       STA $DC05      ; (Threshold=$027C clock cycles)
+
+02BE  A9 90          LDA #$90       ; CIA #1 Interrupt Control Register setup:
+02C0  8D 0D DC       STA $DC0D      ;  enable just FLAG line interrupt (bit 4) (1)
+
+; (1) This FLAG line is connected to the Cassette Read line of the Cassette Port.
+;     The interrupt triggers on negative edges.
+
+02C3  A9 51          LDA #$51       ; Maskable Interrupt Request Vector setup:
+02C5  8D FE FF       STA $FFFE      ;  make this vector point to our IRQ handler (ISR)
+02C8  A9 03          LDA #$03       ;  located at $0351, so that the only active
+02CA  8D FF FF       STA $FFFF      ;  Interrupt (FLAG line) will cause its execution
+                                    ;  on request.
+
+02CD  A9 00          LDA #$00       ; Initialization of:
+02CF  85 02          STA $02        ;  loop_break variable (see later)
+02D1  85 03          STA $03        ;  buffer where to build a byte, pulse by pulse.
+
+02D3  EA             NOP
+
+02D4  4C E5 02       JMP $02E5      ; Jump to Part 2
+; ********************************************
+; * Loader Setup-Part 1.END                  *
+; ********************************************
+
+; ********************************************
+; * Checksum check subroutine                *
+; * Description: Compares calculated and     *
+; *              read checksum to detect a   *
+; *              load error.                 *
+; ********************************************
+
+02D7  A9 07          LDA #$07
+02D9  85 01          STA $01
+02DB  A5 05          LDA $05
+02DD  C5 06          CMP $06
+02DF  D0 01          BNE $02E2
+02E1  60             RTS
+
+02E2  4C E2 FC       JMP $FCE2      ; On checksum error, reset C64
+; ********************************************
+; * Checksum check subroutine.END            *
+; ********************************************
+
+; ********************************************
+; * Loader Setup-Part 2                      *
+; * Description: Hardware setup instructions *
+; ********************************************
+
+02E5  A9 E7          LDA #$E7       ; Non-Maskable Interrupt Hardware Vector setup:
+02E7  8D FA FF       STA $FFFA      ;  make it point to our Load Loop at $03E7. (2)
+02EA  A9 03          LDA #$03
+02EC  8D FB FF       STA $FFFB
+
+; (2) There are two possible sources for an NMI interrupt.  The first is the
+;     RESTORE key, which is connected directly to the 6510 NMI line.  The
+;     second is CIA #2, the interrupt line of which is connected to the 6510
+;     NMI line.
+
+
+02EF  A9 01          LDA #$01       ; Set CIA #2 Timer A high byte
+02F1  8D 05 DD       STA $DD05
+
+02F4  A9 81          LDA #$81       ; CIA #2 Interrupt Control Register setup:
+02F6  8D 0D DD       STA $DD0D      ;  enable Timer A interrupt (bit 0)
+
+02F9  A9 99          LDA #$99       ; CIA #2 Control Register A setup:
+02FB  8D 0E DD       STA $DD0E      ;  start timer A                (bit 0)
+                                    ;  Timer A run mode is one-shot (bit 3)
+                                    ;  Force latched value to be
+                                    ;  loaded to Timer A counter    (bit 4)
+
+02FE  D0 FE          BNE $02FE      ; C64 should hang here, but CIA #2 Timer A
+                                    ; expiration causes the NMI request, which makes
+                                    ; Program Counter move to $03E7.
+
+; ********************************************
+; * Loader Setup-Part 2.END                  *
+; ********************************************
+
+; *****************************
+; * BASIC RAM vector area (3) *
+; *****************************
+0300  8B 03 01 E3
+0302  A7 02
+...
+0332  ED F5
+
+; (3) Several important BASIC routines are vectored through RAM. Vectors
+;     to all of these routines can be found in the indirect vector table.
+;     The turbo loader changes those vectors to execute itself when the
+;     CBM file is fully loaded (this is called "AUTOSTART").
+
+
+
+; ***************************************************************
+; * ISR                                                         *
+; * Description: Interrupt Service Routine that handles FLAG    *
+; *              line interrupts                                *
+; ***************************************************************
+
+; Each interrupt is triggered by a pulse read from tape, so we need to
+; compare it's size (counted by a timer) with a Threshold value, to
+; decide if it's a Bit 0 pulse or Bit 1 pulse.
+
+0351  48             PHA            ; We'll be using A and Y registers
+0352  98             TYA            ; so we save them on the processor stack,
+0353  48             PHA            ; just as every Interrupt Service Routine does.
+
+0354  AD 20 D0       LDA $D020      ; Perform border flash among 2 colors
+0357  49 05          EOR #$05
+0359  8D 20 D0       STA $D020
+
+035C  AD 05 DC       LDA $DC05      ; Read the Timer value
+
+035F  A0 19          LDY #$19       ; CIA #1 Control Register A re-initialized
+0361  8C 0E DC       STY $DC0E      ; for the next pulse measurement:
+                                    ;  Start Timer A                (bit 0)
+                                    ;  Timer A run mode: continuous (bit 3)
+                                    ;  Force latched value to be
+                                    ;  loaded to Timer A counter    (bit 4)
+
+0364  49 02          EOR #$02       ; This piece of code subtracts $200 clock cycles
+0366  4A             LSR            ; from the Timer value. (4)
+0367  4A             LSR            ; Carry is set when pulse is bigger than Threshold
+                                    ; ie. [Latch value - $200] clock cycles.
+
+0368  26 03          ROL $03        ; Group bits with MSb First
+
+036A  A5 03          LDA $03
+036C  90 02          BCC $0370      ; IF AND ONLY IF the last bit of a byte was just
+                                    ; read, a 0 will be moved from bit 7 of $03
+                                    ; to the Carry by the "ROL $03" instruction,
+                                    ; otherwise the Carry will be set (see code
+                                    ; at $0379 to understand why).
+                                    ; Therefore Carry is set IFF a complete byte
+                                    ; is not yet available.(5)
+                                    ; If a complete byte is available, it is kept
+                                    ; by the A register.
+
+; (4) Why not to use the SBC instruction to subtract?
+;     Answer: with SBC we should invert the carry bit (that holds
+;     the borrow at the end of the instruction) to use it in the
+;     following "ROL $03" instruction.
+;     Also remember that SBC would need a CLC before it and that it
+;     affects more Processor Status register bits (N, Z, C, and V).
+
+; (5) This is a self-modified Branch which branches to different addresses during load,
+;     to properly use the available byte just read.
+;     It's a VERY common thing in IRQ loaders to use a self-modifying branch there.
+;     When we are waiting for the FIRST Pilot Byte (to align the byte-oriented loader
+;     to the bit-oriented pulse storage method), this branches to $0370.
+;     When alignment was done, we need to read in the whole pilot sequence and the
+;     Sync Byte, so that this branch branches to $0384.
+;     When Sync Byte is found, we read a single byte we don't even use, at $0399.
+;     And so on...
+
+036E  B0 0D          BCS $037D      ; Always jumps
+
+; -----------------------------------------------------------------------------------
+0370  C9 40          CMP #$40       ; Check if this byte is the FIRST Pilot Byte
+0372  D0 09          BNE $037D
+0374  A9 16          LDA #$16
+0376  8D 6D 03       STA $036D      ; Change the branch at $036C, to jump to $0384
+; -----------------------------------------------------------------------------------
+
+; This code is executed everytime we exit from the ISR (with the RTI).
+;
+
+0379  A9 FE          LDA #$FE       ; This will cause the "ROL $03" instruction to
+037B  85 03          STA $03        ; always set Carry if a whole byte was not yet
+                                    ; built in the byte buffer at $03.
+
+037D  AD 0D DC       LDA $DC0D      ; Clear Interrupt Latch.
+                                    ; This register is clear-on-read.
+
+0380  68             PLA            ; Pop the values of A and Y registers from
+0381  A8             TAY            ; the Processor stack before returning.
+0382  68             PLA
+
+0383  40             RTI
+; ***************************************************************
+; * ISR.END                                                     *
+; ***************************************************************
+
+; ********************************************
+; * Read Pilot train and Sync byte           *
+; ********************************************
+0384  C9 40          CMP #$40       ; Read in the whole Pilot Byte sequence
+0386  F0 F1          BEQ $0379      ; and stop when we read a different byte,
+0388  C9 5A          CMP #$5A       ; checking if it is the Sync Byte
+038A  F0 02          BEQ $038E
+
+038C  D0 52          BNE $03E0      ; If the Sync Byte doesn't match, retry
+                                    ; alignment (seek the FIRST Pilot Byte again).
+
+038E  A9 2B          LDA #$2B
+0390  8D 6D 03       STA $036D      ; Change the branch at $036C, to jump to $0399
+0393  A9 00          LDA #$00
+0395  85 05          STA $05
+0397  F0 E0          BEQ $0379      ; (6)
+; ********************************************
+; * Read Pilot train and Sync byte.END       *
+; ********************************************
+
+; ********************************************
+; * Read an unused byte                      *
+; ********************************************
+0399  A9 32          LDA #$32       ; Read byte is unused.
+039B  8D 6D 03       STA $036D      ; Change the branch at $036C, to jump to $03A0
+039E  D0 D9          BNE $0379      ; (6)
+; ********************************************
+; * Read an unused byte.END                  *
+; ********************************************
+
+; ********************************************
+; * Read Header bytes                        *
+; ********************************************
+03A0  85 07          STA $07        ; Load header at $07..$0A:
+03A2  EE A1 03       INC $03A1      ;  2 bytes: Load address
+03A5  AD A1 03       LDA $03A1      ;  2 bytes: End address+1
+03A8  C9 0B          CMP #$0B
+03AA  D0 CD          BNE $0379
+03AC  A9 45          LDA #$45
+03AE  8D 6D 03       STA $036D      ; Change the branch at $036C, to jump to $03B3
+03B1  D0 C6          BNE $0379      ; (6)
+; ********************************************
+; * Read Header bytes.END                    *
+; ********************************************
+
+; ********************************************
+; * Read Data bytes                          *
+; ********************************************
+03B3  A0 00          LDY #$00
+03B5  91 07          STA ($07),Y    ; Load data into memory
+03B7  45 05          EOR $05        ; Compute checksum
+03B9  85 05          STA $05
+03BB  E6 07          INC $07
+03BD  D0 05          BNE $03C4
+03BF  E6 08          INC $08
+
+03C1  EE 20 D0       INC $D020      ; Change the border flash base colors
+
+03C4  A5 07          LDA $07        ; Check if we finished
+03C6  C5 09          CMP $09
+03C8  A5 08          LDA $08
+03CA  E5 0A          SBC $0A
+03CC  90 AB          BCC $0379
+03CE  A9 67          LDA #$67
+03D0  8D 6D 03       STA $036D      ; Change the branch at $036C, to jump to $03D5
+03D3  D0 A4          BNE $0379      ; (6)
+; ********************************************
+; * Read data bytes.END                      *
+; ********************************************
+
+; ********************************************
+; * Read Checksum byte                       *
+; ********************************************
+03D5  85 06          STA $06        ; Load checksum byte
+
+03D7  A9 FF          LDA #$FF       ; Sets the loop_break variable
+03D9  85 02          STA $02
+
+03DB  A9 07          LDA #$07       ; Restore the vector to where store next header
+03DD  8D A1 03       STA $03A1
+
+03E0  A9 02          LDA #$02       ; Restore the Branch at $036C to seek the FIRST
+03E2  8D 6D 03       STA $036D      ; Pilot Byte.
+03E5  D0 92          BNE $0379      ; (6)
+; ********************************************
+; * Read Checksum byte.END                   *
+; ********************************************
+
+; (6) This branch is always executed, and it's a trick to avoid using a JMP, which
+;     is not relocatable (since it requires the hard memory address where to jump to,
+;     instead of an offset from Program Counter, as the branch instructions do).
+
+
+; ***************************************************************
+; * NMI-ISR                                                     *
+; * Description: keeps the CPU in a loop during which the FLAG  *
+; *              line interrupts are serviced.                  *
+; *              Executes code $0407 as soon as the load loop   *
+; *              is over.                                       *
+; ***************************************************************
+03E7  58             CLI            ; Enable interrupts since we are ready to service
+                                    ; our FLAG line interrupt requests.
+
+03E8  A9 58          LDA #$58       ; Change the NOP at $02D3 into a CLI
+03EA  8D D3 02       STA $02D3      ; to skip Part 2 of setup on next block load.
+
+03ED  A9 0B          LDA #$0B       ; Show screen
+03EF  8D 11 D0       STA $D011
+
+03F2  A5 02          LDA $02        ; Load Loop. The CPU loops here, waiting
+03F4  F0 FC          BEQ $03F2      ; FLAG line interrupts to serve or a
+                                    ; loop_break instruction (= performed when
+                                    ; any bit in $02 memory register is set).
+
+03F6  C6 02          DEC $02
+03F8  4C 07 04       JMP $0407
+03FB  20
+; ***************************************************************
+; * NMI-ISR.END                                                 *
+; ***************************************************************
+</code>
+
+
+
+
+
+
+
+
+
+==== Loader-structure ====
+
+It should now be clear that this loader has the following structure:
+
+<code>
+Threshold: $027C clock cycles (Tap value=$50)
+Endianess: MSbF
+
+Pilot Byte: $40
+Start of payload Byte (1): $5A
+
+Header:
+
+  1 byte: unused
+  2 bytes: Load address (LSBF)
+  2 bytes: End address+1 (LSBF)
+
+Data:
+
+  1 byte: XOR checksum
+
+(1) better known as "Sync Byte".
+</code>
+
+By looking at the TAP file, we can also say that:
+
+<code>
+Code:
+Bit 0: $36
+Bit 1: $65
+</code>
+
+A small analysis on the TAP file will also tell us if this loader uses any trailer pulse.\\
+I hope this will be appreciated and useful.
+
+
+
+
+
+
+
+
+
+
+==== Loader-timings ====
+
+Picture showing the details about the timings for this loader:
+
+{{terminator2loader.png?700|Image showing the details about the timings of the IRQ-loader}}
+
+
+
+==== Figuring out the threshold value ====
+
+I'm referring to those loaders using an IRQ handler routine and FLAG line(1) interrupt. For some reason, the Threshold value for them is often omitted in docs. Here is a note about how to extract it. I will refer to the ASM code of a loader I just found, which uses CIA #1, Timer B. Other loaders may use a different combination, but the results are the same.
+
+Before changing the vector to main IRQ handler (by writing to $FFFE/$FFFF) we have:
+
+<code>
+LDA #$1F       ; disable Timer A interrupt
+STA $DC0D      ; disable Timer B interrupt
+               ; disable TOD clock alarm interrupt
+               ; disable serial shift register interrupt
+               ; disable FLAG line(1) interrupt
+...
+LDA #$A0       ; Timer B Countdown start value
+STA $DC06
+LDA #$03
+STA $DC07
+</code>
+
+The loader's own IRQ handler looks this way:
+
+<code>
+PHA
+TYA
+PHA
+LDA $DC07
+
+LDY #$11       ; Re-Start Timer B
+STY $DC0F      ; Force latched value to be loaded to Timer B counter
+               ; Timer B counts microprocessor cycles
+
+INC $D020
+
+EOR #$02       ; Revert bit
+LSR
+LSR
+ROR $A9        ; Move it to MSb of $A9 (Endianess: LSbF)
+BCC done       ; Whole byte read?
+NOP
+LDA $DC0D
+PLA
+TAY
+PLA
+RTI
+</code>
+
+What this code does is to compare the Timer B Countdown value with $0200. Since the initial value is $03A0 (clock cycles), and it counts DOWN to 0, if the Countdown is at a value greater than $0200 clock cycles when a pulse received on FLAG line(1), the latter is shorter than $01A0 clock cycles. $01A0 is therefore the Threshold value (in clock cycles).
+
+In our example, the TAP value is then:
+
+TAP threshold byte = Threshold (in microseconds) * 0.123156 = $34
+
+where the Threshold (in microseconds) is Threshold * 1e6/CPUFrequency.
+
+(1) on CIA #1, this FLAG line is connected to the Cassette Read line of the Cassette Port.
+
+
+====== CIA + Vector information ======
+
+
+
+
+==== Appendix A (CIA 1) ====
+
+<code>
+56320-56335 $DC00-$DC0F
+Complex Interface Adapter (CIA) #1 Registers
+</code>
+
+Locations 56320-56335 ($DC00-$DC0F) are used to communicate with the Complex Interface Adapter chip #1 (CIA #1). This chip allows the 6510 microprocessor to communicate with peripheral input and output devices. The specific devices that CIA #1 reads data from and sends data to are the joystick controllers, the paddle fire buttons, and the keyboard.
+
+In addition to its two data ports, CIA #1 has two timers, each of which can count an interval from a millionth of a second to a fifteenth of a second. Or the timers can be hooked together to count much longer intervals. CIA #1 has an interrupt line which is connected to the 6510 IRQ line. These two timers can be used to generate interrupts at specified intervals (such as the 1/60 second interrupt used for keyboard scanning, or the more complexly timed interrupts that drive the tape read and write routines).
+
+<code>
+Location Range: 56320-56321 ($DC00-$DC01)
+CIA #1 Data Ports A and B
+</code>
+
+Data Port B can be used as an output by either Timer A or B. It is possible to set a mode in which the timers do not cause an interrupt when they run down (see the descriptions of Control Registers A and B at 56334-5 ($DC0E-F)). Instead, they cause the output on Bit 6 or 7 of Data Port B to change. Timer A can be set either to pulse the output of Bit 6 for one machine cycle, or to toggle that bit from 1 to 0 or 0 to 1. Timer B can use Bit 7 of this register for the same purpose.
+
+<code>
+Location Range: 56324-56327 ($DC04-$DC07)
+Timers A and B Low and High Bytes
+</code>
+
+These four timer registers (two for each timer) have different functions depending on whether you are reading from them or writing to them. When you read from these registers, you get the present value of the Timer Counter (which counts down from its initial value to 0). When you write data to these registers, it is stored in the Timer Latch, and from there it can be used to load the Timer Counter using the Force Load bit of Control Register A or B (see 56334-5 ($DC0E-F) below).
+
+These interval timers can hold a 16-bit number from 0 to 65535, in normal 6510 low-byte, high-byte format (VALUE=LOW BYTE+256*HIGH BYTE). Once the Timer Counter is set to an initial value, and the timer is started, the timer will count down one number every microprocessor clock cycle. Since the clock speed of the 64 (using the American NTSC television standard) is 1,022,730 cycles per second, every count takes approximately a millionth of a second. The formula for calculating the amount of time it will take for the timer to count down from its latch value to 0 is:
+
+TIME=LATCH VALUE/CLOCK SPEED
+
+where LATCH VALUE is the value written to the low and high timer registers (LATCH VALUE=TIMER LOW+256*TIMER HIGH), and CLOCK SPEED is 1,022,370 cycles per second for American (NTSC) standard television monitors, or 985,250 for European (PAL) monitors.
+
+When Timer Counter A or B gets to 0, it will set Bit 0 or 1 in the Interrupt Control Register at 56333 ($DC0D). If the timer interrupt has been enabled (see 56333 ($DC0D)), an IRQ will take place, and the high bit of the Interrupt Control Register will be set to 1. Alternately, if the Port B output bit is set, the timer will write data to Bit 6 or 7 of Port B. After the timer gets to 0, it will reload the Timer Latch Value, and either stop or count down again, depending on whether it is in one-shot or continuous mode (determined by Bit 3 of the Control Register).
+
+Although usually a timer will be used to count the microprocessor cycles, Timer A can count either the microprocessor clock cycles or external pulses on the CTN line, which is connected to pin 4 of the User Port.
+
+Timer B is even more versatile. In addition to these two sources, Timer B can count the number of times that Timer A goes to 0. By setting Timer A to count the microprocessor clock, and setting Timer B to count the number of times that Timer A zeros, you effectively link the two timers into one 32-bit timer that can count up to 70 minutes with accuracy within 1/15 second.
+
+In the 64, CIA #1 Timer A is used to generate the interrupt which drives the routine for reading the keyboard and updating the software clock. Both Timers A and B are also used for the timing of the routines that read and write tape data. Normally, Timer A is set for continuous operation, and latched with a value of 149 in the low byte and 66 in the high byte, for a total Latch Value of 17045. This means that it is set to count to 0 every 17045/1022730 seconds, or approximately 1/60 second.
+
+For tape reads and writes, the tape routines take over the IRQ vectors. Even though the tape write routines use the on-chip I/O port at location 1 for the actual data output to the cassette, reading and writing to the cassette uses both CIA #1 Timer A and Timer B for timing the I/O routines.
+
+<code>
+56324 $DC04 TIMALO
+Timer A (low byte)
+
+56325 $DC05 TIMAHI
+Timer A (high byte)
+
+56326 $DC06 TIMBLO
+Timer B (low byte)
+
+56327 $DC07 TIMBHI
+Timer B (high byte)
+
+56333 $DC0D CIAICR
+Interrupt Control Register
+</code>
+
+<code>
+Bit 0: Read / did Timer A count down to 0? (1=yes)
+Write/ enable or disable Timer A interrupt (1=enable, 0=disable)
+Bit 1: Read / did Timer B count down to 0? (1=yes)
+Write/ enable or disable Timer B interrupt (1=enable, 0=disable)
+Bit 2: Read / did Time of Day Clock reach the alarm time? (1=yes)
+Write/ enable or disable TOD clock alarm interrupt (1=enable, 0=disable)
+Bit 3: Read / did the serial shift register finish a byte? (1=yes)
+Write/ enable or disable serial shift register interrupt (1=enable, 0=disable)
+Bit 4: Read / was a signal sent on the flag line? (1=yes)
+Write/ enable or disable FLAG line interrupt (1=enable, 0=disable)
+Bit 5: Not used
+Bit 6: Not used
+Bit 7: Read / did any CIA #1 source cause an interrupt? (1=yes)
+Write/ set or clear bits of this register (1=bits written with 1 will be set, 0=bits written with 1 will be cleared)
+</code>
+
+This register is used to control the five interrupt sources on the 6526 CIA chip. These sources are Timer A, Timer B, the Time of Day Clock, the Serial Register, and the FLAG line. Timers A and B cause an interrupt when they count down to 0. The Time of Day Clock generates an interrupt when it reaches the ALARM time. The Serial Shift Register interrupts when it compiles eight bits of input or output. An external signal pulling the CIA hardware line called FLAG low will also cause an interrupt (on CIA #1, this FLAG line is connected to the Cassette Read line of the Cassette Port).
+
+Even if the condition for a particular interrupt is satisfied, the interrupt must still be enabled for an IRQ actually to occur. This is done by writing to the Interrupt Control Register. What happens when you write to this register depends on the way that you set Bit 7. If you set it to 0, any other bit that was written to with a 1 will be cleared, and the corresponding interrupt will be disabled. If you set Bit 7 to 1, any bit written to with a 1 will be set, and the corresponding interrupt will be enabled. In either case, the interrupt enable flags for those bits written to with a 0 will not be affected.
+
+For example, in order to disable all interrupts from BASIC, you could POKE 56333, 127. This sets Bit 7 to 0, which clears all of the other bits, since they are all written with 1's. Don't try this from BASIC immediate mode, as it will turn off Timer A which causes the IRQ for reading the keyboard, so that it will in effect turn off the keyboard.
+
+To turn on the Timer A interrupt, a program could POKE 56333,129. Bit 7 is set to 1 and so is Bit 0, so the interrupt which corresponds to Bit 0 (Timer A) is enabled.
+
+When you read this register, you can tell if any of the conditions for a CIA Interrupt were satisfied because the corresponding bit will be set to a 1. For example, if Timer A counts down to 0, Bit 0 of this register will be set to 1. If, in addition, the mask bit that corresponds to that interrupt source is set to 1, and an interrupt occurs, Bit 7 will also be set. This allows a multi-interrupt system to read one bit and see if the source of a particular interrupt was CIA #1. You should note, however, that reading this register clears it, so you should preserve its contents in RAM if you want to test more than one bit.
+
+<code>
+56334 $DC0E CIACRA
+Control Register A
+
+Bit 0: Start Timer A (1=start, 0=stop)
+Bit 1: Select Timer A output on Port B (1=Timer A output appears on Bit 6 of Port B)
+Bit 2: Port B output mode (1=toggle Bit 6, 0=pulse Bit 6 for one cycle)
+Bit 3: Timer A run mode (1=one-shot, 0=continuous)
+Bit 4: Force latched value to be loaded to Timer A counter (1=force load strobe)
+Bit 5: Timer A input mode (1=count microprocessor cycles, 0=count signals on CNT line at pin 4 of User Port)
+Bit 6: Serial Port (56332, $DC0C) mode (1=output, 0=input)
+Bit 7: Time of Day Clock frequency (1=50 Hz required on TOD pin, 0=60 Hz)
+</code>
+
+Bits 0-3. This nybble controls Timer A. Bit 0 is set to 1 to start the timer counting down, and set to 0 to stop it. Bit 3 sets the timer for one-shot or continuous mode.
+
+In one-shot mode, the timer counts down to 0, sets the counter value back to the latch value, and then sets Bit 0 back to 0 to stop the timer. In continuous mode, it reloads the latch value and starts all over again.
+
+Bits 1 and 2 allow you to send a signal on Bit 6 of Data Port B when the timer counts. Setting Bit 1 to 1 forces this output (which overrides the Data Direction Register B Bit 6, and the normal Data Port B value). Bit 2 allows you to choose the form this output to Bit 6 of Data Port B will take. Setting Bit 2 to a value of 1 will cause Bit 6 to toggle to the opposite value when the timer runs down (a value of 1 will change to 0, and a value of 0 will change to 1). Setting Bit 2 to a value of 0 will cause a single pulse of a one machine-cycle duration (about a millionth of a second) to occur.
+
+Bit 4. This bit is used to load the Timer A counter with the value that was previously written to the Timer Low and High Byte Registers. Writing a 1 to this bit will force the load (although there is no data stored here, and the bit has no significance on a read).
+
+Bit 5. Bit 5 is used to control just what it is Timer A is counting. If this bit is set to 1, it counts the microprocessor machine cycles (which occur at the rate of 1,022,730 cycles per second). If the bit is set to 0, the timer counts pulses on the CNT line, which is connected to pin 4 of the User Port. This allows you to use the CIA as a frequency counter or an event counter, or to measure pulse width or delay times of external signals.
+
+Bit 6. Whether the Serial Port Register is currently inputting or outputting data (see the entry for that register at 56332 ($DC0C) for more information) is controlled by this bit.
+
+Bit 7. This bit allows you to select from software whether the Time of Day Clock will use a 50 Hz or 60 Hz signal on the TOD pin in order to keep accurate time (the 64 uses a 60 Hz signal on that pin).
+
+<code>
+56335 $DC0F CIACRB
+Control Register B
+
+Bit 0: Start Timer B (1=start, 0=stop)
+Bit 1: Select Timer B output on Port B (1=Timer B output appears on Bit 7 of Port B)
+Bit 2: Port B output mode (1=toggle Bit 7, 0=pulse Bit 7 for one cycle)
+Bit 3: Timer B run mode (1=one-shot, 0=continuous)
+Bit 4: Force latched value to be loaded to Timer B counter (1=force load strobe)
+Bits 5-6: Timer B input mode
+00 = Timer B counts microprocessor cycles
+01 = Count signals on CNT line at pin 4 of User Port
+10 = Count each time that Timer A counts down to 0
+11 = Count Timer A 0's when CNT pulses are also present
+Bit 7: Select Time of Day write (0=writing to TOD registers sets alarm, 1=writing to TOD registers sets clock)
+</code>
+
+Bits 0-3. This nybble performs the same functions for Timer B that Bits 0-3 of Control Register A perform for Timer A, except that Timer B output on Data Port B appears at Bit 7, and not Bit 6.
+
+Bits 5 and 6. These two bits are used to select what Timer B counts. If both bits are set to 0, Timer B counts the microprocessor machine cycles (which occur at the rate of 1,022,730 cycles per second). If Bit 6 is set to 0 and Bit 5 is set to 1, Timer B counts pulses on the CNT line, which is connected to pin 4 of the User Port. If Bit 6 is set to 1 and Bit 5 is set to 0, Timer B counts Timer A underflow pulses, which is to say that it counts the number of times that Timer A counts down to 0. This is used to link the two numbers into one 32-bit timer that can count up to 70 minutes with accuracy to within 1/15 second. Finally, if both bits are set to 1, Timer B counts the number of times that Timer A counts down to 0 and there is a signal on the CNT line (pin 4 of the User Port).
+
+Bit 7. Bit 7 controls what happens when you write to the Time of Day registers. If this bit is set to 1, writing to the TOD registers sets the ALARM time. If this bit is cleared to 0, writing to the TOD registers sets the TOD clock.
+
+
+
+==== Appendix B (CIA 2) ====
+
+Locations 56576-56591 ($DD00-$DD0F) are used to address the Complex Interface Adapter chip #2 (CIA #2). Since the chip itself is identical to CIA #1, which is addressed at 56320 ($DC00), the discussion here will be limited to the use which the 64 makes of this particular chip. For more general information on the chip registers, please see the corresponding entries for CIA #1.
+
+A significant (for our purposes) difference between CIA chips #1 and #2 is that the interrupt line of CIA #1 is wired to the 6510 IRQ line, while that of CIA #2 is wired to the NMI line. This means that interrupts from this chip cannot be masked by setting the Interrupt disable flag (SEI). They can be disabled from CIA's Mask Register, though. Be sure to use the NMI vector when setting up routines to be driven by interrupts generated by this chip.
+
+
+
+==== Appendix C (VECTORS) ====
+
+<code>
+792-793 $318-$319 NMINV
+Vector: Non-Maskable Interrupt
+</code>
+
+This vector points to the address of the routine that will be executed when a Non-Maskable Interrupt (NMI) occurs (currently at 65095 ($FE47)).
+
+There are two possible sources for an NMI interrupt. The first is the RESTORE key, which is connected directly to the 6510 NMI line. The second is CIA #2, the interrupt line of which is connected to the 6510 NMI line.
+
+When an NMI interrupt occurs, a ROM routine sets the Interrupt disable flag, and then jumps through this RAM vector. The default vector points to an interrupt routine which checks to see what the cause of the NMI was.
+
+If the cause was CIA #2, the routine checks to see if one of the RS-232 routines should be called. If the source was the RESTORE key, it checks for a cartridge, and if present, the cartridge is entered at the warm start entry point. If there is no cartridge, the STOP key is tested. If the STOP key was pressed at the same time as the RESTORE key, several of the Kernal initialization routines such as RESTOR, IOINIT and part of CINT are executed, and BASIC is entered through its warm start vector at 40962. If the STOP key was not pressed simultaneously with the RESTORE, the interrupt will end without letting the user know that anything happened at all when the RESTORE key was pressed.
+
+Since this vector controls the outcome of pressing the RESTORE key, it can be used to disable the STOP/RESTORE sequence. A simple way to do this is to change this vector to point to the RTI instruction. A simple
+
+<code>
+LDA #$C1
+STA $0318
+</code>
+
+will accomplish this. To set the vector back:
+
+<code>
+LDA #$47
+STA $0318
+</code>
+
+Note that this will cut out all NMIs, including those required for RS-232 I/O.
+
+<code>
+Location Range: 65530-65535 ($FFFA-$FFFF)
+6510 Hardware Vectors
+</code>
+
+The last six locations in memory are reserved by the 6510 processor chip for three fixed vectors. These vectors let the chip know at what address to start executing machine language program code when an NMI interrupt occurs, when the computer is turned on, or when an IRQ interrupt or BRK occurs.
+
+<code>
+65530 $FFFA
+Non-Maskable Interrupt Hardware Vector
+</code>
+
+This vector points to the main NMI routine at 65091 ($FE43).
+
+<code>
+65532 $FFFC
+System Reset (RES) Hardware Vector
+</code>
+
+This vector points to the power-on routine at 64738 ($FCE2).
+
+<code>
+65534 $FFFE
+Maskable Interrupt Request and Break Hardware Vectors
+</code>
+
+This vector points to the main IRQ handler routine at 65352 ($FF48).

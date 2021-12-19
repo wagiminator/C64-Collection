@@ -1,6 +1,11 @@
 # Commodore C64 Collection
 Collection of cartridges, adapters and replacements for the Commodore C64.
 
+# [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
+TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
+
+![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
+
 # [SD2IEC LP](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
 C64 SD-card adapter and floppy disk drive emulator based on the design by [Lars Pontoppidan](https://larsee.com/blog/2007/02/the-mmc2iec-device/) with cassette port plug. Copy C64 games and programs to SD-card on your PC, put the SD-card in your SD2IEC and load games and programs on your C64!
 
