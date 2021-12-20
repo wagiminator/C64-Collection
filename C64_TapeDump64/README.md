@@ -48,7 +48,7 @@ The accuracy of the measurement of the pulse lengths depends on various factors.
 That's why the difference between the individual pulse lengths used for the encoding of the data is large enough to be able to reliably differentiate between them even under the circumstances mentioned. In fact, it is not the measured pulse length itself that is relevant, but whether it is above or below a defined threshold value. Furthermore, turbo loaders often use a mechanism to synchronize with the data stream from the datasette.
 
 ## TAP File Format
-The TAP file format attempts to duplicate the data stored on a C64 cassette tape, bit for bit. It was designed by Per Hakan Sundell (author of the CCS64 C64 emulator) in 1997. Since it is simply a representation of the raw serial data from a tape, it should handle any custom tape loaders that exist. The layout is fairly simple, with a small 14-byte header followed by the file data:
+The TAP file format attempts to duplicate the data stored on a C64 cassette tape, bit for bit. It was designed by Per Håkan Sundell (author of the [CCS64](http://www.ccs64.com/) C64 emulator) in 1997. Since it is simply a representation of the raw serial data from a tape, it should handle any custom tape loaders that exist. The layout is fairly simple, with a small 20-byte header followed by the file data:
 
 ```
       00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F        ASCII
