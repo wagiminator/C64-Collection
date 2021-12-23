@@ -17,7 +17,7 @@ Commodore Datasette Emulator based on the design and firmware by [Sweetlilmre](h
 ![C64_Tapuino_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic1.jpg)
 
 # [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
-Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541).
+Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
 
 ![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
 

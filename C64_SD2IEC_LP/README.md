@@ -23,7 +23,7 @@ Firmware updates can be downloaded from https://www.sd2iec.de/nightlies/ (use fi
 
 # Operating Instructions
 - Format an SD card (max 32GB, 1GB or 2GB cards work best) to FAT32 file system on your PC.
-- Copy fb64 from /software/sdcard_root to the root of the SD card.
+- Copy files from /software/sdcard_root to the root of the SD card.
 - [Download](https://www.c64games.de/) and copy C64 programs/games to root or organize them in folders.
 - Put the SD card to SD2IEC.
 - Plug the SD2IEC floppy emulator to the cassette port of your C64.
@@ -48,6 +48,7 @@ You can change the address of your SD2IEC with the DIP switches:
 2. [Firmware Download](https://www.sd2iec.de/nightlies/)
 3. [Inofficial Manual](https://www.thegeekpub.com/9473/sd2iec-manual-use-sd2iec-c64/)
 4. [Another Manual](http://www.c64os.com/post/sd2iecdocumentation)
+5. [And another one](https://www.thefuturewas8bit.com/index.php/sd2iec-info)
 5. [C64 Games](https://www.c64games.de/)
 6. [C64 Demos](https://csdb.dk/)
 

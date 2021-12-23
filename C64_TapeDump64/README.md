@@ -12,7 +12,7 @@ The schematic is shown below:
 I finally wanted to use one of the (not quite so) new 8-pin [tinyAVRs](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf) for a project. Here it fits really well. It has enough pins, hardware UART and a timer/counter B (TCB), which is specially designed for CPU-independent frequency and pulse length measurements. Since the firmware requires less than 800 bytes of flash, any of these MCUs can be used: ATtiny202, ATtiny212, ATtiny402 or ATtiny412. Don't buy them in China, they are much cheaper e.g. at [Digikey](https://www.digikey.de/de/products/detail/microchip-technology/ATTINY202-SSN/9947534) (€0.45).
 
 ## USB to Serial Converter
-The [CH340N](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf) (or CH330N) is now in use everywhere with me. At around €0.45 (if you buy [10 pieces](https://lcsc.com/product-detail/USB-ICs_WCH-Jiangsu-Qin-Heng-CH340N_C506813.html)) it is very cheap, fast, small, uncomplicated, reliable and hardly requires any external components (not even a crystal). It's probably the best choice for this small project too.
+The [CH340N](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf) (or CH330N) is now in use everywhere with me. At around €0.45 (if you buy [10 pieces](https://lcsc.com/product-detail/USB-ICs_WCH-Jiangsu-Qin-Heng-CH340N_C506813.html)) it is very cheap, fast, small, uncomplicated, reliable and hardly requires any external components (not even a crystal). It's probably the best choice for this small project too. And it is also used as a SerialUPDI programmer for the ATtiny.
 
 ## Boost Converter
 In order to provide the approximately 6.1V for the motor of the Datasette, a boost converter based on the inexpensive [MT3608](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf) is installed on the board. Controlling the motor with 5V would certainly also be possible, but the reduced speed would then have to be compensated by software later. It is difficult to estimate what this would mean for the accuracy of the sampled data.
@@ -88,7 +88,7 @@ Without going too much into detail, the ATtiny measures the pulse lengths with i
 
 As you can see, the calculation of the TAP values is based on a resulting clock frequency of 1MHz instead of 0.985248MHz for PAL or 1.022730MHz for NTSC. However, due to the resolution and the valid measuring range of the TAP format, this does not lead to any noteworthy deviations in the end result.
 
-The tapedump python script controls the device via three simple serial commands:
+The tapedump Python script controls the device via three simple serial commands:
 
 |Command|Function|Response|
 |:-:|:-|:-|
@@ -96,14 +96,14 @@ The tapedump python script controls the device via three simple serial commands:
 |"v"|transmit firmware version number|e.g. "v1.0\n"|
 |"r"|read file from tape|raw data stream|
 
-The raw datastream starts with a 0x00 as soon as PLAY on tape was pressed. Each valid pulse the device reads from the tape will be converted into a single non-zero byte which represents the pulse length according to TAP file format version 0 and immediately transmitted via UART. Pulse lengths that would lead to TAP values of less than 1 or greater than 255 are ignored. If STOP on tape was pressed or a timeout waiting for valid pulses occurs, the end of the stream is shown with a 0x00 byte. Afterwards, the 16-bit checksum, which is formed from the addition of all data bytes, is transmitted least significant byte first (little endian). Finally, the tape buffer overflow flag is transmitted as a single byte (0x00 means no overflow occured).
+The raw datastream starts with a 0x00 as soon as <kbd>PLAY</kbd> on tape was pressed. Each valid pulse the device reads from the tape will be converted into a single non-zero byte which represents the pulse length according to TAP file format version 0 and immediately transmitted via UART. Pulse lengths that would lead to TAP values of less than 1 or greater than 255 are ignored. If <kbd>STOP</kbd> on tape was pressed or a timeout waiting for valid pulses occurs, the end of the stream is shown with a 0x00 byte. Afterwards, the 16-bit checksum, which is formed from the addition of all data bytes, is transmitted least significant byte first (little endian). Finally, the tape buffer overflow flag is transmitted as a single byte (0x00 means no overflow occured).
 
-If PLAY was not pressed within the defined period of time at the beginning, a 0x01 is sent instead of a 0x00 and the procedure is ended.
+If <kbd>PLAY</kbd> was not pressed within the defined period of time at the beginning, a 0x01 is sent instead of a 0x00 and the procedure is ended.
 
 The Python script itself writes the TAP file header and the received data bytes into the output file.
 
 ## Compiling and Uploading the Firmware
-- Set the selector switch on the device to "UPDI". 
+- Set the serial mode switch on the device to "UPDI". 
 - Connect the device to a USB port of your PC.
 - Use one of the following methods:
 
@@ -126,12 +126,12 @@ The Python script itself writes the TAP file header and the received data bytes 
 - Run `DEVICE=attiny412 PORT=/dev/ttyUSB0 make install` to compile, burn the fuses and upload the firmware (change DEVICE and PORT accordingly).
 
 # Operating Instructions
-- Set the selector switch on your TapeDump64 to "UART"
+- Set the serial mode switch on your TapeDump64 to "UART"
 - Connect your TapeDump64 to your Commodore Datasette
 - Connect your TapeDump64 to a USB port of your PC
 - Execute the tapedump python script on your PC: `python tapedump.py outputfile.tap`
-- Press PLAY on your Datasette
-- The dumping is done fully automatically. It stops when the end of the cassette is reached, when there are no more signals on the tape for a certain time or when the STOP button on the Datasette is pressed.
+- Press <kbd>PLAY</kbd> on your Datasette
+- The dumping is done fully automatically. It stops when the end of the cassette is reached, when there are no more signals on the tape for a certain time or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
 ![TapeDump64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic2.jpg)
 ![TapeDump64_cli.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_cli.jpg)
