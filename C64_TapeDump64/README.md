@@ -76,7 +76,7 @@ In TAP version 1, the data value of 0x00 has been re-coded to represent values g
 
 ```0.002875s * 985248Hz = 2832 (data bytes: 0x00, 0x10, 0x0B, 0x00)```
 
-TAP Version 2 is an extension made by Markus Brenner for C16 tapes. It is version 1, but each value represents a halfwave, starting with a '0'->'1' transition. The time encoding doesn't change.
+TAP Version 2 is an extension made by Markus Brenner for C16 tapes. It is version 1, but each value represents a halfwave, starting with a '0' to '1' transition. The time encoding doesn't change.
 
 However, in practice, neither the storage of longer pulse lengths nor the higher resolution are relevant in most cases. That's why TAP version 0 is used for TapeDump64.
 

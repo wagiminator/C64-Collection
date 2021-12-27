@@ -77,7 +77,7 @@ In TAP version 1, the data value of 0x00 has been re-coded to represent values g
 
 ```0.002875s * 985248Hz = 2832 (data bytes: 0x00, 0x10, 0x0B, 0x00)```
 
-TAP Version 2 is an extension made by Markus Brenner for C16 tapes. It is version 1, but each value represents a halfwave, starting with a '0'->'1' transition. The time encoding doesn't change.
+TAP Version 2 is an extension made by Markus Brenner for C16 tapes. It is version 1, but each value represents a halfwave, starting with a '0' to '1' transition. The time encoding doesn't change.
 
 TapeBuddy64 can read TAP versions 0 and 1 and write them to cassette. It uses TAP version 1 to generate a TAP file when reading from the Datasette. The pauses between the individual files on tape are also precisely recorded so that the device should be able to handle all kinds of fast loaders.
 
