@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   TapeDump64 - Transfer files from a Commodore Datasette to a PC
-// Version:   v1.0
+// Version:   v1.1
 // Year:      2021
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -37,7 +37,7 @@
 // Clock:   16 MHz internal
 //
 // Leave the rest on default settings. Select "SerialUPDI" as programmer in the
-// Arduino IDE and set the selector switch on the board to "UPDI". Don't forget
+// Arduino IDE and set the serial mode switch on the board to "UPDI". Don't forget
 // to "Burn bootloader"! Compile and upload the code.
 //
 // No Arduino core functions or libraries are used. To compile and upload without
@@ -49,7 +49,7 @@
 //
 // Operating Instructions:
 // -----------------------
-// - Set the selector switch on your TapeDump64 to "UART"
+// - Set the serial mode switch on your TapeDump64 to "UART"
 // - Connect your TapeDump64 to your Commodore Datasette
 // - Connect your TapeDump64 to a USB port of your PC
 // - Execute the tapedump python script on your PC: tapedump.py outputfile.tap
@@ -101,7 +101,7 @@
 #define TAP_BUF_LEN   64          // tape buffer length (must be power of 2)
 
 // Identifiers
-#define VERSION     "1.0"         // version number sent via serial if requested
+#define VERSION     "1.1"         // version number sent via serial if requested
 #define IDENT       "TapeDump64"  // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -272,7 +272,8 @@ void TAP_read(void) {
 // TCB0 interrupt service routine (on each pulse capture)
 ISR(TCB0_INT_vect) {
   uint16_t tmp = TCB0.CCMP;                         // read pulse length in 1/8 us
-  if((tmp >= 64) && (tmp < 16384) && (!TAP_timer_ovf)) { // valid pulse length?
+  if((tmp >= 16320) || (TAP_timer_ovf)) tmp = 16320;// limit to max value
+  if(tmp >= 1024) {                                 // above minimum pulse length?
     TAP_buf[TAP_buf_head++] = tmp >> 6;             // calculate and write .tap value
     TAP_buf_head &= (TAP_BUF_LEN - 1);              // limit buffer pointer
     if(TAP_buf_head == TAP_buf_tail) TAP_buf_ovf = 1;   // set overflow flag if necessary

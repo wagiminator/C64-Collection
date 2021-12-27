@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   TapeDump64 - Python Script for Command Line Interface
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2021
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -26,7 +26,7 @@
 #
 # Operating Instructions:
 # -----------------------
-# - Set the selector switch on your TapeDump64 to "UART"
+# - Set the serial mode switch on your TapeDump64 to "UART"
 # - Connect your TapeDump64 to your Commodore Datasette
 # - Connect your TapeDump64 to a USB port of your PC
 # - Execute this skript: python tapedump.py outputfile.tap
@@ -98,7 +98,7 @@ class Adapter(Serial):
 
 # Print Header
 print('--------------------------------------------------')
-print('TapeDump 64 - Python Command Line Interface v1.0')
+print('TapeDump 64 - Python Command Line Interface v1.1')
 print('(C) 2021 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -170,13 +170,16 @@ while 1:
     if data:
         if data[0] == 0:
             break
-        f.write(data)
+        if data[0] == 255:
+            f.write(b'\x00')
+        else:
+            f.write(data)
+            minpulse  = min(minpulse, data[0])
+            maxpulse  = max(maxpulse, data[0])
         count    += 1
         checksum += data[0]
         checksum %= 65536
         taptime  += data[0]
-        minpulse  = min(minpulse, data[0])
-        maxpulse  = max(maxpulse, data[0])
         if count == 1:
             print('Loading ...')
     if time.time() - msgtime > 0.5:

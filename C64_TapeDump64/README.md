@@ -50,15 +50,7 @@ That's why the difference between the individual pulse lengths used for the enco
 ## TAP File Format
 The TAP file format attempts to duplicate the data stored on a C64 cassette tape, bit for bit. It was designed by Per Håkan Sundell (author of the [CCS64](http://www.ccs64.com/) C64 emulator) in 1997. Since it is simply a representation of the raw serial data from a tape, it should handle any custom tape loaders that exist. The layout is fairly simple, with a small 20-byte header followed by the file data:
 
-```
-      00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F        ASCII
-      -----------------------------------------------   ----------------
-0000: 43 36 34 2D 54 41 50 45 2D 52 41 57 00 00 00 00   C64-TAPE-RAW????
-0010: 51 21 08 00 2F 0F 0D 31 64 1D 26 0D 07 21 0A 12   Q!??/??1d?&??!??
-0020: 4A 2F 2C 34 07 18 0D 31 07 04 23 04 0D 42 0D 1E   J/,4???1??#??B??
-0030: 34 04 42 0D 20 15 5E 04 0D 18 61 0D 26 29 34 0D   4?B???^???a?&)4?
-0040: 23 0D 07 0A 3F 55 04 0A 13 3F 07 0D 12 2B 18 0A   #????U???????+??
-```
+![TapeDump64_format.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_format.jpg)
 
 |Bytes (hex)|Description|
 |:-|:-|
@@ -69,19 +61,20 @@ The TAP file format attempts to duplicate the data stored on a C64 cassette tape
 |0014-xxxx|File data|
 
 In TAP version 0, each data byte in the file data area represents the length of a single pulse determined by the following formula:
+
 ```data byte = pulse length (in seconds) * C64 clock frequency (in Hertz) / 8```
 
 Therefore, a data value for a pulse length of 390µs would be:
 
 ```0.000390s * 985248Hz / 8 = 48 (0x30 in hex)```
 
-A data value of 0x00 represents an "overflow" condition, any pulse length which is more than 255 * 8 clock cycles or 2078µs in length. Such a pulse length does not encode any data and normally only occurs in the pauses between a program and the following one on the same tape.
+A data value of 0x00 represents an "overflow" condition, any pulse length which is more than 255 * 8 clock cycles or 2078µs in length. Such a pulse length does not encode any data and normally only occurs in the pauses between a program and the following one on the same tape. However, the lengths of these pauses can be relevant for some fast loaders.
 
 In TAP version 1, the data value of 0x00 has been re-coded to represent values greater than 255 * 8 clock cycles or values with a greater resolution (one clock cycle instead of eight). When a 0x00 is encountered, three bytes will follow which are the actual pulse length in C64 clock cycles. The three bytes are stored in little endian format (least significant byte first). For example, a data value for a pulse length of 2875µs would look like this:
 
 ```0.002875s * 985248Hz = 2832 (data bytes: 0x00, 0x10, 0x0B, 0x00)```
 
-However, in practice, neither the storage of longer pulse lengths nor the higher resolution are relevant. That's why TAP version 0 is used for TapeDump64.
+However, in practice, neither the storage of longer pulse lengths nor the higher resolution are relevant in most cases. That's why TAP version 0 is used for TapeDump64.
 
 ## Implementation
 Without going too much into detail, the ATtiny measures the pulse lengths with its timer/counter B (TCB) in frequency measurement mode. The TCB continuously counts upwards at 8MHz until a falling edge is detected at the READ output of the Datasette. The current value of the counter is automatically saved, the counter is then reset to zero and restarted. In addition, an interrupt is triggered, in whose service routine the stored value is read out, divided by 64 and pushed into the output buffer for transmission to the PC.
@@ -96,7 +89,7 @@ The tapedump Python script controls the device via three simple serial commands:
 |"v"|transmit firmware version number|e.g. "v1.0\n"|
 |"r"|read file from tape|raw data stream|
 
-The raw datastream starts with a 0x00 as soon as <kbd>PLAY</kbd> on tape was pressed. Each valid pulse the device reads from the tape will be converted into a single non-zero byte which represents the pulse length according to TAP file format version 0 and immediately transmitted via UART. Pulse lengths that would lead to TAP values of less than 1 or greater than 255 are ignored. If <kbd>STOP</kbd> on tape was pressed or a timeout waiting for valid pulses occurs, the end of the stream is shown with a 0x00 byte. Afterwards, the 16-bit checksum, which is formed from the addition of all data bytes, is transmitted least significant byte first (little endian). Finally, the tape buffer overflow flag is transmitted as a single byte (0x00 means no overflow occured).
+The raw datastream starts with a 0x00 as soon as <kbd>PLAY</kbd> on tape was pressed. Each valid pulse the device reads from the tape will be converted into a single non-zero byte which represents the pulse length according to TAP file format version 0 and immediately transmitted via UART. Invalid pulse lengths that would lead to TAP values of less than 16 are ignored. TAP values that would be greater than 255 are limited to 255 and later marked as a pulse overflow (byte 0x00) by the Python script. If <kbd>STOP</kbd> on tape was pressed or a timeout waiting for valid pulses occurs, the end of the stream is shown with a 0x00 byte. Afterwards, the 16-bit checksum, which is formed from the addition of all data bytes, is transmitted least significant byte first (little endian). Finally, the tape buffer overflow flag is transmitted as a single byte (0x00 means no overflow occured).
 
 If <kbd>PLAY</kbd> was not pressed within the defined period of time at the beginning, a 0x01 is sent instead of a 0x00 and the procedure is ended.
 
