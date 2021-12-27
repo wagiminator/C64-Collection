@@ -55,8 +55,10 @@ The TAP file format attempts to duplicate the data stored on a C64 cassette tape
 |Bytes (hex)|Description|
 |:-|:-|
 |0000-000B|File signature "C64-TAPE-RAW"|
-|000C|TAP version (00 - original, 01 - updated)|
-|000D-000F|Future expansion|
+|000C|TAP version (0 - original, 1 - updated, 2 - halfwave extension)|
+|000D|Computer platform (0 - C64, 1 - VIC-20, 2 - C16, Plus/4, 3 - PET)|
+|000E|Video standard (0 - PAL, 1 - NTSC, 2 - OLD NTSC, 3 - PALN)|
+|000F|Future expansion|
 |0010-0013|File data size (little endian; not including the header)|
 |0014-xxxx|File data|
 
@@ -73,6 +75,8 @@ A data value of 0x00 represents an "overflow" condition, any pulse length which 
 In TAP version 1, the data value of 0x00 has been re-coded to represent values greater than 255 * 8 clock cycles or values with a greater resolution (one clock cycle instead of eight). When a 0x00 is encountered, three bytes will follow which are the actual pulse length in C64 clock cycles. The three bytes are stored in little endian format (least significant byte first). For example, a data value for a pulse length of 2875µs would look like this:
 
 ```0.002875s * 985248Hz = 2832 (data bytes: 0x00, 0x10, 0x0B, 0x00)```
+
+TAP Version 2 is an extension made by Markus Brenner for C16 tapes. It is version 1, but each value represents a halfwave, starting with a '0'->'1' transition. The time encoding doesn't change.
 
 However, in practice, neither the storage of longer pulse lengths nor the higher resolution are relevant in most cases. That's why TAP version 0 is used for TapeDump64.
 
@@ -147,12 +151,13 @@ There is also a graphical [front end](https://www.luigidifraia.com/software/) fo
 5. [Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
 6. [Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
 7. [TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
-8. [TAPClean](https://sourceforge.net/projects/tapclean/)
-9. [TAPClean Front End](https://www.luigidifraia.com/software/)
-10. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
-11. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
-12. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
-13. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+8. [VICE Emulator File Formats](https://vice-emu.sourceforge.io/vice_17.html)
+9. [TAPClean](https://sourceforge.net/projects/tapclean/)
+10. [TAPClean Front End](https://www.luigidifraia.com/software/)
+11. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
+12. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
+13. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+14. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
 
 ![TapeDump64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic3.jpg)
 ![TapeDump64_pic4.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic4.jpg)
