@@ -1,0 +1,4 @@
+Download AVR 8-bit Toolchain:
+https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers
+To do this, you have to register for free with Microchip on the site.
+Extract the sub-folders (avr, bin, include, ...) here.

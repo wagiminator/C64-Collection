@@ -1,10 +1,10 @@
 # Commodore C64 Collection
 Collection of cartridges, adapters and replacements for the Commodore C64.
 
-# [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
-TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
+# [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64)
+TapeBuddy64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to read from and write on tapes. It is an advanced version of the [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The TapeBuddy64 is controlled via a command line interface or a graphical front end written in Python.
 
-![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
+![TapeBuddy64_pic6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic6.jpg)
 
 # [SD2IEC LP](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
 C64 SD-card adapter and floppy disk drive emulator based on the design by [Lars Pontoppidan](https://larsee.com/blog/2007/02/the-mmc2iec-device/) with cassette port plug. Copy C64 games and programs to SD-card on your PC, put the SD-card in your SD2IEC and load games and programs on your C64!
@@ -20,6 +20,11 @@ Commodore Datasette Emulator based on the design and firmware by [Sweetlilmre](h
 Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
 
 ![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
+
+# [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
+TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
+
+![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
 
 # [C64 Keyboard Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
 C64 keyboard to USB adapter based on the design and firmware by [Mikkel Holm Olsen](https://symlink.dk/projects/c64key/). Use the original keyboard with you favourite emulator!

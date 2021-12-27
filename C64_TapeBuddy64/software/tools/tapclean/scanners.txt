@@ -1,0 +1,79 @@
+1:108DE0A5:108DE0A5
+1:accolade:Accolade/EA Loader
+1:aces:Ace of Aces
+0:aliensy:Alien Syndrome
+1:alterdk:Alternative Software (DK)
+1:alterwg:Alternative World Games
+0:amaction:American Action
+1:anirog:Anirog
+1:ashdave:Ash+Dave
+2:ar:Action Replay
+1:atlantis:Atlantis
+1:audiogenic:Audiogenic
+1:biturbo:Biturbo
+4:bleep:Bleepload
+4:burner:Burner
+2:burnervar:Burner (Mastertronic Variant)
+0:chuckie:Chuckie Egg
+0:csparks:Creative Sparks
+0:creatures:Creatures (level files)
+4:cyber:Cyberload
+0:easytape:Easy-Tape System C
+0:enigma:Enigma
+0:ddesign:Digital Design
+1:fftape:FF Tape
+2:fire:Firebird
+3:flash:Flashload
+5:free:Freeload (and clones)
+1:frslow:Freeload Slow
+1:frzmachine:Freeze Machine
+0:glass:Glass Tape
+0:goforgold:Go For The Gold
+1:gradvcreator:Graphic Adventure Creator Save
+2:gremlinf1:Gremlin F1
+2:gremlinf2:Gremlin F2
+3:hit:Hitload
+3:hitec:Hi-Tec
+1:ik:IK
+1:jet:Jetload
+0:jiffy:Jiffy Load
+0:lexpeed:Lexpeed Fastsave System (Radarsoft)
+4:megasave:Mega-Save (was CHR)
+2:micro:Microload
+2:microvar:Microload (Blue Ribbon Variant)
+0:mms:MMS Tape
+0:msx:MSX Tape
+4:nova:Novaload
+2:ocean:Ocean
+2:oceannew1:Ocean New F1
+2:oceannew2:Ocean New F2
+0:oceannew3:Ocean New F3
+2:oceannew4:Ocean New F4
+1:ode:ODEload
+1:palacef1:Palace F1
+1:palacef2:Palace F2
+3:pav:Pavloda
+2:power:Power Load
+2:rackit:Rackit
+1:rainbowf1:Rainbow Arts F1
+1:rainbowf2:Rainbow Arts F2
+0:rislands:Rainbow Islands
+2:raster:Rasterload
+1:seuck:SEUCK
+2:snake50:Snakeload 5.0
+2:snake51:Snakeload 5.1
+3:spav:Super Pavloda
+2:super:Super Tape
+1:tdif1:TDI F1
+1:tdif2:TDI F2
+1:tequila:Tequila Sunrise
+1:testape:TES Tape
+2:trilogic:Trilogic v3.2
+0:turbo220:Turbo 220
+3:turbo:Turbotape 250 (and clones)
+0:turbo526:Turbo 526
+1:turr:Turrican
+4:usgold:U.S. Gold
+3:virgin:Virgin
+4:visi:Visiload
+3:wild:Wildload
