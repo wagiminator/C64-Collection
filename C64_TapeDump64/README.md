@@ -1,5 +1,5 @@
 # TapeDump64 - Dump your Commodore Datasette Tapes
-TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
+TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. For an idvanced version that can also write on tapes, take a look at [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64).
 
 ![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
 

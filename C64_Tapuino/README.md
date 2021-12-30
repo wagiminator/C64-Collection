@@ -45,10 +45,14 @@ The saved data is saved on the SD card in the directory "Recordings". These can 
 ## Converting Programs to TAP Format
 Not every program can be found in TAP format, but there is a way to convert images with a different format to TAP. The small Windows program [WAV-PRG](http://wav-prg.sourceforge.net/wavprg.html) enables PRG, P00- and T64 files to be converted into TAP format. After opening the program, choose the second option "Convert a PRG, P00 or T64 to a sound or TAP or WAV" and click "OK". Now select the machine for which the file is to be converted from the drop-down menu, e.g. C64 PAL and click "OK". Now select the file to be converted. That's it, the TAP file is now ready for use with the Tapuino.
 
+## Dumping Tapes from your old Datasette
+If you still have old tapes and a Commodore Datasette, you can use them to create TAP images. To do this, check out the project [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64).
+
 # References, Links and Notes
 1. [Source Code](https://github.com/sweetlilmre/tapuino)
 2. [Tapuino Tutorial (german)](https://www.mingos-commodorepage.com/tutorials/c64tapuino.php?title=Der%20Tapuino%20im%20Selbstbau)
-3. [C64 Games](https://www.c64games.de/)
+3. [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64)
+4. [C64 Games](https://www.c64games.de/)
 
 ![C64_Tapuino_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic3.jpg)
 ![C64_Tapuino_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic2.jpg)
