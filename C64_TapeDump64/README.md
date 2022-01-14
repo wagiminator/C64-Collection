@@ -120,7 +120,7 @@ The Python script itself writes the TAP file header and the received data bytes 
 - Download [AVR 8-bit Toolchain](https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers) and extract the sub-folders (avr, bin, include, ...) to /software/tools/avr-gcc. To do this, you have to register for free with Microchip on the download site.
 - Open a terminal.
 - Navigate to the folder with the makefile and the Arduino sketch.
-- Run `DEVICE=attiny412 PORT=/dev/ttyUSB0 make install` to compile, burn the fuses and upload the firmware (change DEVICE and PORT accordingly).
+- Run `DEVICE=attiny202 make install` to compile, burn the fuses and upload the firmware (change DEVICE accordingly).
 
 # Operating Instructions
 - Set the serial mode switch on your TapeDump64 to "UART"

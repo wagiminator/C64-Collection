@@ -1,12 +1,14 @@
-# Project:  TapeDump64
+# ===================================================================================
+# Project:  TapeDump64 - makefile
 # Author:   Stefan Wagner
 # Year:     2021
 # URL:      https://github.com/wagiminator    
-#
+# ===================================================================================
 # Download AVR 8-bit Toolchain:
 # https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers
 # and extract to ./tools/avr-gcc 
 # Type "make help" in the command line.
+# ===================================================================================
 
 # Input and Output File Names
 SKETCH  = TapeDump64.ino
@@ -24,77 +26,80 @@ FUSE6   = 0x04
 FUSE7   = 0x00
 FUSE8   = 0x00
 
-# Programmer Options
-PROGRMR = serialupdi
-PORT   ?= /dev/ttyUSB0
-
 # Paths
 GCCPATH = ./tools/avr-gcc
 DFPPATH = ./tools/dfp
-PYMPATH = ./tools/pymcuprog
-ADCPATH = ./tools/avrdude
+PYMPATH = ./tools/tinyupdi
 
 # Commands
 DFPINCL = -B $(DFPPATH)/gcc/dev/$(DEVICE)/ -I $(DFPPATH)/include/
 COMPILE = $(GCCPATH)/bin/avr-gcc $(DFPINCL) -flto -Wall -Os -mmcu=$(DEVICE) -DF_CPU=$(CLOCK)UL -x c++ $(SKETCH)
-PYPROG  = python -u $(PYMPATH)/prog.py -t uart -u $(PORT) -b 230400 -d $(DEVICE)
+PYPROG  = python -u $(PYMPATH)/tinyupdi.py -d $(DEVICE)
 CLEAN   = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
 
 # Symbolic Targets
 help:
 	@echo "Use the following commands:"
-	@echo "make all       compile and build $(TARGET).bin/.hex/.asm for $(DEVICE)"
+	@echo "make all       compile and build $(TARGET).elf/.bin/.hex/.asm for $(DEVICE)"
 	@echo "make hex       compile and build $(TARGET).hex for $(DEVICE)"
 	@echo "make asm       compile and disassemble to $(TARGET).asm for $(DEVICE)"
 	@echo "make bin       compile and build $(TARGET).bin for $(DEVICE)"
-	@echo "make upload    compile and upload to $(DEVICE) using $(PROGRMR)"
-	@echo "make fuses     burn fuses of $(DEVICE) using $(PROGRMR) programmer"
+	@echo "make upload    compile and upload to $(DEVICE)"
+	@echo "make fuses     burn fuses of $(DEVICE)"
 	@echo "make install   compile, upload and burn fuses for $(DEVICE)"
 	@echo "make clean     remove all build files"
 
-all:	buildbin buildhex buildasm removetemp size
+all:	buildelf buildbin buildhex buildasm removetemp size
 
-bin:  buildbin removetemp size
+elf:	buildelf removetemp size
 
-hex:	buildbin buildhex removetemp size removebin
+bin:	buildelf buildbin removetemp size removeelf
 
-asm:	buildbin buildasm removetemp size removebin
+hex:	buildelf buildhex removetemp size removeelf
 
-install: fuses upload
+asm:	buildelf buildasm removetemp size removeelf
 
-upload:	hex
+install:	bin
+	@echo "Installing to $(DEVICE) ..."
+	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) --flash $(TARGET).bin
+
+upload:	bin
 	@echo "Uploading to $(DEVICE) ..."
-	@$(PYPROG) --fuses 2:$(FUSE2) 6:$(FUSE6) 8:$(FUSE8) -f $(TARGET).hex -a write
+	@$(PYPROG) --flash $(TARGET).bin
 
 fuses:
 	@echo "Burning fuses of $(DEVICE) ..."
-	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8) -a erase
+	@$(PYPROG) --fuses 0:$(FUSE0) 1:$(FUSE1) 2:$(FUSE2) 4:$(FUSE4) 5:$(FUSE5) 6:$(FUSE6) 7:$(FUSE7) 8:$(FUSE8)
 
 clean:
 	@echo "Cleaning all up ..."
 	@$(CLEAN)
-	@rm -f $(TARGET).bin $(TARGET).hex $(TARGET).asm
+	@rm -f $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).asm
+
+buildelf:
+	@echo "Building $(TARGET).elf for $(DEVICE) @ $(CLOCK)Hz ..."
+	@$(COMPILE) -o $(TARGET).elf
 
 buildbin:
-	@echo "Building $(TARGET).bin for $(DEVICE) @ $(CLOCK)Hz ..."
-	@$(COMPILE) -o $(TARGET).bin
+	@echo "Building $(TARGET).bin ..."
+	@$(GCCPATH)/bin/avr-objcopy -O binary -R .eeprom $(TARGET).elf $(TARGET).bin
 
 buildhex:
 	@echo "Building $(TARGET).hex ..."
-	@$(GCCPATH)/bin/avr-objcopy -O ihex -R .eeprom $(TARGET).bin $(TARGET).hex
+	@$(GCCPATH)/bin/avr-objcopy -O ihex -R .eeprom $(TARGET).elf $(TARGET).hex
 
 buildasm:
 	@echo "Disassembling to $(TARGET).asm ..."
-	@$(GCCPATH)/bin/avr-objdump -d $(TARGET).bin > $(TARGET).asm
+	@$(GCCPATH)/bin/avr-objdump -d $(TARGET).elf > $(TARGET).asm
 
 size:
-	@echo "FLASH: $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).bin | awk '/[0-9]/ {print $$1 + $$2}') bytes"
-	@echo "SRAM:  $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).bin | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "FLASH: $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
+	@echo "SRAM:  $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
 
 removetemp:
 	@echo "Removing temporary files ..."
 	@$(CLEAN)
 
-removebin:
-	@echo "Removing $(TARGET).bin ..."
-	@rm -f $(TARGET).bin
+removeelf:
+	@echo "Removing $(TARGET).elf ..."
+	@rm -f $(TARGET).elf

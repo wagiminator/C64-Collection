@@ -129,7 +129,7 @@ If there is no more data in the TAP file, the Python script sends a 0x0000 word 
 - Download [AVR 8-bit Toolchain](https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers) and extract the sub-folders (avr, bin, include, ...) to /software/tools/avr-gcc. To do this, you have to register for free with Microchip on the download site.
 - Open a terminal.
 - Navigate to the folder with the makefile and the Arduino sketch.
-- Run `DEVICE=attiny404 PORT=/dev/ttyUSB0 make install` to compile, burn the fuses and upload the firmware (change DEVICE and PORT accordingly).
+- Run `DEVICE=attiny404 make install` to compile, burn the fuses and upload the firmware (change DEVICE accordingly).
 
 ## Installing Python and Drivers
 Python needs to be installed on your PC in order to use the software. Most Linux distributions already include this. Windows users can follow these [instructions](https://www.pythontutorial.net/getting-started/install-python/). In addition PySerial and Tkinter (8.6 or newer) must be installed. However, these are already included in most Python installations.
