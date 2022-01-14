@@ -146,14 +146,14 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 
 ## Reading from Tape (Command Line)
 - Execute the respective Python script on your PC: `python tape-read.py outputfile.tap`.
-- Press <kbd>PLAY</kbd> on your Datasette when promted.
+- Press <kbd>PLAY</kbd> on your Datasette when prompted.
 - The dumping is done fully automatically. It stops when the end of the cassette is reached, when there are no more signals on the tape for a certain time, or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
 ![TapeBuddy64_cli1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_cli1.jpg)
 
 ## Writing on Tape (Command Line)
 - Execute the respective Python script on your PC: `python tape-write.py inputfile.tap`.
-- Press <kbd>RECORD</kbd> on your Datasette when promted.
+- Press <kbd>RECORD</kbd> on your Datasette when prompted.
 - The recording is done fully automatically. It stops when all data is written, the end of the cassette is reached, or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
 ![TapeBuddy64_cli2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_cli2.jpg)
@@ -186,7 +186,7 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 - Insert a cassette into the Datasette that you know is working well.
 - Execute `python tape-gui.py`
 - Select "Read from tape to TAP file", then select the output file. You can delete it later.
-- Press <kbd>PLAY</kbd> on the Datasette when promted.
+- Press <kbd>PLAY</kbd> on the Datasette when prompted.
 - As soon as the pulse lines are displayed, take a thin screwdriver and slowly adjust the azimuth until the displayed lines are as narrow as possible.
 
 ![TapeBuddy64_align2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_align2.jpg)
@@ -194,20 +194,21 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 
 # References, Links and Notes
 1. [TapeDump64 Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
-2. [Tapuino Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_Tapuino)
-3. [How Commodore Tapes Work](https://wav-prg.sourceforge.io/tape.html)
-4. [How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
-5. [Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
-6. [Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
-7. [TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
-8. [VICE Emulator File Formats](https://vice-emu.sourceforge.io/vice_17.html)
-9. [TAPClean](https://sourceforge.net/projects/tapclean/)
-10. [TAPClean Front End](https://www.luigidifraia.com/software/)
-11. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
-12. [Adjusting the Datassette Head Azimuth](https://theokoulis.com/index.php/2020/11/15/some-notes-on-adjusting-the-datassette-head-azimuth-on-the-vic-20/)
-13. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
-14. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
-15. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+2. [TrueTape64 Project](https://github.com/francescovannini/truetape64)
+3. [Tapuino Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_Tapuino)
+4. [How Commodore Tapes Work](https://wav-prg.sourceforge.io/tape.html)
+5. [How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
+6. [Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
+7. [Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
+8. [TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
+9. [VICE Emulator File Formats](https://vice-emu.sourceforge.io/vice_17.html)
+10. [TAPClean](https://sourceforge.net/projects/tapclean/)
+11. [TAPClean Front End](https://www.luigidifraia.com/software/)
+12. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
+13. [Adjusting the Datassette Head Azimuth](https://theokoulis.com/index.php/2020/11/15/some-notes-on-adjusting-the-datassette-head-azimuth-on-the-vic-20/)
+14. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
+15. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+16. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
 
 ![TapeBuddy64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic1.jpg)
 ![TapeBuddy64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic3.jpg)
