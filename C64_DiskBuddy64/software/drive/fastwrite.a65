@@ -1,0 +1,109 @@
+; ====================================================================
+; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Writing
+; Version:   v1.0
+; Year:      2022
+; Author:    Stefan Wagner
+; Github:    https://github.com/wagiminator
+; EasyEDA:   https://easyeda.com/wagiminator
+; License:   http://creativecommons.org/licenses/by-sa/3.0/
+; ====================================================================
+;
+; Description:
+; ------------
+; Simple fast writing by accelerating the IEC communication due to
+; the use of an asynchronous 2-bit parallel protocol. This program is
+; loaded into the memory of the floppy disk drive and communicates
+; from there with the TapeBuddy64 adapter. This implementation writes
+; a list of sectors to the specified track on the disk.
+;
+; References:
+; -----------
+; Michael Steil: https://www.pagetable.com/?p=568
+;
+; Assembling Instructions:
+; ------------------------
+; ca65 -l -t c64 fastwrite.a65
+; ld65 -t c64 -o fastwrite.bin fastwrite.o
+;
+; Operating Instructions:
+; -----------------------
+; "M-E"<addrLow><addrHigh><track><#sectors><sector1><sector2>...
+;
+; $0200 - $0202 "M-E"       Memory Execute command
+; $0203 - $0204 <addrL/H>   start address of this program in RAM
+; $0205         <track>     track on disk to write to
+; $0206         <#sectors>  number of sectors in the following list
+; $0207 - ...   <sectorX>   list of sectors to write in order
+
+.setcpu "6502"
+.org $0500
+
+start:
+    ldy #$00          ; y for buffer number and sector index
+    sty $f9           ; set buffer at $0300
+    lda $0205         ; get track from command buffer
+    sta $06           ; set track for disk operation
+    lda $1c00         ; turn on DRIVE LED
+    ora #$08
+    sta $1c00
+
+writeloop:    
+    sei               ; disable interrupts
+    ldx #$00          ; buffer index
+receiveloop:
+    lda #$08          ; 2 mark ready to receive:
+    sta $1800         ; 4 -> pull CLK LOW
+    lda #$01          ; 2 wait for ready to send:
+waitbyte:
+    bit $1800         ; 4 test DATA line
+    beq waitbyte      ; 2 wait for DATA LOW
+    lsr               ; 2 let's go:
+    sta $1800         ; 4 -> release CLK HIGH
+    
+    lda $1800         ; 4 bits 3 and 1
+    asl               ; 2
+    ora $1800         ; 4 bits 2 and 0
+    and #$0F          ; 2
+    sta $05           ; 3
+    lda $1800         ; 4 bits 7 and 5
+    asl               ; 2
+    ora $1800         ; 4 bits 6 and 4
+    asl               ; 2
+    asl               ; 2
+    asl               ; 2
+    asl               ; 2
+    ora $05           ; 3 make byte complete ...
+    sta $0300,x       ; 5 and write it to buffer
+    inx               ; 2
+    bne receiveloop   ; 3 repeat for all 256 bytes
+
+    cli               ; enable interrupts    
+    lda $0207,y       ; get sector from list in command buffer
+    sta $07           ; set sector for disk operation
+    ldx #$03          ; number of retries
+retry:
+    lda #$90          ; job number for writing sector
+    sta $00           ; set job -> start disk operation
+waitcomplete:
+    lda $00
+    bmi waitcomplete  ; wait for job to complete
+    cmp #$01          ; was it successful?
+    beq success       ; -> leave if successful
+    lda $16           ; disk ID1 -> compensate ID MISMATCH
+    sta $12           ; disk drive ID1
+    lda $17           ; disk ID2
+    sta $13           ; disk drive ID1
+    dex               ; decrease retry counter
+    bne retry         ; try again (max 3x)
+    beq end           ; jump to end
+
+success:
+    iny               ; increment sector index
+    dec $0206         ; decrement number of sectors
+    bne writeloop     ; repeat for all sectors
+
+end:
+    lda $1c00         ; turn off DRIVE LED
+    and #$F7
+    sta $1c00
+    rts               ; end of mission
