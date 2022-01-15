@@ -184,7 +184,7 @@ class Programmer(Serial):
 
 
     # ------------------------------------------------------------------------------
-    # Pysical Layer for UPDI Stack
+    # Physical Layer for UPDI Stack
     # ------------------------------------------------------------------------------
 
     # Send a double break to reset the UPDI port
@@ -494,7 +494,7 @@ class Programmer(Serial):
         for _ in range(pages):
             data += (self.read_data_words(address, self.flash_pagesize >> 1))
             address += self.flash_pagesize
-        return data
+        return data[:size]
 
     # Write to flash
     def write_flash(self, address, data):
@@ -512,7 +512,7 @@ class Programmer(Serial):
 
     # Pad data so that there are full pages
     def pad_data(self, data, blocksize):
-        return data + b'\x00' * (len(data) % blocksize)
+        return data + b'\xFF' * (len(data) % blocksize)
 
     # Divide data into pages
     def page_data(self, data, size):
@@ -538,7 +538,7 @@ class Programmer(Serial):
         self.write_flash(self.flash_start, data)
         print('Verifying firmware ...')
         readback = self.read_flash(self.flash_start, len(data))
-        return data == readback[:len(data)]
+        return data == readback
 
     # Set single fuse
     def set_fuse(self, fusenum, value):
