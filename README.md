@@ -39,12 +39,12 @@ Replacement board for the legendary SID soundchip of the Commodore C64 based on 
 # [C64 8k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_8k)
 Simple 8k cartridge for C64.
 
-![C64_Cartridge_8k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_8k/documentation/C64_Cartridge_8k_pic1.jpg)
+![C64_Cartridge_8k_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_8k/documentation/C64_Cartridge_8k_pic2.jpg)
 
 # [C64 64k/256k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_64k_256k)
 MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of multiple PRG-files!
 
-![C64_Cartridge_64k_256k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_64k_256k_pic1.jpg)
+![C64_Cartridge_64k_256k_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_64k_256k_pic2.jpg)
 
 # [C64 512k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_512k)
 512k MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of even more PRG-files!
