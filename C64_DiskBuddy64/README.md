@@ -56,7 +56,7 @@ DiskBuddy64 uses the D64 format to read or create disk images. The structure of 
   - **Programmer:**     SerialUPDI
   - Leave the rest at the default settings.
 - Go to **Tools -> Burn Bootloader** to burn the fuses.
-- Open the TapeBuddy64 sketch and click **Upload**.
+- Open the DiskBuddy64 sketch and click **Upload**.
 
 ### If using the makefile (Linux/Mac)
 - Download [AVR 8-bit Toolchain](https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers) and extract the sub-folders (avr, bin, include, ...) to /software/tools/avr-gcc. To do this, you have to register for free with Microchip on the download site.
@@ -81,7 +81,7 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 The following command line tools are available:
 
 ### Reading status of connected IEC devices
-`python disk-status.py`
+`python disk-detect.py`
 
 ### Reading directory of an inserted floppy disk
 ```

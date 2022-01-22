@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Verify Disk
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -15,15 +15,24 @@
 # Dependencies:
 # -------------
 # - adapter (included in libs folder)
+# - disktools (included in libs folder)
 #
 # Operating Instructions:
 # -----------------------
-# - python disk-verify.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+# - Set the serial mode switch on your DiskBuddy64 adapter to "UART"
+# - Connect the adapter to your floppy disk drive(s)
+# - Connect the adapter to a USB port of your PC
+# - Switch on your floppy disk drive(s)
+# - Execute this skript:
+#
+# - python disk-verify.py [-h] [-b] [-e ERRORS] [-d {8,9,10,11}] -f FILE
 #   optional arguments:
 #   -h, --help            show help message and exit
 #   -b, --bamonly         only verify blocks with BAM entry (recommended)
+#   -e, --errors          tolerated errors until comparison is aborted (default=0)
 #   -d, --device          device number of disk drive (8-11, default=8)
 #   -f FILE, --file FILE  d64 file to compare the disk with
+#
 # - Example: python disk-verify.py -b -f game.d64
 
 
@@ -32,24 +41,18 @@ import os
 import time
 import argparse
 from libs.adapter import *
+from libs.disktools import *
 
 
-# ===================================================================================
-# Main Function
-# ===================================================================================
-
-
-# Variables
-tracks  = 35
-bamcopy = 0
-ramaddr = 0x0500
-device  = 8
+# Constants and variables
+FASTREAD_BIN = 'libs/fastread.bin'
+tracks = 35
 
 
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.0')
+print('DiskBuddy64 - Python Command Line Interface v1.1')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -61,65 +64,75 @@ parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=
 parser.add_argument('-f', '--file', required=True, help='d64 file to compare the disk with')
 
 args = parser.parse_args(sys.argv[1:])
-if args.bamonly:  bamcopy  = 1
-device   = args.device
-filename = args.file
+bamcopy   = args.bamonly
+device    = args.device
+filename  = args.file
 
 
 # Establish serial connection
 print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
-
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-
-print('Adapter found on port', diskbuddy.port)
+print('Adapter found on port:', diskbuddy.port)
 print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present
-if not diskbuddy.checkdevice(device):
+# Check if IEC device ist present and supported
+magic = diskbuddy.detectdevice(device)
+if not device_is_known(magic): 
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
+print('IEC device', device, 'found:', IEC_DEVICES[magic])
+if not device_is_supported(magic):
+    diskbuddy.close()
+    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast loader to disk drive RAM
 print('Uploading fast loader ...')
-if diskbuddy.uploadbin(ramaddr, 'libs/fastread.bin') > 0:
+if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
     diskbuddy.close()
-    sys.exit(1)
+    raise AdpError('Failed to upload fast loader')
 
 
-# Create output file
+# Open comparison file
 print('Opening', filename, 'for verifying ...')
 try:
+    filesize = os.stat(filename).st_size
     f = open(filename, 'rb')
 except:
     diskbuddy.close()
-    raise AdpError('Could not open ' + filename)
+    raise AdpError('Failed to open ' + filename)
 
 
-# Read BAM if necessary
-if bamcopy > 0:
-    print('Verifying BAM ...')
-    dbam = BAM(diskbuddy.readblock(ramaddr, 18, 0))
-    if not dbam.bam:
-        f.close()
-        diskbuddy.close()
-        sys.exit(1)
-    f.seek(getfilepointer(18, 0))
-    fbam = BAM(f.read(256))
-    if not dbam.bam == fbam.bam:
-        f.close()
-        diskbuddy.close()
-        raise AdpError('BAM mismatch')
+# Check comparison file
+if not filesize == getfilepointer(tracks + 1, 0):
+    f.close()
+    diskbuddy.close()
+    raise AdpError('Wrong file size')
+
+
+# Read and verify BAM
+print('Verifying BAM ...')
+dbam = BAM(diskbuddy.readblock(18, 0))
+if not dbam.bam:
+    f.close()
+    diskbuddy.close()
+    raise AdpError('Failed to read the BAM')
+f.seek(getfilepointer(18, 0))
+fbam = BAM(f.read(256))
+if not dbam.bam == fbam.bam:
+    f.close()
+    diskbuddy.close()
+    raise AdpError('BAM mismatch')
 
 
 # Read disk
 print('Verifying disk ...')
-errors    = 0
-verified  = 0
-starttime = time.time()
+errors     = 0
+verified   = 0
+starttime  = time.time()
 for track in range(1, tracks + 1):
     secnum      = getsectors(track)
     interleave  = secnum // 2;
@@ -127,7 +140,7 @@ for track in range(1, tracks + 1):
     seclist     = []
 
     # Cancel sectors without BAM entry
-    if bamcopy > 0 and track < 36:
+    if bamcopy and track < 36:
         for x in range(secnum):
             if dbam.blockisfree(track, x): sectors.remove(x)
 
@@ -147,10 +160,10 @@ for track in range(1, tracks + 1):
     # Send command to disk drive, if there's something to read on track
     seclen = len(seclist)
     if seclen > 0:
-        if diskbuddy.startfastiec('r', ramaddr, track, seclist) > 0:
+        if diskbuddy.startfastread(track, seclist) > 0:
             f.close()
             diskbuddy.close()
-            sys.exit(1)
+            raise AdpError('Failed to start disk operation')
 
     # Read track
     trackline = ('Track ' + str(track) + ':').ljust(10) + '['
@@ -161,12 +174,12 @@ for track in range(1, tracks + 1):
     for sector in seclist:
         f.seek(getfilepointer(track, sector))
         fblock = f.read(256)
-        block  = diskbuddy.read(256)
+        block  = diskbuddy.getblock()
         if not block:
             print('')
             f.close()
             diskbuddy.close()
-            raise AdpError('Reading from disk failed')
+            raise AdpError('Failed to read from disk')
         if fblock == block:
             sys.stdout.write('#')
         else:
@@ -184,7 +197,7 @@ print('Done.')
 print('Duration:', round(duration), 'seconds')
 print('Verified:', verified, 'sectors')
 print('Errors:  ', errors)
-if bamcopy == 0 and errors > 0:
+if not bamcopy and errors > 0:
     print('Use --bamonly and verify again!')
 print('')
 f.close()

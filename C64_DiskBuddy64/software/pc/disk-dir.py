@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Directory
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -15,9 +15,16 @@
 # Dependencies:
 # -------------
 # - adapter (included in libs folder)
+# - disktools (included in libs folder)
 #
 # Operating Instructions:
 # -----------------------
+# - Set the serial mode switch on your DiskBuddy64 adapter to "UART"
+# - Connect the adapter to your floppy disk drive(s)
+# - Connect the adapter to a USB port of your PC
+# - Switch on your floppy disk drive(s)
+# - Execute this skript:
+#
 # - python disk-dir.py [-h] [-d {8,9,10,11}]
 #   optional arguments:
 #   -h, --help                  show help message and exit
@@ -27,16 +34,11 @@
 import sys
 import argparse
 from libs.adapter import *
-
-# Variables
-ramaddr = 0x0500
-device  = 8
-filetypes = ['DEL', 'SEQ', 'PRG', 'USR', 'REL']
+from libs.disktools import *
 
 
-# ===================================================================================
-# Main Function
-# ===================================================================================
+# Constants
+FASTREAD_BIN = 'libs/fastread.bin'
 
 
 # Get and check command line arguments
@@ -59,16 +61,16 @@ if not diskbuddy.checkdevice(device):
 
 
 # Upload fast loader to disk drive RAM
-if diskbuddy.uploadbin(ramaddr, 'libs/fastread.bin') > 0:
+if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
     diskbuddy.close()
-    sys.exit(1)
+    raise AdpError('Failed to upload fast loader')
 
 
 # Read BAM
-dbam = BAM(diskbuddy.readblock(ramaddr, 18, 0))
+dbam = BAM(diskbuddy.readblock(18, 0))
 if not dbam.bam:
     diskbuddy.close()
-    sys.exit(1)
+    raise AdpError('Failed to read the BAM')
 
 
 # Print disk title
@@ -84,10 +86,10 @@ blocksfree = dbam.getblocksfree()
 track  = 18
 sector = 1
 while track > 0:
-    block = diskbuddy.readblock(ramaddr, track, sector)
+    block = diskbuddy.readblock(track, sector)
     if not block:
       diskbuddy.close()
-      sys.exit(1)
+      raise AdpError('Failed to read directory')
 
     track  = block[0]
     sector = block[1]
@@ -96,10 +98,10 @@ while track > 0:
         line  = str(int.from_bytes(block[ptr+0x1E:ptr+0x20], byteorder='little')).ljust(5)
         line += '\"'
         line += (PETtoASC(PETdelpadding(block[ptr+0x05:ptr+0x15])) + '\"').ljust(19)
-        line += filetypes[block[ptr+0x02] & 0x07]
+        line += FILETYPES[block[ptr+0x02] & 0x07]
         print(line.upper())
         ptr  += 0x20
-    
+
 
 # Finish all up
 print(blocksfree, 'BLOCKS FREE.')

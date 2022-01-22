@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskBuddy64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.0
+// Version:   v1.1
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -77,7 +77,7 @@
 #define CMD_BUF_LEN   64          // command buffer length (don't change)
 
 // Identifiers
-#define VERSION     "1.0"         // version number sent via serial if requested
+#define VERSION     "1.1"         // version number sent via serial if requested
 #define IDENT       "DiskBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -241,6 +241,13 @@ void IEC_init(void) {
 #define IEC_DATA_isHigh()    pinRead(PIN_DATA)      // check if DATA is HIGH / FALSE
 #define IEC_DATA_isLow()     !pinRead(PIN_DATA)     // check if DATA is LOW  / TRUE
 
+// Release all control lines
+void IEC_release(void) {
+  IEC_ATN_setHigh();                                // release ATN line
+  IEC_CLK_setHigh();                                // release CLK line
+  IEC_DATA_setHigh();                               // release DATA line
+}
+
 // Send a data byte
 uint8_t IEC_sendByte(uint8_t data) {
   IEC_CLK_setHigh();                                // declare 'READY TO SEND'
@@ -321,9 +328,7 @@ uint8_t IEC_readByte(void) {
 uint8_t IEC_ATN_start(void) {
   IEC_ATN_setLow();                                 // declare 'ATTENTION!'
   IEC_CLK_setLow();                                 // pull CLK line true
-  _delay_us(60);                                    // wait a bit
-  uint8_t cnt = 251;                                // waiting counter in 4us steps
-  while(--cnt && IEC_DATA_isHigh()) _delay_us(4);   // wait 'ATN RESPONSE TIME' (up to 1000us)
+  _delay_us(1000);                                  // wait 'ATN RESPONSE TIME' (1000us)
   if(IEC_DATA_isHigh()) {                           // no response?
     IEC_error = 1;                                  // raise error
     IEC_ATN_setHigh(); IEC_CLK_setHigh();           // release control lines
@@ -340,9 +345,9 @@ void IEC_ATN_stop(void) {
 // Perform turnaround -> Disk Drive becomes talker, ATtiny becomes listener
 void IEC_turnaround(void) {
   IEC_DATA_setLow();                                // take over DATA line
-  IEC_CLK_setHigh();                                // declare 'I am listener now'
+  IEC_CLK_setHigh();                                // declare 'I AM LISTENER NOW'
   _delay_us(20);
-  while(IEC_CLK_isHigh());                          // wait for listener 'I am talker now'
+  while(IEC_CLK_isHigh());                          // wait for listener 'I AM TALKER NOW'
 }
 
 // ===================================================================================
@@ -402,7 +407,7 @@ uint8_t IEC_untalk(void) {
 // Write a string to IEC bus
 uint8_t IEC_sendStr(const uint8_t* str) {
   while(*str && !IEC_error) IEC_sendByte(*str++);   // send each character of string
-  if(!IEC_error) IEC_sendLast(0x0D);                // send 'return' char
+  if(!IEC_error) IEC_sendLast(0x0D);                // send 'RETURN' char
   return IEC_error;                                 // return error state
 }
 
@@ -410,8 +415,7 @@ uint8_t IEC_sendStr(const uint8_t* str) {
 uint8_t IEC_readRaw(void) {
   IEC_EOI = 0;                                      // clear EOI flag
   while(!IEC_EOI && !IEC_error) {                   // while bytes available and no error
-    uint8_t data = IEC_readByte();                  // read data byte from device
-    UART_write(data);                               // send data byte via UART to PC
+    UART_write(IEC_readByte());                     // transfer data byte IEC -> UART
   }
   return IEC_error;                                 // return error state
 }
@@ -427,7 +431,7 @@ uint8_t IEC_readBytes(void) {
   return IEC_error;                                 // return error state
 }
 
-// Send command buffer via IEC bus
+// Send buffer via IEC bus
 uint8_t IEC_writeBuffer(uint8_t* buf, uint8_t count) {
   while(count && !IEC_error) {                      // until no more bytes or error
     if(--count) IEC_sendByte(*buf++);               // send data byte buffer -> IEC
@@ -445,7 +449,7 @@ uint8_t IEC_writeBuffer(uint8_t* buf, uint8_t count) {
 // Read byte via fast IEC
 uint8_t IEC_readAsynch(void) {
   uint8_t data = 0;                                 // preload data byte
-  while(IEC_CLK_isHigh());                          // wait for 'ready to send'
+  while(IEC_CLK_isHigh());                          // wait for 'READY TO SEND BYTE'
   __builtin_avr_delay_cycles(16 * MFCYCLES);        // wait 16 floppy cycles
   if(IEC_CLK_isLow())  data |= 0b10000000;          // get data bit 7
   if(IEC_DATA_isLow()) data |= 0b00100000;          // get data bit 5
@@ -458,7 +462,7 @@ uint8_t IEC_readAsynch(void) {
   __builtin_avr_delay_cycles(8 * MFCYCLES - 4);     // wait 8 floppy cycles
   if(IEC_CLK_isLow())  data |= 0b00000100;          // get data bit 2
   if(IEC_DATA_isLow()) data |= 0b00000001;          // get data bit 0
-  while(IEC_CLK_isLow());                           // wait for CLK low
+  while(IEC_CLK_isLow());                           // wait for CLK released
   return data;                                      // return received data byte
 }
 
@@ -466,16 +470,18 @@ uint8_t IEC_readAsynch(void) {
 void IEC_readBlock(void) {
   uint8_t cnt = 0;                                  // counter variable
   WDT_reset();                                      // reset watchdog
-  do { 
-    UART_send(IEC_readAsynch());                    // data byte IEC -> UART
+  do {                                              // transfer block data
+    uint8_t data = IEC_readAsynch();                // read data byte from IEC
+    UART_send(data);                                // send data byte via UART
+    if(!cnt) IEC_EOI = !data;                       // end of file flag
   } while(--cnt);                                   // loop 256 times
 }
 
 // Write byte via fast IEC
 void IEC_writeAsynch(uint8_t data) {
-  while(IEC_CLK_isHigh()) buf_check();              // wait for 'ready to receive'
-  IEC_DATA_setLow();                                // declare  'ready to send'
-  while(IEC_CLK_isLow()) buf_check();               // wait for 'lets go'
+  while(IEC_CLK_isHigh()) buf_check();              // wait for 'READY TO RECEIVE'
+  IEC_DATA_setLow();                                // declare  'READY TO SEND'
+  while(IEC_CLK_isLow()) buf_check();               // wait for 'LETS GO'
   IEC_CLK_setHigh(); IEC_DATA_setHigh();            // initially '0' - bits
   if(data & 0b00001000) IEC_CLK_setLow();           // set data bit 3
   if(data & 0b00000010) IEC_DATA_setLow();          // set data bit 1
@@ -519,8 +525,8 @@ void IEC_writeBlock(void) {
 void IEC_getStatus(void) {
   IEC_talk(IEC_device, 0x0F);                       // device should talk on channel 15
   IEC_readRaw();                                    // read from device and write via UART
-  UART_write('\n');                                 // send 'END OF MESSAGE' via UART
   IEC_untalk();                                     // send 'UNTALK'
+  UART_write('\n');                                 // send 'END OF MESSAGE' via UART
 }
 
 // Send command from buffer to device via IEC
@@ -547,7 +553,15 @@ void IEC_writeTrack(void) {
   UART_write(0);                                    // send 'job finished'
 }
 
-// <length>"M-E"<addrLow><addrHigh><Tracks+1><Orig><Bump><ShowProgress><Demagn><Verify>0:<Name>,<ID1><ID2>
+// <length>"M-E"<addrLow><addrHigh><startTrack><startSector>
+void IEC_loadFile(void) {
+  if(IEC_sendCommand()) return;                     // send command to drive (return if error)
+  do {
+    IEC_readBlock();                                // read sector and send data via UART
+  } while(!IEC_error && !IEC_EOI);                  // repeat until error or end of file
+}
+
+// <length>"M-E"<addrLow><addrHigh><Track+1><Orig><Bump><ShowProgress><Demagn><Verify>0:<Name>,<ID1><ID2>
 void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   uint8_t cnt = CMD_buf[6];                         // get number of tracks
@@ -559,24 +573,31 @@ void IEC_format(void) {
   }
 }
 
+// <length>"M-R"<addrLow><addrHigh><length>
+void IEC_readMem(void) {
+  if(IEC_sendCommand()) return;                     // send command to drive (return if error)
+  IEC_talk(IEC_device, 0x0F);                       // device should talk on channel 15
+  IEC_readRaw();                                    // read from device and write via UART
+  IEC_untalk();                                     // send 'UNTALK'
+}
+
 // ===================================================================================
 // Main Function
 // ===================================================================================
 
 // List of low-level commands
 enum {NOP, LISTEN, UNLISTEN, TALK, UNTALK, READBYTE, READBYTES, READRAW, 
-      WRITEBYTE, WRITELAST, WRITEBYTES, READFAST, WRITEFAST, GETDEVICE, SETDEVICE, 
-      GETEOI, SETEOI, CLREOI, GETATN, SETATN, RELATN,
-      GETCLK, SETCLK, RELCLK, GETDATA, SETDATA, RELDATA};
+      WRITEBYTE, WRITELAST, WRITEBYTES, READFAST, WRITEFAST, OPEN, CLOSE,
+      RESET, RELEASE, GETDEVICE, SETDEVICE, GETEOI, SETEOI, CLREOI,
+      GETATN, SETATN, RELATN, GETCLK, SETCLK, RELCLK, GETDATA, SETDATA, RELDATA};
       
 // Main function
 int main(void) {
   // Setup
   _PROTECTED_WRITE(CLKCTRL.MCLKCTRLB, 0);             // set clock frequency to 16 MHz
   UART_init();                                        // setup serial communication
-  IEC_init();                                         // setup iec interface
   WDT_init();                                         // setup watchdog timer
-  sei();                                              // enable global interrupts
+  IEC_init();                                         // setup IEC interface
 
   // Loop
   while(1) {
@@ -588,11 +609,14 @@ int main(void) {
       // High-level commands
       case 'i':         UART_println(IDENT); break;   // send identification string
       case 'v':         UART_println(VERSION); break; // send version number
-      case 'c':         IEC_sendCommand(); break;     // send command string
-      case 's':         IEC_getStatus(); break;       // get status
       case 'r':         IEC_readTrack(); break;       // read track from disk
       case 'w':         IEC_writeTrack(); break;      // write track to disk
+      case 'l':         IEC_loadFile(); break;        // load a file from disk
+      case 's':         break;                        // save a file to disk
       case 'f':         IEC_format(); break;          // format disk
+      case 'm':         IEC_readMem(); break;         // read memory
+      case 'c':         IEC_sendCommand(); break;     // send command to IEC device
+      case 't':         IEC_getStatus(); break;       // get status from IEC device
 
       // Low-level commands
       case LISTEN:      IEC_listen(IEC_device, 0x0F); break;            //  1 01
@@ -607,20 +631,24 @@ int main(void) {
       case WRITEBYTES:  IEC_writeBuffer(CMD_buf+1, CMD_buf[0]); break;  // 10 0A
       case READFAST:    IEC_readBlock(); break;                         // 11 0B
       case WRITEFAST:   IEC_writeBlock(); break;                        // 12 0C
-      case GETDEVICE:   UART_write(IEC_device); break;                  // 13 0D
-      case SETDEVICE:   IEC_device = CMD_buf[1]; break;                 // 14 0E
-      case GETEOI:      UART_write(IEC_EOI); break;                     // 15 0F
-      case SETEOI:      IEC_EOI = 1; break;                             // 16 10
-      case CLREOI:      IEC_EOI = 0; break;                             // 17 11
-      case GETATN:      UART_write(pinRead(PIN_ATN) == 0); break;       // 18 12
-      case SETATN:      IEC_ATN_setLow(); break;                        // 19 13
-      case RELATN:      IEC_ATN_setHigh(); break;                       // 20 14
-      case GETCLK:      UART_write(pinRead(PIN_CLK) == 0); break;       // 21 15
-      case SETCLK:      IEC_CLK_setLow(); break;                        // 22 16
-      case RELCLK:      IEC_CLK_setHigh(); break;                       // 23 17
-      case GETDATA:     UART_write(pinRead(PIN_DATA) == 0); break;      // 24 18
-      case SETDATA:     IEC_DATA_setLow(); break;                       // 25 19
-      case RELDATA:     IEC_DATA_setHigh(); break;                      // 26 1A
+      case OPEN:        break;                                          // 13 0D
+      case CLOSE:       break;                                          // 14 0E
+      case RESET:       break;                                          // 15 0F
+      case RELEASE:     IEC_release(); break;                           // 16 10
+      case GETDEVICE:   UART_write(IEC_device); break;                  // 17 11
+      case SETDEVICE:   IEC_device = CMD_buf[1]; break;                 // 18 12
+      case GETEOI:      UART_write(IEC_EOI); break;                     // 19 13
+      case SETEOI:      IEC_EOI = 1; break;                             // 20 14
+      case CLREOI:      IEC_EOI = 0; break;                             // 21 15
+      case GETATN:      UART_write(pinRead(PIN_ATN) == 0); break;       // 22 16
+      case SETATN:      IEC_ATN_setLow(); break;                        // 23 17
+      case RELATN:      IEC_ATN_setHigh(); break;                       // 24 18
+      case GETCLK:      UART_write(pinRead(PIN_CLK) == 0); break;       // 25 19
+      case SETCLK:      IEC_CLK_setLow(); break;                        // 26 1A
+      case RELCLK:      IEC_CLK_setHigh(); break;                       // 27 1B
+      case GETDATA:     UART_write(pinRead(PIN_DATA) == 0); break;      // 28 1C
+      case SETDATA:     IEC_DATA_setLow(); break;                       // 29 1D
+      case RELDATA:     IEC_DATA_setHigh(); break;                      // 30 1E
       default:          break;
     }
     if(cmd <= RELDATA) UART_write(IEC_error);

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Adapter Library
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -10,18 +10,17 @@
 #
 # Description:
 # ------------
-# Adapter Library - Basic functions for the TapeBuddy64
+# Adapter Library - Basic functions for the DiskBuddy64
 #
-# Reference:
-# ----------
-# - PETSCII/ASCII table from https://github.com/AndiB/PETSCIItoASCII
+# References:
+# -----------
+# - IEC device detection adapted from OpenCBM: https://github.com/OpenCBM/OpenCBM
 #
 # Dependencies:
 # -------------
 # - pySerial
 
 
-import os
 import sys
 from serial import Serial
 from serial.tools.list_ports import comports
@@ -31,204 +30,204 @@ from serial.tools.list_ports import comports
 # Adapter Class - Basic Communication with the Device via USB to Serial Converter
 # ===================================================================================
 
-
 class Adapter(Serial):
-    def __init__(self):
+    def __init__(self, ident='DiskBuddy64'):
         super().__init__(baudrate = 460800, timeout = 1, write_timeout = 1)
-        self.identify()
-
+        self.identify(ident)
 
     # Identify the com port of the adapter
-    def identify(self):
+    def identify(self, ident):
         vid = '1A86'
         pid = '7523'
-        did = 'DiskBuddy64'
         for p in comports():
             if vid and pid in p.hwid:
                 self.port = p.device
-
                 try:
                     self.open()
                 except:
                     continue
-
                 try:
-                    self.sendcommand('i')
+                    self.sendcommand(CMD_GETIDENT)
                     data = self.getline()
                 except:
                     self.close()
                     continue
-
-                if data == did:
+                if data == ident:
                     break
                 else:
                     self.close()
-
 
     # Send a command to the adapter
     def sendcommand(self, cmd, argbytes = None):
         self.write(cmd.encode())
         if argbytes:
-            self.write(len(argbytes).to_bytes(1, byteorder='little'))
+            self.write([len(argbytes)])
             self.write(argbytes)
         else:
-            self.write(b'\x00')
-
+            self.write([0])
 
     # Get a reply string from the adapter
     def getline(self):
-        return self.readline().decode().rstrip('\r\n')
-
+        return self.readline().decode().rstrip('\r\n').lstrip('\r\n')
 
     # Get firmware version of the adapter
     def getversion(self):
-        self.sendcommand('v')
-        version = self.getline()
-        return version
+        self.sendcommand(CMD_GETVERSION)
+        return self.getline()
 
 
-    # Upload binary to disk drive RAM
-    def uploadbin(self, ramaddr, filename):
-        try:
-            filesize = os.stat(filename).st_size
-        except:
-            sys.stderr.write('ERROR: ' + filename + ' not found\n')
-            return 1
+    # ------------------------------------------------------------------------------
+    # Data Layer for IEC Stack
+    # ------------------------------------------------------------------------------
 
-        try:
-            f = open(filename, 'rb')
-        except:
-            sys.stderr.write('ERROR: Could not open ' + filename + '\n')
-            return 1
-
-        while filesize > 0:
-            if filesize > 32:   length = 32
-            else:               length = filesize
-            argstr  = b'M-W'
-            argstr += ramaddr.to_bytes(2, byteorder='little')
-            argstr += length.to_bytes(1, byteorder='little')
-            argstr += f.read(length)
-            self.sendcommand('c', argstr)
-            reply = self.read(1)
-            if not reply or reply[0] > 0:
-                f.close()
-                sys.stderr.write('ERROR: Uploading ' + filename + ' failed\n')
-                return 1
-            ramaddr  += length
-            filesize -= length
-        f.close()
-        return 0
-
-
-    # Read single block from disk
-    def readblock(self, ramaddr, track, sector):
-        seclist = sector.to_bytes(1, byteorder='little')
-        if self.startfastiec('r', ramaddr, track, seclist) > 0:
-            return None
-        self.timeout = 4
-        block = self.read(256)
-        self.timeout = 1
-        if not block or not len(block) == 256:
-            sys.stderr.write('ERROR: Reading from the disk failed\n')
-            return None
-        return block
-
-
-    # Start reading/writing list of sectors from/to a single track
-    def startfastiec(self, cmd, ramaddr, track, seclist):
-        argstr  = b'M-E'
-        argstr += ramaddr.to_bytes(2, byteorder='little')
-        argstr += track.to_bytes(1, byteorder='little')
-        argstr += len(seclist).to_bytes(1, byteorder='little')
-        for x in seclist: argstr += x.to_bytes(1, byteorder='little')
-        self.sendcommand(cmd, argstr)
+    # Send IEC command
+    def iec_command(self, adpcmd, ieccmd=None):
+        self.sendcommand(adpcmd, ieccmd)
         reply = self.read(1)
         if not reply or reply[0] > 0:
-            sys.stderr.write('ERROR: Sending command failed\n')
             return 1
         return 0
-
-
-    # Start formating disk
-    def startformat(self, ramaddr, tracks, bump, demag, diskname, diskident):
-        argstr  = b'M-E'
-        argstr += (ramaddr + 3).to_bytes(2, byteorder='little')
-        argstr += (tracks + 1).to_bytes(1, byteorder='little')
-        argstr += b'\x01'
-        argstr += bump.to_bytes(1, byteorder='little')
-        argstr += b'\x01'
-        argstr += demag.to_bytes(1, byteorder='little')
-        argstr += b'\x000:'
-        argstr += (diskname + ',' + diskident).encode()
-        self.sendcommand('f', argstr)
-        reply = self.read(1)
-        if not reply or reply[0] > 0:
-            sys.stderr.write('ERROR: Sending command failed\n')
-            return 1
-        return 0
-
 
     # Set IEC device number
     def setdevice(self, device):
-        argstr = device.to_bytes(1, byteorder='little')
-        self.sendcommand('\x0E', argstr)
-        reply = self.read(1)
-        if not reply or reply[0] > 0:
-            return 1
-        return 0
+        return self.iec_command(CMD_SETDEVICE, bytes([device]))
 
-
-    # Check if IEC device is present
+    # Set IEC device number und read status string
     def checkdevice(self, device):
         if self.setdevice(device) > 0:
             return None
-        self.sendcommand('s')
-        response = self.getline()
-        return response
+        return self.getstatus()
+
+    # Detect device (returns "magic number" of identified device)
+    def detectdevice(self, device):
+        if self.setdevice(device) > 0:
+            return None
+        memtest = self.readmemory(0xFF40, 2)
+        if not memtest or not len(memtest) == 2:
+            return None
+        magic = int.from_bytes(memtest, byteorder='little')
+        if magic == 0xAAAA:
+            memtest = self.readmemory(0xFFFE, 2)
+            temp = int.from_bytes(memtest, byteorder='little')
+            if not temp == 0xFE67:
+                magic = temp
+        return magic
+
+    # Get status string from device
+    def getstatus(self):
+        self.sendcommand(CMD_GETSTATUS)
+        return self.getline()
+
+    # Read from memory of IEC device
+    def readmemory(self, addr, size):
+        data = bytes()
+        while size > 0:
+            if size > 255:   length = 255
+            else:            length = size
+            ieccmd  = b'M-R'
+            ieccmd += addr.to_bytes(2, byteorder='little')
+            ieccmd += bytes([length])
+            if self.iec_command(CMD_READMEM, ieccmd) > 0:
+                return None
+            data += self.read(length)
+            self.read(1)
+            addr += length
+            size -= length
+        return data
+
+    # Write to memory of IEC device
+    def writememory(self, addr, data):
+        size = len(data)
+        while size > 0:
+            if size > 32:   length = 32
+            else:           length = size
+            ieccmd  = b'M-W'
+            ieccmd += addr.to_bytes(2, byteorder='little')
+            ieccmd += bytes([length])
+            ieccmd += data[:length]
+            if self.iec_command(CMD_IEC_CMD, ieccmd) > 0:
+                return 1
+            data  = data[length:]
+            addr += length
+            size -= length
+        return 0
 
 
-# ===================================================================================
-# BAM Class - Working with the BAM
-# ===================================================================================
+    # ------------------------------------------------------------------------------
+    # Fast IEC Communication
+    # ------------------------------------------------------------------------------
 
+    # Upload binary to disk drive RAM
+    def uploadbin(self, loadaddr, filename):
+        try:
+            f = open(filename, 'rb')
+        except:
+            sys.stderr.write('ERROR: Failed to open ' + filename + '\n')
+            return 1
 
-class BAM:
-    def __init__(self, bam):
-        self.bam = bam
+        reply = self.writememory(loadaddr, f.read())
+        f.close()
+        return reply
 
-    def getdiskname(self):
-        return PETtoASC(PETdelpadding(self.bam[0x90:0xA0]))
+    # Read single sector from disk and return block data
+    def readblock(self, track, sector):
+        seclist = bytes([sector])
+        if self.startfastread(track, seclist) > 0:
+            return None
+        self.timeout = 4
+        block = self.getblock()
+        self.timeout = 1
+        return block
 
-    def getdiskident(self):
-        return PETtoASC(self.bam[0xA2:0xA4])
+    # Get block data via fast IEC
+    def getblock(self):
+        block = self.read(256)
+        if not block or not len(block) == 256:
+            return None
+        return block
 
-    def getheader(self):
-        header  = '0    \"'
-        header += (self.getdiskname() + '\"').ljust(19)
-        header += self.getdiskident().ljust(3)
-        header += PETtoASC(self.bam[0xA5:0xA7])
-        return header.upper()
+    # Send block data via fast IEC
+    def sendblock(self, data):
+        counter = 256;
+        while counter > 0:
+            requested = self.read(1);
+            if not requested:
+                return 1
+            size = requested[0]
+            if not self.write(data[:size]) == size:
+                return 1
+            data = data[size:]
+            counter -= size
+        return 0
 
-    def getblocksfree(self):
-        blocksfree = 0
-        for x in range(0x04, 0x90, 0x04): 
-            if not x == 0x48: blocksfree += self.bam[x]
-        return blocksfree
+    # Start reading list of sectors from a single track
+    def startfastread(self, track, seclist):
+        ieccmd  = b'M-E'
+        ieccmd += FASTREAD_STARTADDR.to_bytes(2, byteorder='little')
+        ieccmd += bytes([track, len(seclist)])
+        ieccmd += bytes(seclist)
+        return self.iec_command(CMD_READTRACK, ieccmd)
 
-    def getallocated(self):
-        allocated = 0
-        for x in range(0x04, 0x90, 0x04): 
-            allocated += (getsectors(x // 4) - self.bam[x])
-        return allocated
+    # Start writing list of sectors to a single track using fastwrite
+    def startfastwrite(self, track, seclist):
+        ieccmd  = b'M-E'
+        ieccmd += FASTWRITE_STARTADDR.to_bytes(2, byteorder='little')
+        ieccmd += bytes([track, len(seclist)])
+        ieccmd += bytes(seclist)
+        return self.iec_command(CMD_WRITETRACK, ieccmd)
 
-    def blockisfree(self, track, sector):
-        return self.bam[4 * track + 1 + (sector // 8)] & (1 << (sector % 8)) > 0
+    # Start formating disk using fastformat
+    def startfastformat(self, tracks, bump, demag, diskname, diskident):
+        ieccmd  = b'M-E'
+        ieccmd += FASTFORMAT_STARTADDR.to_bytes(2, byteorder='little')
+        ieccmd += bytes([tracks + 1, 0x01, bump, 0x01, demag, 0x00])
+        ieccmd += b'0:' + (diskname + ',' + diskident).encode()
+        return self.iec_command(CMD_FORMATDISK, ieccmd)
 
 
 # ===================================================================================
 # Error Class - Raise an Error
 # ===================================================================================
-
 
 class AdpError(Exception):
     def __init__(self, msg='Something went wrong'):
@@ -238,92 +237,112 @@ class AdpError(Exception):
         
 
 # ===================================================================================
-# Basic Functions for the TapeBuddy64
+# IEC Devices
 # ===================================================================================
 
+# Check if device is in database
+def device_is_known(magic):
+    if magic is None:
+        return False
+    return magic in IEC_DEVICES
 
-# Get number of sectors in track
-def getsectors(track):
-    if track <  1:  return 0
-    if track < 18:  return 21
-    if track < 25:  return 19
-    if track < 31:  return 18
-    if track < 41:  return 17
-    return 0
+# Check if device is supported
+def device_is_supported(magic):
+    if magic is None:
+        return False
+    return magic in IEC_DEVICES_SPT
 
-# Get pointer to track/sector in D64 file
-def getfilepointer(track, sector):
-    if track == 1: return sector * 256
-    pointer = 0
-    for x in range(1, track):
-        pointer += 256 * getsectors(x)
-    return pointer + 256 * sector
+# Device dictionary (adapted from https://github.com/OpenCBM/OpenCBM)
+IEC_DEVICES = {
+    0xFEB6: 'CBM 2031',
+    0xAAAA: 'CBM 1540 or 1541',
+    0xF00F: 'CBM 1541-II',
+    0xCD18: 'CBM 1541C',
+    0x10CA: 'DolphinDOS 1541',
+    0x6F10: 'SpeedDOS 1541',
+    0x2710: 'ProfDOS 1541',
+    0x8085: 'JiffyDOS 1541',
+    0xAEEA: '64\'er DOS 1541',
+    0x180D: 'Turbo 1541',
+    0x094C: 'PrologicDOS 1541',
+    0xFED7: 'CBM 1570',
+    0x02AC: 'CBM 1571',
+    0x01BA: 'CBM 1581',
+    0x32F0: 'CBM 3040',
+    0xC320: 'CBM 4040',
+    0x20F8: 'CBM 4040',
+    0xF2E9: 'CBM 8050',
+    0xC866: 'CBM 8250',
+    0xC611: 'CBM 8250'
+}
 
-
-# Convert PETSCII bytes to ASCII string
-def PETtoASC(line):
-    result = ''
-    for x in line:
-        result += chr(PETtoASCtable[x])
-    return result
-
-
-# Convert ASCII string to PETSCII string
-def ASCtoPET(line):
-    result = ''
-    for x in line:
-        result += chr(ASCtoPETtable[ord(x)])
-    return result
-
-# Delete $A0 padding in PETSCII bytes
-def PETdelpadding(line):
-    result = b''
-    for x in line:
-        if not x == 0xA0:
-              result += x.to_bytes(1, byteorder='little')
-    return result
+# List of supported devices (this has to be checked!!!)
+IEC_DEVICES_SPT = {
+    0xAAAA, 0xF00F, 0xCD18, 0x10CA, 0x6F10, 0x2710, 0x8085, 0xAEEA, 0x180D, 0x094C
+}
 
 
 # ===================================================================================
-# PETSCII to ASCII Conversion Tables - from https://github.com/AndiB/PETSCIItoASCII
+# Adapter Constants
 # ===================================================================================
 
-
-# PETSCII to ASCII conversion table
-PETtoASCtable = [
-    0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x14,0x09,0x0d,0x11,0x93,0x0a,0x0e,0x0f,
-    0x10,0x0b,0x12,0x13,0x08,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
-    0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,
-    0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,
-    0x40,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6a,0x6b,0x6c,0x6d,0x6e,0x6f,
-    0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7a,0x5b,0x5c,0x5d,0x5e,0x5f,
-    0xc0,0xc1,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,0xc8,0xc9,0xca,0xcb,0xcc,0xcd,0xce,0xcf,
-    0xd0,0xd1,0xd2,0xd3,0xd4,0xd5,0xd6,0xd7,0xd8,0xd9,0xda,0xdb,0xdc,0xdd,0xde,0xdf,
-    0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8a,0x8b,0x8c,0x8d,0x8e,0x8f,
-    0x90,0x91,0x92,0x0c,0x94,0x95,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,0x9d,0x9e,0x9f,
-    0xa0,0xa1,0xa2,0xa3,0xa4,0xa5,0xa6,0xa7,0xa8,0xa9,0xaa,0xab,0xac,0xad,0xae,0xaf,
-    0xb0,0xb1,0xb2,0xb3,0xb4,0xb5,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf,
-    0x60,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,0x4e,0x4f,
-    0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a,0x7b,0x7c,0x7d,0x7e,0x7f,
-    0xa0,0xa1,0xa2,0xa3,0xa4,0xa5,0xa6,0xa7,0xa8,0xa9,0xaa,0xab,0xac,0xad,0xae,0xaf,
-    0xb0,0xb1,0xb2,0xb3,0xb4,0xb5,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf]
+FASTREAD_LOADADDR    = 0x0500
+FASTREAD_STARTADDR   = 0x0500
+FASTWRITE_LOADADDR   = 0x0500
+FASTWRITE_STARTADDR  = 0x0500
+FASTLOAD_LOADADDR    = 0x0500
+FASTLOAD_STARTADDR   = 0x0500
+FASTSAVE_LOADADDR    = 0x0500
+FASTSAVE_STARTADDR   = 0x0500
+FASTFORMAT_LOADADDR  = 0x0500
+FASTFORMAT_STARTADDR = 0x0503
 
 
-# ASCII to PETSCII conversion table
-ASCtoPETtable = [
-    0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x14,0x20,0x0d,0x11,0x93,0x0a,0x0e,0x0f,
-    0x10,0x0b,0x12,0x13,0x08,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
-    0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,
-    0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,
-    0x40,0xc1,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,0xc8,0xc9,0xca,0xcb,0xcc,0xcd,0xce,0xcf,
-    0xd0,0xd1,0xd2,0xd3,0xd4,0xd5,0xd6,0xd7,0xd8,0xd9,0xda,0x5b,0x5c,0x5d,0x5e,0x5f,
-    0xc0,0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,0x4e,0x4f,
-    0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a,0xdb,0xdc,0xdd,0xde,0xdf,
-    0x80,0x81,0x82,0x83,0x84,0x85,0x86,0x87,0x88,0x89,0x8a,0x8b,0x8c,0x8d,0x8e,0x8f,
-    0x90,0x91,0x92,0x0c,0x94,0x95,0x96,0x97,0x98,0x99,0x9a,0x9b,0x9c,0x9d,0x9e,0x9f,
-    0xa0,0xa1,0xa2,0xa3,0xa4,0xa5,0xa6,0xa7,0xa8,0xa9,0xaa,0xab,0xac,0xad,0xae,0xaf,
-    0xb0,0xb1,0xb2,0xb3,0xb4,0xb5,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf,
-    0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x68,0x69,0x6a,0x6b,0x6c,0x6d,0x6e,0x6f,
-    0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7a,0x7b,0x7c,0x7d,0x7e,0x7f,
-    0xe0,0xe1,0xe2,0xe3,0xe4,0xe5,0xe6,0xe7,0xe8,0xe9,0xea,0xeb,0xec,0xed,0xee,0xef,
-    0xf0,0xf1,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf8,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff]
+# ===================================================================================
+# Adapter Commands
+# ===================================================================================
+
+# High level commands
+CMD_GETIDENT   = 'i'
+CMD_GETVERSION = 'v'
+CMD_READTRACK  = 'r'
+CMD_WRITETRACK = 'w'
+CMD_LOADFILE   = 'l'
+CMD_SAVEFILE   = 's'
+CMD_FORMATDISK = 'f'
+CMD_READMEM    = 'm'
+CMD_IEC_CMD    = 'c'
+CMD_GETSTATUS  = 't'
+
+# Low level commands
+CMD_NOP        = '\x00'
+CMD_LISTEN     = '\x01'
+CMD_UNLISTEN   = '\x02'
+CMD_TALK       = '\x03'
+CMD_UNTALK     = '\x04'
+CMD_READBYTE   = '\x05'
+CMD_READBYTES  = '\x06'
+CMD_READRAW    = '\x07'
+CMD_WRITEBYTE  = '\x08'
+CMD_WRITELAST  = '\x09'
+CMD_WRITEBYTES = '\x0a'
+CMD_READFAST   = '\x0b'
+CMD_WRITEFAST  = '\x0c'
+CMD_OPEN       = '\x0d'
+CMD_CLOSE      = '\x0e'
+CMD_RESET      = '\x0f'
+CMD_RELEASE    = '\x10'
+CMD_GETDEVICE  = '\x11'
+CMD_SETDEVICE  = '\x12'
+CMD_GETEOI     = '\x13'
+CMD_SETEOI     = '\x14'
+CMD_CLREOI     = '\x15'
+CMD_GETATN     = '\x16'
+CMD_SETATN     = '\x17'
+CMD_RELATN     = '\x18'
+CMD_GETCLK     = '\x19'
+CMD_SETCLK     = '\x1a'
+CMD_RELCLK     = '\x1b'
+CMD_GETDATA    = '\x1c'
+CMD_SETDATA    = '\x1d'
+CMD_RELDATA    = '\x1e'

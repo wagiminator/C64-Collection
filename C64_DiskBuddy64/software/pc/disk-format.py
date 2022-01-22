@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -15,9 +15,16 @@
 # Dependencies:
 # -------------
 # - adapter (included in libs folder)
+# - disktools (included in libs folder)
 #
 # Operating Instructions:
 # -----------------------
+# - Set the serial mode switch on your DiskBuddy64 adapter to "UART"
+# - Connect the adapter to your floppy disk drive(s)
+# - Connect the adapter to a USB port of your PC
+# - Switch on your floppy disk drive(s)
+# - Execute this skript:
+#
 # - python disk-format.py [-h] [-x] [-n] [-m] [-d {8,9,10,11}] [-t TITLE] [-i IDENT]
 #   optional arguments:
 #   -h, --help                  show help message and exit
@@ -27,6 +34,7 @@
 #   -d, --device                device number of disk drive (8-11, default=8)
 #   -t TITLE, --title TITLE     disk title (max 16 characters, default=commodore)
 #   -i IDENT, --ident IDENT     disk ident (2 characters, default=64)
+#
 # - Example: python disk-format.py -t games -i a7
 
 
@@ -34,20 +42,20 @@ import sys
 import time
 import argparse
 from libs.adapter import *
+from libs.disktools import *
 
 
-# Variables
-ramaddr = 0x0500
-tracks  = 35
-bump    = 1
-demag   = 0
-device  = 8
+# Constants and variables
+FASTFORMAT_BIN = 'libs/fastformat.bin'
+tracks = 35
+bump   = 1
+demag  = 0
 
 
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.0')
+print('DiskBuddy64 - Python Command Line Interface v1.1')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -76,31 +84,34 @@ if len(diskName) < 1 or len(diskName) > 16 or not len(diskIdent) == 2:
 # Establish serial connection
 print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
-
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-
-print('Adapter found on port', diskbuddy.port)
+print('Adapter found on port:', diskbuddy.port)
 print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present
-if not diskbuddy.checkdevice(device):
+# Check if IEC device ist present and supported
+magic = diskbuddy.detectdevice(device)
+if not device_is_known(magic): 
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-
-
-# Upload cbmformat to disk drive RAM
-print('Uploading fast formatter ...')
-if diskbuddy.uploadbin(ramaddr, 'libs/fastformat.bin') > 0:
+print('IEC device', device, 'found:', IEC_DEVICES[magic])
+if not device_is_supported(magic):
     diskbuddy.close()
-    sys.exit(1)
+    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
+
+
+# Upload fast formatter to disk drive RAM
+print('Uploading fast formatter ...')
+if diskbuddy.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+    diskbuddy.close()
+    raise AdpError('Failed to upload fast formatter')
 
 
 # Format the disk
-if diskbuddy.startformat(ramaddr, tracks, bump, demag, diskName, diskIdent) > 0:
+if diskbuddy.startfastformat(tracks, bump, demag, diskName, diskIdent) > 0:
     diskbuddy.close()
-    sys.exit(1)
+    raise AdpError('Failed to start disk operation')
 
 starttime = time.time()
 sys.stdout.write('Formatting: [' + '-' * (tracks) + ']\r')
@@ -113,8 +124,7 @@ for x in range(tracks):
     if not progress:
         print('')
         diskbuddy.close()
-        raise AdpError('Formatting disk failed')
-        sys.exit(1)
+        raise AdpError('Failed to format the disk')
     sys.stdout.write('#')
     sys.stdout.flush()
 

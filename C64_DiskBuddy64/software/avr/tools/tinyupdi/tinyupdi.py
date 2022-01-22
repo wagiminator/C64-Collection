@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   TinyUPDI - Minimal application-specific UPDI programmer based on pyupdi
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -71,8 +71,8 @@ def _main():
                         help='fuses to set (syntax: fuse_nr:0xvalue)')
     args = parser.parse_args(sys.argv[1:])
 
-    if not any( (args.fuses, args.flash, args.erase) ):
-        print('No action (flash or fuses or erase)')
+    if not any(args.fuses, args.flash, args.erase):
+        print('No action necessary')
         sys.exit(0)
 
     # Establish connection via serial to UPDI device
@@ -86,7 +86,7 @@ def _main():
     try:
         tinyupdi.enter_progmode()
     except:
-        print('Device is locked. Performing unlock with chip erase.')
+        print('Device is locked, performing unlock with chip erase')
         tinyupdi.unlock()
 
     # Get target MCU infos
@@ -110,31 +110,31 @@ def _main():
         if not tinyupdi.chip_erase():
             tinyupdi.leave_progmode()
             tinyupdi.close()
-            raise PrgError('Erasing chip failed')
+            raise PrgError('Failed to erase chip')
 
     # Flash binary file
     if args.flash is not None:
         if not tinyupdi.flash_bin(args.flash):
             tinyupdi.leave_progmode()
             tinyupdi.close()
-            raise PrgError('Flashing ' + str(args.flash) + ' failed')
+            raise PrgError('Failed to flash ' + str(args.flash))
 
     # Write fuses
     if args.fuses is not None:
         print('Writing and verifying fuses ...')
         for fslist in args.fuses:
             for fsarg in fslist:
-                if not re.match("^[0-9]+:0x[0-9a-fA-F]+$", fsarg):
+                if not re.match('^[0-9]+:0x[0-9a-fA-F]+$', fsarg):
                     tinyupdi.leave_progmode()
                     tinyupdi.close()
                     raise PrgError('Bad fuses format {}. Expected fuse_nr:0xvalue'.format(fsarg))
-                lst = fsarg.split(":0x")
+                lst = fsarg.split(':0x')
                 fusenum = int(lst[0])
                 value = int(lst[1], 16)
                 if not tinyupdi.set_fuse(fusenum, value):
                     tinyupdi.leave_progmode()
                     tinyupdi.close()
-                    raise PrgError('Setting fuse' + str(fusenum) + ' to ' + str(value) + ' failed')
+                    raise PrgError('Failed to set fuse' + str(fusenum) + ' to ' + str(value))
 
     # Finish all up
     tinyupdi.leave_progmode()
@@ -166,12 +166,10 @@ class Programmer(Serial):
         for p in comports():
             if vid and pid in p.hwid:
                 self.port = p.device
-
                 try:
                     self.open()
                 except:
                     continue
-
                 self.init()
                 if not self.check():
                     self.send_double_break()
@@ -179,7 +177,6 @@ class Programmer(Serial):
                     if not self.check():
                         self.close()
                         continue
-
                 break
 
 
@@ -579,19 +576,19 @@ class PrgError(Exception):
 # Get list of supported device names
 def get_supported_devices():
     result = list()
-    for d in DEVICES:
+    for d in UPDI_DEVICES:
         result.append(d['name'])
     return result
 
 # Get device dictionary for a given device ID
 def get_device(deviceid):
-    for d in DEVICES:
+    for d in UPDI_DEVICES:
         if d['device_id'] == deviceid:
             return d
     return None
 
 # Device definitions
-DEVICES = [
+UPDI_DEVICES = [
     {'name': 'attiny202',  'device_id': 0x1E9123, 'flash_size': 0x0800, 'flash_pagesize': 0x40},
     {'name': 'attiny402',  'device_id': 0x1E9227, 'flash_size': 0x1000, 'flash_pagesize': 0x40},
     {'name': 'attiny212',  'device_id': 0x1E9121, 'flash_size': 0x0800, 'flash_pagesize': 0x40},
@@ -682,9 +679,9 @@ UPDI_KEY_KEY = 0x00
 UPDI_KEY_64 = 0x00
 UPDI_KEY_128 = 0x01
 UPDI_KEY_256 = 0x02
-UPDI_KEY_NVM = b"NVMProg "
-UPDI_KEY_CHIPERASE = b"NVMErase"
-UPDI_KEY_UROW = b"NVMUs&te"
+UPDI_KEY_NVM = b'NVMProg '
+UPDI_KEY_CHIPERASE = b'NVMErase'
+UPDI_KEY_UROW = b'NVMUs&te'
 UPDI_SIB_8BYTES = UPDI_KEY_64
 UPDI_SIB_16BYTES = UPDI_KEY_128
 UPDI_SIB_32BYTES = UPDI_KEY_256
