@@ -263,7 +263,8 @@ uint8_t IEC_sendByte(uint8_t data) {
     IEC_CLK_setLow();                               // end of clock period
   }
   IEC_DATA_setHigh();                               // release DATA line for handshake
-  uint8_t cnt = 251;                                // waiting counter in 4us steps
+  uint8_t cnt = 245;                                // waiting counter in 4us steps
+  _delay_us(20);                                    // some time for the weak pull-ups
   while(--cnt && IEC_DATA_isHigh()) _delay_us(4);   // wait for listener 'DATA ACCEPTED' (max 1ms)
   if(IEC_DATA_isHigh()) {                           // no response??
     IEC_error = 1;                                  // raise IEC_error
@@ -317,7 +318,7 @@ uint8_t IEC_readByte(void) {
 
   // Release system line if last byte received
   if(IEC_EOI) {                                     // was it the last byte?
-    _delay_us(70);                                  // wait 'EOI ACKNOWLEDGE TIME' (min 60us)
+    _delay_us(60);                                  // wait 'EOI ACKNOWLEDGE TIME' (min 60us)
     IEC_DATA_setHigh();                             // release DATA line
   }
 
@@ -346,7 +347,7 @@ void IEC_ATN_stop(void) {
 void IEC_turnaround(void) {
   IEC_DATA_setLow();                                // take over DATA line
   IEC_CLK_setHigh();                                // declare 'I AM LISTENER NOW'
-  _delay_us(20);
+  _delay_us(20);                                    // some time for the weak pull-ups
   while(IEC_CLK_isHigh());                          // wait for listener 'I AM TALKER NOW'
 }
 
