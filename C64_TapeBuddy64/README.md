@@ -113,6 +113,13 @@ If there is no more data in the TAP file, the Python script sends a 0x0000 word 
 - Connect the device to a USB port of your PC.
 - Use one of the following methods:
 
+### If using the graphical front end (recommended)
+- Execute the respective Python script on your PC: `python tape-gui.py`.
+- Click on <kbd>Flash firmware</kbd>.
+
+### If using the command line tool
+- Execute the respective Python script on your PC: `python flash-firmware.py`.
+
 ### If using the Arduino IDE
 - Open your Arduino IDE.
 - Make sure you have installed [megaTinyCore](https://github.com/SpenceKonde/megaTinyCore).
@@ -144,23 +151,29 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 
 ![TapeBuddy64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic2.jpg)
 
-## Reading from Tape (Command Line)
+## Command Line Interface
+The following command line tools are available:
+
+### Reading from Tape
 - Execute the respective Python script on your PC: `python tape-read.py outputfile.tap`.
 - Press <kbd>PLAY</kbd> on your Datasette when prompted.
 - The dumping is done fully automatically. It stops when the end of the cassette is reached, when there are no more signals on the tape for a certain time, or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
 ![TapeBuddy64_cli1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_cli1.jpg)
 
-## Writing on Tape (Command Line)
+### Writing on Tape
 - Execute the respective Python script on your PC: `python tape-write.py inputfile.tap`.
 - Press <kbd>RECORD</kbd> on your Datasette when prompted.
 - The recording is done fully automatically. It stops when all data is written, the end of the cassette is reached, or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
 ![TapeBuddy64_cli2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_cli2.jpg)
 
-## Graphical Front End
+## Graphical User Interface
 - Execute the respective Python script on your PC: `python tape-gui.py`.
 - The rest should be self explanatory.
+
+![TapeBuddy64_gui1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_gui1.jpg)
+![TapeBuddy64_gui2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_gui2.jpg)
 
 ## Status LEDs
 |LED|Description|

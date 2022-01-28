@@ -40,10 +40,11 @@ CLEAN   = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
 # Symbolic Targets
 help:
 	@echo "Use the following commands:"
-	@echo "make all       compile and build $(TARGET).elf/.bin/.hex/.asm for $(DEVICE)"
+	@echo "make all       compile and build $(TARGET).elf/.hex/.bin/.asm for $(DEVICE)"
+	@echo "make elf       compile and build $(TARGET).elf for $(DEVICE)"
 	@echo "make hex       compile and build $(TARGET).hex for $(DEVICE)"
-	@echo "make asm       compile and disassemble to $(TARGET).asm for $(DEVICE)"
 	@echo "make bin       compile and build $(TARGET).bin for $(DEVICE)"
+	@echo "make asm       compile and disassemble to $(TARGET).asm for $(DEVICE)"
 	@echo "make upload    compile and upload to $(DEVICE)"
 	@echo "make fuses     burn fuses of $(DEVICE)"
 	@echo "make install   compile, upload and burn fuses for $(DEVICE)"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   TapeBuddy64 - Python Script for Command Line Interface - WRITE
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2021
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -12,6 +12,7 @@
 # ------------
 # TapeBuddy64 is a simple and inexpensive adapter that can interface a Commodore
 # Datasette to your PC via USB in order to read from or write to tapes.
+# This script writes a TAP image to Datasette tape.
 #
 # References:
 # -----------
@@ -21,7 +22,7 @@
 #
 # Dependencies:
 # -------------
-# - pySerial
+# - adapter (included in libs folder)
 #
 # Operating Instructions:
 # -----------------------
@@ -29,7 +30,7 @@
 # - Connect your TapeBuddy64 to your Commodore Datasette
 # - Connect your TapeBuddy64 to a USB port of your PC
 # - Execute this skript: python tape-write.py inputfile.tap
-# - Press RECORD on your Datasette
+# - Press RECORD & PLAY on your Datasette when promted
 # - The writing is done fully automatically. It stops when the file is recorded, 
 #   the end of the cassette is reached or when the STOP button on the Datasette 
 #   is pressed.
@@ -37,58 +38,7 @@
 
 import sys
 import os
-from serial import Serial
-from serial.tools.list_ports import comports
-
-
-# ===================================================================================
-# Adapter Class - Basic Communication with the Device via USB to Serial Converter
-# ===================================================================================
-
-class Adapter(Serial):
-    def __init__(self):
-        super().__init__(baudrate = 460800, timeout = 1, write_timeout = 1)
-        self.identify()
-
-
-    def identify(self):
-        vid = '1A86'
-        pid = '7523'
-        did = 'TapeBuddy64'
-        for p in comports():
-            if vid and pid in p.hwid:
-                self.port = p.device
-
-                try:
-                    self.open()
-                except:
-                    continue
-
-                try:
-                    self.sendcommand('i')
-                    data = self.getline()
-                except:
-                    self.close()
-                    continue
-
-                if data == did:
-                    break
-                else:
-                    self.close()
-
-
-    def sendcommand(self, cmd):
-        self.write(cmd.encode())
-
-
-    def getline(self):
-        return self.readline().decode().rstrip('\r\n')
-
-
-    def getversion(self):
-        self.sendcommand('v')
-        version = self.getline()
-        return version
+from libs.adapter import *
 
 
 # ===================================================================================
@@ -98,7 +48,7 @@ class Adapter(Serial):
 def progress(percent=0, width=50):
     left = width * percent // 100
     right = width - left
-    sys.stdout.write('\r[' + '#' * left + ' ' * right + '] ' + str(percent) + '%')
+    sys.stdout.write('\r[' + '#' * left + '-' * right + '] ' + str(percent) + '%')
     sys.stdout.flush()
 
 
@@ -109,63 +59,58 @@ def progress(percent=0, width=50):
 # Print Header
 print('')
 print('---------------------------------------------------------')
-print('TapeBuddy64 - Python Command Line Interface v1.0')
+print('TapeBuddy64 - Python Command Line Interface v1.1')
 print('(C) 2021 by Stefan Wagner - github.com/wagiminator')
 print('---------------------------------------------------------')
+
 
 # Get and check command line arguments
 try:
     fileName = sys.argv[1]
 except:
-    sys.stderr.write('ERROR: Missing input file name\n')
-    sys.exit(1)
+    raise AdpError('Missing input file name')
 
 
 # Establish serial connection
 print('Connecting to TapeBuddy64 ...')
 tapebuddy = Adapter()
-
 if not tapebuddy.is_open:
-    sys.stderr.write('ERROR: Device not found\n')
-    sys.exit(1)
-
+    raise AdpError('Adapter not found')
 print('Device found on port', tapebuddy.port)
 print('Firmware version:', tapebuddy.getversion())
 
 
-# Open input file and check file header
+# Open input file
 print('Opening', fileName, 'for reading ...')
-
 try:
     fileSize = os.stat(fileName).st_size
-except:
-    sys.stderr.write ('ERROR: File not found\n')
-    sys.exit(1)
-
-try:
     f = open(fileName, 'rb')
 except:
-    sys.stderr.write('ERROR: Could not open input file\n')
-    tapebuddy.close()
-    sys.exit(1)
+    raise AdpError('Failed to open ' + filename)
 
-if not f.read(12) == b'C64-TAPE-RAW':
-    sys.stderr.write('ERROR: Wrong file header\n')
+
+# Check file header
+if fileSize < 20 or not f.read(12) == b'C64-TAPE-RAW':
     tapebuddy.close()
     f.close()
-    sys.exit(1)
+    raise AdpError('Wrong file header')
 
 
-# Get TAP version and size of data area
+# Check TAP version
 tapversion = f.read(1)[0]
+if tapversion > 1:
+    tapebuddy.close()
+    f.close()
+    raise AdpError('Unsupported TAP version')
+
+
+# Check size of data area
 f.seek(16)
 datasize = int.from_bytes(f.read(4), byteorder='little')
-
 if not (datasize + 20) == fileSize:
-    sys.stderr.write('ERROR: File size does not match header entry\n')
     tapebuddy.close()
     f.close()
-    sys.exit(1)
+    raise AdpError('File size does not match header entry')
 
 
 # Print TAP file information
@@ -180,10 +125,9 @@ print('Preparing data ...')
 try:
     t = open('tapebuddy.tmp', 'wb')
 except:
-    sys.stderr.write('ERROR: Could not create temp file\n')
     tapebuddy.close()
     f.close()
-    sys.exit(1)
+    raise AdpError('Failed to create temp file')
 
 fcount  = datasize
 tcount  = 0
@@ -224,8 +168,8 @@ print('Estimated recording time:', taptime//60, 'min', taptime%60, 'sec')
 
 
 # Send write command to TapeBuddy64 and wait for RECORD pressed
-print('PRESS RECORD ON TAPE')
-tapebuddy.sendcommand('w')
+print('PRESS RECORD & PLAY ON TAPE')
+tapebuddy.sendcommand(CMD_WRITETAPE)
 
 while 1:
     response = tapebuddy.read(1)
@@ -235,10 +179,8 @@ while 1:
     sys.stdout.flush()
 print('\r', ' ' * 50, end='\r')
 if response[0] > 0:
-    f.close()
     tapebuddy.close()
-    sys.stderr.write('TIMEOUT: Didn\'t I say something about pressing RECORD?\n')
-    sys.exit(1)
+    raise AdpError('Timeout waiting for RECORD')
 else:
     print('OK')
     print('Start recording ...')
@@ -282,19 +224,16 @@ tapebuddy.close()
 # Validate data and checksum and print infos
 if underrun > 0:
     sys.stderr.write('ERROR: Buffer underrun occured\n')
-
 if tcount > 0 or stopped > 0:
-    sys.stderr.write('ERROR: Recording was stopped before completion\n')
-    sys.exit(1)
+    raise AdpError('Recording was stopped before completion')
 
 print('Recording finished.')
 
 if not checksum == testsum:
-    sys.stderr.write('ERROR: Checksum mismatch\n')
-    sys.exit(1)
+    raise AdpError('Checksum mismatch')
 
-print('Checksum:          OK')
-print('Buffer underruns:  No')
+print('Checksum:       OK')
+print('Buffer status:  OK')
 print('Recording successful!')
 print('PRESS STOP ON TAPE');
 print('')

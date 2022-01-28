@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   TapeBuddy64 - Connect your Commodore Datasette to a PC
-// Version:   v1.0
+// Version:   v1.1
 // Year:      2021
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -108,7 +108,7 @@
 #define TAP_BUF_LEN   128         // tape buffer length (must be power of 2)
 
 // Identifiers
-#define VERSION     "1.0"         // version number sent via serial if requested
+#define VERSION     "1.1"         // version number sent via serial if requested
 #define IDENT       "TapeBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -169,7 +169,7 @@ void UART_println(const char *str) {
 // UART empty RX pipeline
 void UART_flushRX(void) {
   do {
-    uint8_t tmp = USART0.RXDATAL;                   // read to clear RXCIF flag
+    USART0.RXDATAL;                                 // read to clear RXCIF flag
     _delay_ms(1);                                   // wait a bit
   } while(UART_available());                        // repeat if there is still data
 }
@@ -316,8 +316,8 @@ void TAP_read(void) {
       cli();                                        // atomic sequence ahead
       if(TAP_timer_ovf) {                           // overflow ahead?
         if(TCB0.CNT < 65500) {                      // is it an actual overflow?          
-          TAP_buf[TAP_buf_head++] = 0xFFFF >> 1;    // low  byte TAP value of max pause
-          TAP_buf[TAP_buf_head++] = 0xFFFF >> 9;    // high byte TAP value of max pause
+          TAP_buf[TAP_buf_head++] = 0xFF;           // low  byte TAP value of max pause
+          TAP_buf[TAP_buf_head++] = 0x7F;           // high byte TAP value of max pause
           TAP_buf_head &= (TAP_BUF_LEN - 1);        // limit buffer pointer
           if(TAP_buf_head==TAP_buf_tail) TAP_buf_ovf = 1; // set overflow flag if necessary
           TAP_timer_ovf = 0;                        // clear overflow flag
