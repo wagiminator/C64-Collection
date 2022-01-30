@@ -19,7 +19,11 @@ The [CH340N](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH3
 ## IEC Connector
 The floppy disk drive is connected to the adapter via the [6-pin DIN jack](https://aliexpress.com/item/1005001265863686.html). Alternatively, a serial cable can be soldered directly to the corresponding pads.
 
+## PCB Versions
+Two PCB versions are available, one with micro USB and IEC connector, the other as a USB stick with male USB-A and directly soldered IEC cable. The corresponding Gerber files can be found in the hardware folder and can be uploaded to a PCB manufacturer of your choice.
+
 ![DiskBuddy64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_pic1.jpg)
+![DiskBuddy64_stick1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick1.jpg)
 
 # Software
 ## Floppy Disk Drive
@@ -81,7 +85,9 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 The following command line tools are available:
 
 ### Reading status of connected IEC devices
-`python disk-detect.py`
+```
+python disk-detect.py
+```
 
 ### Reading directory of an inserted floppy disk
 ```
@@ -148,7 +154,9 @@ Example: python disk-verify.py -b -f game.d64
 ```
 
 ### Flashing firmware to DiskBuddy64 adapter
-`python flash-firmware.py`
+```
+python flash-firmware.py
+```
 
 ## Graphical Front End
 - Execute the respective Python script on your PC: `python diskbuddy-gui.py`.
@@ -173,6 +181,8 @@ Coming soon ...
 10. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
 11. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 
+![DiskBuddy64_stick5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick5.jpg)
+![DiskBuddy64_stick6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick6.jpg)
 ![DiskBuddy64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_pic2.jpg)
 ![DiskBuddy64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_pic3.jpg)
 
