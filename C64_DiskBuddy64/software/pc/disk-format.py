@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -25,12 +25,13 @@
 # - Switch on your floppy disk drive(s)
 # - Execute this skript:
 #
-# - python disk-format.py [-h] [-x] [-n] [-m] [-d {8,9,10,11}] [-t TITLE] [-i IDENT]
+# - python disk-format.py [-h] [-x] [-n] [-c] [-v] [-d {8,9,10,11}] [-t TITLE] [-i IDENT]
 #   optional arguments:
 #   -h, --help                  show help message and exit
 #   -x, --extend                format 40 tracks
 #   -n, --nobump                do not bump head
-#   -m, --demagnetize           demagnetize disk (recommended for new disks)
+#   -c, --clear                 clear (demagnetize) disk (recommended for new disks)
+#   -v, --verify                verify each track after it is formatted
 #   -d, --device                device number of disk drive (8-11, default=8)
 #   -t TITLE, --title TITLE     disk title (max 16 characters, default=commodore)
 #   -i IDENT, --ident IDENT     disk ident (2 characters, default=64)
@@ -50,12 +51,13 @@ FASTFORMAT_BIN = 'libs/fastformat.bin'
 tracks = 35
 bump   = 1
 demag  = 0
+verify = 0
 
 
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.1')
+print('DiskBuddy64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -64,15 +66,17 @@ print('--------------------------------------------------')
 parser = argparse.ArgumentParser(description='Simple command line interface for DiskBuddy64')
 parser.add_argument('-x', '--extend', action='store_true', help='format 40 tracks')
 parser.add_argument('-n', '--nobump', action='store_true', help='do not bump head')
-parser.add_argument('-m', '--demagnetize', action='store_true', help='demagnetize disk (recommended for new disks)')
+parser.add_argument('-c', '--clear', action='store_true', help='clear (demagnetize) disk (recommended for new disks)')
+parser.add_argument('-v', '--verify', action='store_true', help='verify each track after it is formatted')
 parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=8, help='device number of disk drive (default=8)')
 parser.add_argument('-t', '--title', default='commodore', help='disk title (max 16 characters, default=commodore)')
 parser.add_argument('-i', '--ident', default='64', help='disk ident (2 characters, default=aa)')
 
 args = parser.parse_args(sys.argv[1:])
-if args.extend:       tracks = 40
-if args.nobump:       bump   = 0
-if args.demagnetize:  demag  = 1
+if args.extend: tracks = 40
+if args.nobump: bump   = 0
+if args.clear:  demag  = 1
+if args.verify: verify = 1
 device = args.device
 diskName  = ASCtoPET(args.title.lower())
 diskIdent = ASCtoPET(args.ident.lower())
@@ -109,7 +113,7 @@ if diskbuddy.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
 
 
 # Format the disk
-if diskbuddy.startfastformat(tracks, bump, demag, diskName, diskIdent) > 0:
+if diskbuddy.startfastformat(tracks, bump, demag, verify, diskName, diskIdent) > 0:
     diskbuddy.close()
     raise AdpError('Failed to start disk operation')
 

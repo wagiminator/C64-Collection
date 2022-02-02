@@ -100,13 +100,14 @@ optional arguments:
 
 ### Formatting an inserted floppy disk
 ```
-python disk-format.py [-h] [-x] [-n] [-m] [-d {8,9,10,11}] [-t TITLE] [-i IDENT]
+python disk-format.py [-h] [-x] [-n] [-c] [-v] [-d {8,9,10,11}] [-t TITLE] [-i IDENT]
 
 optional arguments:
 -h, --help                  show help message and exit
 -x, --extend                format 40 tracks
 -n, --nobump                do not bump head
--m, --demagnetize           demagnetize disk (recommended for new disks)
+-c, --clear                 clear (demagnetize) disk (recommended for new disks)
+-v, --verify                verify each track after it is formatted
 -d, --device                device number of disk drive (8-11, default=8)
 -t TITLE, --title TITLE     disk title (max 16 characters, default=commodore)
 -i IDENT, --ident IDENT     disk ident (2 characters, default=64)
@@ -116,10 +117,11 @@ Example: python disk-format.py -t games -i a7
 
 ### Reading from floppy disk to a D64 image file
 ```
-python disk-read.py [-h] [-b] [-d {8,9,10,11}] [-f FILE]
+python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-f FILE]
 
 optional arguments:
 -h, --help            show help message and exit
+-x, --extend          read disk with 40 tracks
 -b, --bamonly         only read blocks with BAM entry (recommended)
 -d, --device          device number of disk drive (8-11, default=8)
 -f FILE, --file FILE  output file (default=output.d64)
@@ -151,6 +153,15 @@ optional arguments:
 -f FILE, --file FILE  d64 file to compare the disk with
 
 Example: python disk-verify.py -b -f game.d64
+```
+
+### Reading PRG files from floppy disk
+```
+python disk-load.py [-h] [-d {8,9,10,11}]
+
+optional arguments:
+-h, --help            show help message and exit
+-d, --device          device number of disk drive (8-11, default=8)
 ```
 
 ### Flashing firmware to DiskBuddy64 adapter

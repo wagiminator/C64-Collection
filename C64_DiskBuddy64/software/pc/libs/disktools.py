@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Disk Tools Library
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -77,6 +77,33 @@ class BAM:
 
 
 # ===================================================================================
+# DIR Class - Working with the Directory
+# ===================================================================================
+
+class Dir:
+    def __init__(self, dirblocks):
+        self.bam = BAM(dirblocks[:256])
+        self.dir = dirblocks[256:]
+        self.dirpass()
+
+    def dirpass(self):
+        self.filelist = list()
+        for ptr in range(len(self.dir) // 0x20):
+            base = 0x20 * ptr
+            if self.dir[base+0x02] > 0:
+                file = dict()
+                file['base']    = base
+                file['type']    = FILETYPES[self.dir[base+0x02] & 0x07]
+                file['locked']  = ((self.dir[base+0x02] & 0x40) > 0)
+                file['closed']  = ((self.dir[base+0x02] & 0x80) > 0)
+                file['track']   = self.dir[base+0x03]
+                file['sector']  = self.dir[base+0x04]
+                file['name']    = PETtoASC(PETdelpadding(self.dir[base+0x05:base+0x15]))
+                file['size']    = int.from_bytes(self.dir[base+0x1E:base+0x20], byteorder='little')
+                self.filelist.append(file)
+
+
+# ===================================================================================
 # Basic Functions to work with a Disk
 # ===================================================================================
 
@@ -127,6 +154,11 @@ def PETdelpadding(line):
         if not x == 0xA0:
               result += bytes([x])
     return result
+
+# Remove character invalid for filenames
+def cleanstring(filename):
+    filename = filename.lstrip().rstrip().replace(' ', '_')
+    return ''.join(c for c in filename if c.isalnum() or c=='_' or c=='-')
 
 
 # ===================================================================================

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Adapter Library
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -22,6 +22,7 @@
 
 
 import sys
+import time
 from serial import Serial
 from serial.tools.list_ports import comports
 
@@ -68,7 +69,7 @@ class Adapter(Serial):
 
     # Get a reply string from the adapter
     def getline(self):
-        return self.readline().decode().rstrip('\r\n').lstrip('\r\n')
+        return self.readline().decode().rstrip('\r\n')
 
     # Get firmware version of the adapter
     def getversion(self):
@@ -118,15 +119,19 @@ class Adapter(Serial):
         self.sendcommand(CMD_GETSTATUS)
         return self.getline()
 
+    # Initialize disk
+    def initialize(self):
+        return self.iec_command(CMD_IEC_CMD, b'I')
+
     # Read from memory of IEC device
     def readmemory(self, addr, size):
         data = bytes()
         while size > 0:
-            if size > 255:   length = 255
+            if size > 256:   length = 256
             else:            length = size
             ieccmd  = b'M-R'
             ieccmd += addr.to_bytes(2, byteorder='little')
-            ieccmd += bytes([length])
+            ieccmd += bytes([length % 256])
             if self.iec_command(CMD_READMEM, ieccmd) > 0:
                 return None
             data += self.read(length)
@@ -151,6 +156,12 @@ class Adapter(Serial):
             addr += length
             size -= length
         return 0
+
+    # Execute subroutine in memory
+    def executememory(self, addr):
+        ieccmd  = b'M-E'
+        ieccmd += addr.to_bytes(2, byteorder='little')
+        return self.iec_command(CMD_IEC_CMD, ieccmd)
 
 
     # ------------------------------------------------------------------------------
@@ -216,11 +227,18 @@ class Adapter(Serial):
         ieccmd += bytes(seclist)
         return self.iec_command(CMD_WRITETRACK, ieccmd)
 
+    # Start reading a file from disk
+    def startfastload(self, track, sector):
+        ieccmd  = b'M-E'
+        ieccmd += FASTLOAD_STARTADDR.to_bytes(2, byteorder='little')
+        ieccmd += bytes([track, sector])
+        return self.iec_command(CMD_LOADFILE, ieccmd)
+
     # Start formating disk using fastformat
-    def startfastformat(self, tracks, bump, demag, diskname, diskident):
+    def startfastformat(self, tracks, bump, demag, verify, diskname, diskident):
         ieccmd  = b'M-E'
         ieccmd += FASTFORMAT_STARTADDR.to_bytes(2, byteorder='little')
-        ieccmd += bytes([tracks + 1, 0x01, bump, 0x01, demag, 0x00])
+        ieccmd += bytes([tracks + 1, 0x01, bump, 0x01, demag, verify])
         ieccmd += b'0:' + (diskname + ',' + diskident).encode()
         return self.iec_command(CMD_FORMATDISK, ieccmd)
 
@@ -232,7 +250,7 @@ class Adapter(Serial):
 class AdpError(Exception):
     def __init__(self, msg='Something went wrong'):
         super(AdpError, self).__init__(msg)
-        sys.stderr.write('ERROR: ' + msg + '\n')
+        sys.stderr.write('ERROR: ' + msg + '\n\n')
         sys.exit(1)
         
 
@@ -287,15 +305,19 @@ IEC_DEVICES_SPT = {
 # ===================================================================================
 
 FASTREAD_LOADADDR    = 0x0500
-FASTREAD_STARTADDR   = 0x0500
+FASTREAD_STARTADDR   = 0x0503
 FASTWRITE_LOADADDR   = 0x0500
-FASTWRITE_STARTADDR  = 0x0500
+FASTWRITE_STARTADDR  = 0x0503
 FASTLOAD_LOADADDR    = 0x0500
 FASTLOAD_STARTADDR   = 0x0500
 FASTSAVE_LOADADDR    = 0x0500
 FASTSAVE_STARTADDR   = 0x0500
 FASTFORMAT_LOADADDR  = 0x0500
 FASTFORMAT_STARTADDR = 0x0503
+
+MEMCMD_INITIALIZE    = 0xC63D
+MEMCMD_LOADBAM       = 0xD042
+MEMCMD_SETTRACK18    = 0xD00E
 
 
 # ===================================================================================

@@ -1,6 +1,6 @@
 ; ====================================================================
-; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Reading
-; Version:   v1.1
+; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Loading
+; Version:   v1.2
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -14,7 +14,8 @@
 ; the use of an asynchronous 2-bit parallel protocol. This program is
 ; loaded into the memory of the floppy disk drive and communicates
 ; from there with the DiskBuddy64 adapter.
-; This implementation reads a list of sectors on the specified track.
+; This implementation reads a file starting at the specified track
+; and sector.
 ;
 ; References:
 ; -----------
@@ -27,13 +28,12 @@
 ;
 ; Operating Instructions:
 ; -----------------------
-; "M-E"<addrLow><addrHigh><track><#sectors><sector1><sector2>...
+; "M-E"<addrLow><addrHigh><track><sector>
 ;
 ; $0200 - $0202 "M-E"       Memory Execute command
 ; $0203 - $0204 <addrL/H>   start address of this program in RAM ($0500)
-; $0205         <track>     track on disk to read from
-; $0206         <#sectors>  number of sectors in the following list
-; $0207 - ...   <sectorX>   list of sectors to read in order
+; $0205         <track>     track on disk to start reading
+; $0206         <sector>    sector on track to start reading
 
 
 .setcpu "6502"
@@ -45,17 +45,19 @@
 start:
     lda #$00          ; set buffer number:
     sta $f9           ; -> buffer at $0300
-    sta $05           ; set sector index start value (#$00)
     lda $0205         ; get track from command buffer
     sta $06           ; set track for disk operation
+    lda $0206         ; get sector from command buffer
+    sta $07           ; set sector for disk operation
     jsr $c118         ; turn on DRIVE LED
+    lda #$12          ; speed up stepper
+    sta $1c07
+    jsr $c63d         ; check drive and initialize
+    bne finish        ; 'READ ERROR' -> finish
 
 ; Read sector from disk
 ; ---------------------
-readsector:
-    ldx $05           ; get sector index
-    lda $0207,x       ; get sector from list in command buffer
-    sta $07           ; set sector for disk operation    
+readsector:   
     ldx #$05          ; number of retries
 retry:
     lda #$80          ; job number for reading sector
@@ -65,13 +67,9 @@ waitcomplete:
     bmi waitcomplete  ; wait for job to complete
     cmp #$01          ; was it successful?
     beq sendblock     ; -> send data block via IEC
-    lda $16           ; disk ID1 -> compensate 'ID MISMATCH'
-    sta $12           ; disk drive ID1
-    lda $17           ; disk ID2
-    sta $13           ; disk drive ID1
     dex               ; decrease retry counter
     bne retry         ; try again (max 5x)
-    beq end           ; 'READ ERROR' -> terminate
+    beq finish        ; 'READ ERROR' -> terminate
 
 ; Send 256 bytes to adapter via fast IEC
 ; --------------------------------------
@@ -103,14 +101,19 @@ sendbyte:
     bne sendbyte      ; 3 repeat for all 256 bytes
     cli               ; enable interrupts
 
-nextsector:
-    inc $05           ; increment sector index
-    dec $0206         ; decrement number of sectors
-    bne readsector    ; repeat for all sectors
+; Prepare next sector
+; -------------------
+    lda $0301         ; get next sector
+    sta $07           ; set sector for disk operation
+    lda $0300         ; get next track
+    sta $06           ; set track for disk operation
+    bne readsector    ; repeat until end of file
 
 ; Finish all up
 ; -------------
-end:
+finish:
+    lda #$3a          ; stepper back to normal speed
+    sta $1c07
     lda $1c00         ; turn off DRIVE LED
     and #$F7
     sta $1c00

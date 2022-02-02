@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -43,6 +43,7 @@ from libs.tinyupdi import Programmer
 # Binary Files
 FIRMWARE_BIN   = 'libs/firmware.bin'
 FASTREAD_BIN   = 'libs/fastread.bin'
+FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
 
@@ -92,7 +93,7 @@ def showContent():
     try:
         f = open(fileName, 'rb')
     except:
-        messagebox.showerror('Error', 'Could not open file !')
+        messagebox.showerror('Error', 'Failed to open file !')
         return
 
     fileSize = os.stat(fileName).st_size
@@ -155,14 +156,14 @@ def diskDir():
     # Upload fast loader to disk drive RAM
     if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Uploading fastread.bin failed !')
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
 
     # Read BAM
     dbam = BAM(diskbuddy.readblock(18, 0))
     if not dbam.bam:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Reading BAM failed !')
+        messagebox.showerror('Error', 'Failed to read the BAM !')
         return
 
     # Draw content window
@@ -193,7 +194,7 @@ def diskDir():
         if not block:
           diskbuddy.close()
           contentWindow.quit()
-          messagebox.showerror('Error', 'Could not read from disk !')
+          messagebox.showerror('Error', 'Failed to read from disk !')
           return
 
         track  = block[0]
@@ -205,6 +206,8 @@ def diskDir():
             line += '\"'
             line += (PETtoASC(PETdelpadding(block[ptr+0x05:ptr+0x15])) + '\"').ljust(19)
             line += FILETYPES[block[ptr+0x02] & 0x07]
+            if (block[ptr+0x02] & 0x40) > 0:  line += '<'
+            if (block[ptr+0x02] & 0x80) == 0: line += '*'
             l.insert('end', line.upper())
             ptr  += 0x20
     
@@ -242,6 +245,7 @@ def diskFormat():
     var1 = IntVar()
     var2 = IntVar()
     var3 = IntVar()
+    var4 = IntVar()
     var2.set(1)
     Checkbutton(parameterWindow, text="Demagnetize the disk", variable=var1).grid(
                             row=2, columnspan=2, sticky=W, padx=10, pady=4)
@@ -249,15 +253,18 @@ def diskFormat():
                             row=3, columnspan=2, sticky=W, padx=10, pady=4)
     Checkbutton(parameterWindow, text="Format 40 tracks", variable=var3).grid(
                             row=4, columnspan=2, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Verify on the fly", variable=var4).grid(
+                            row=5, columnspan=2, sticky=W, padx=10, pady=4)
 
     Button(parameterWindow, text='OK', command=parameterWindow.quit).grid(
-                            row=5, columnspan=2, sticky=EW, padx=4, pady=4)
+                            row=6, columnspan=2, sticky=EW, padx=4, pady=4)
     parameterWindow.mainloop()
 
     diskName  = ent1.get()
     diskIdent = ent2.get()
     demag     = var1.get()
     bump      = var2.get()
+    verify    = var4.get()
     if var3.get() == 1: tracks = 40
     else:               tracks = 35
     parameterWindow.destroy()
@@ -281,13 +288,13 @@ def diskFormat():
     # Upload fast loader to disk drive RAM
     if diskbuddy.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Uploading fastformat.bin failed !')
+        messagebox.showerror('Error', 'Failed to upload fastformat.bin !')
         return
 
     # Format the disk
-    if diskbuddy.startfastformat(tracks, bump, demag, diskName, diskIdent) > 0:
+    if diskbuddy.startfastformat(tracks, bump, demag, verify, diskName, diskIdent) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Sending command failed !')
+        messagebox.showerror('Error', 'Failed to send command !')
         return
 
     progress = Progressbox(mainWindow, 'DiskBuddy64 - Formatting disk', 'Formatting disk ...')
@@ -299,7 +306,7 @@ def diskFormat():
         if not progr:
             diskbuddy.close()
             progress.destroy()
-            messagebox.showerror('Error', 'Formatting disk failed !')
+            messagebox.showerror('Error', 'Failed to format the disk !')
             return
         progress.setvalue((tracks - progr[0]) * 100 // tracks)
 
@@ -326,19 +333,26 @@ def diskRead():
 
     var1 = IntVar()
     var2 = IntVar()
+    var3 = IntVar()
     var1.set(1)
     Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=var1).grid(
                             row=0, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Verify after copying", variable=var2).grid(
+    Checkbutton(parameterWindow, text="Copy 40 tracks", variable=var3).grid(
                             row=1, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Verify after copying", variable=var2).grid(
+                            row=2, sticky=W, padx=10, pady=4)
     Button(parameterWindow, text='Select output file', command=parameterWindow.quit).grid(
-                            row=2, columnspan=2, sticky=EW, padx=4, pady=4)
+                            row=3, columnspan=2, sticky=EW, padx=4, pady=4)
     parameterWindow.mainloop()
 
     bamcopy   = var1.get()
     verify    = var2.get()
-    tracks    = 35
-    allocated = 683
+    if var3.get() > 0:
+        tracks    = 40
+        allocated = 768
+    else:
+        tracks    = 35
+        allocated = 683
     parameterWindow.destroy()
 
     # Get output file
@@ -362,7 +376,7 @@ def diskRead():
     # Upload fast loader to disk drive RAM
     if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Uploading fastread.bin failed !')
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
 
     # Create output file
@@ -370,7 +384,7 @@ def diskRead():
         f = open(filename, 'wb')
     except:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Could not create output file !')
+        messagebox.showerror('Error', 'Failed to create output file !')
         return
 
     # Fill output file with default values
@@ -386,16 +400,17 @@ def diskRead():
             f.close()
             diskbuddy.close()
             progress.destroy()
-            messagebox.showerror('Error', 'Could not read BAM !')
+            messagebox.showerror('Error', 'Failed to read the BAM !')
             return
         allocated = dbam.getallocated()
+        if tracks > 35:
+            allocated += 85
 
     # Read disk
     copied = 0
     starttime = time.time()
     for track in range(1, tracks + 1):
         secnum      = getsectors(track)
-        interleave  = secnum // 2;
         sectors     = [x for x in range(secnum)]
         seclist     = []
 
@@ -405,6 +420,8 @@ def diskRead():
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
+        if track < 18:  interleave = 6
+        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -426,7 +443,7 @@ def diskRead():
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not read from disk !')
+                messagebox.showerror('Error', 'Failed to read from disk !')
                 return
 
         # Read track
@@ -438,7 +455,7 @@ def diskRead():
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not read from disk !')
+                messagebox.showerror('Error', 'Failed to read from disk !')
                 return
             f.write(block)
             diskbuddy.timeout = 1
@@ -446,6 +463,8 @@ def diskRead():
         progress.setvalue(copied * 100 // allocated)
 
     # Finish all up
+    if verify == 0 and tracks > 35:
+        diskbuddy.readblock(18, 0)
     duration = time.time() - starttime
     f.close()
     diskbuddy.close()
@@ -508,7 +527,7 @@ def diskWrite():
     # Upload fast loader to disk drive RAM
     if diskbuddy.uploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Uploading fastwrite.bin failed !')
+        messagebox.showerror('Error', 'Failed to upload fastwrite.bin !')
         return
 
     # Open input file
@@ -517,21 +536,28 @@ def diskWrite():
         f = open(filename, 'rb')
     except:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Could not open input file !')
+        messagebox.showerror('Error', 'Failed to open input file !')
         return
 
     # Check input file
     if not filesize == getfilepointer(tracks + 1, 0):
-        f.close()
-        diskbuddy.close()
-        messagebox.showerror('Error', 'Wrong input file size !')
-        return
+        if filesize == getfilepointer(41, 0):
+            messagebox.showinfo('Warning', 
+                'This is a disk image with 40 tracks!')
+            tracks    = 40
+            allocated = 768
+        else:
+            f.close()
+            diskbuddy.close()
+            messagebox.showerror('Error', 'Wrong input file size !')
+            return
 
     # Read BAM if necessary
     if bamcopy > 0:
         f.seek(getfilepointer(18, 0))
         fbam = BAM(f.read(256))
         allocated = fbam.getallocated()
+        if tracks > 35: allocated += 85
 
     # Write disk
     copied = 0
@@ -540,39 +566,56 @@ def diskWrite():
     for track in range(1, tracks + 1):
         secnum      = getsectors(track)
         sectors     = [x for x in range(secnum)]
+        seclist     = []
 
         # Cancel sectors without BAM entry
         if bamcopy > 0 and track < 36:
             for x in range(secnum):
                 if fbam.blockisfree(track, x): sectors.remove(x)
 
+        # Optimize order of sectors for speed
+        interleave = secnum // 2
+        sector  = 0
+        counter = len(sectors)
+        while counter:
+            if sector >= secnum: sector -= secnum
+            while not sector in sectors:
+                sector += 1
+                if sector >= secnum: sector = 0
+            seclist.append(sector)
+            sectors.remove(sector)
+            sector  += interleave
+            counter -= 1
+
         # Send command to disk drive, if there's something to write on track
         progress.setactivity('Copy D64 file to disk ...' +
                 '\nTrack: ' + str(track) + ' of ' + str(tracks))
-        seclen = len(sectors)
+        seclen = len(seclist)
         if seclen > 0:
-            if diskbuddy.startfastwrite(track, sectors) > 0:
+            if diskbuddy.startfastwrite(track, seclist) > 0:
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not write to disk !')
+                messagebox.showerror('Error', 'Failed to write on disk !')
                 return
 
         # Write track
         diskbuddy.timeout = 3
-        for sector in sectors:
+        for sector in seclist:
             f.seek(getfilepointer(track, sector))
             if diskbuddy.sendblock(f.read(256)) > 0:
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not write to disk !')
+                messagebox.showerror('Error', 'Failed to write on disk !')
                 return
             copied += 1
         if seclen > 0:  diskbuddy.read(1);
         progress.setvalue(copied * 100 // allocated)
 
     # Finish all up
+    if verify == 0 and tracks > 35:
+        diskbuddy.executememory(MEMCMD_SETTRACK18)
     duration = time.time() - starttime
     f.close()
     diskbuddy.close()
@@ -599,7 +642,7 @@ def diskVerify(filename, bamcopy, tracks):
     # Upload fast loader to disk drive RAM
     if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Uploading fastread.bin failed !')
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
 
     # Open image file
@@ -607,19 +650,19 @@ def diskVerify(filename, bamcopy, tracks):
         f = open(filename, 'rb')
     except:
         diskbuddy.close()
-        messagebox.showerror('Error', 'Could not open image file !')
+        messagebox.showerror('Error', 'Failed to open image file !')
         return
 
     # Read BAM if necessary
     progress = Progressbox(mainWindow, 'DiskBuddy64 - Verifying', 'Verify disk image ...')
-    allocated = 683
+    allocated = getsectornumber(tracks + 1, 0)
     if bamcopy > 0:
         dbam = BAM(diskbuddy.readblock(18, 0))
         if not dbam.bam:
             f.close()
             diskbuddy.close()
             progress.destroy()
-            messagebox.showerror('Error', 'Could not open BAM !')
+            messagebox.showerror('Error', 'Failed to open BAM !')
             return
         f.seek(getfilepointer(18, 0))
         fbam = BAM(f.read(256))
@@ -630,13 +673,14 @@ def diskVerify(filename, bamcopy, tracks):
             messagebox.showerror('Error', 'BAM mismatch !')
             return
         allocated = dbam.getallocated()
+        if tracks > 35:
+            allocated += 85
 
     # Read disk
     errors    = 0
     verified  = 0
     for track in range(1, tracks + 1):
         secnum      = getsectors(track)
-        interleave  = secnum // 2;
         sectors     = [x for x in range(secnum)]
         seclist     = []
 
@@ -646,6 +690,8 @@ def diskVerify(filename, bamcopy, tracks):
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
+        if track < 18:  interleave = 6
+        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -665,7 +711,7 @@ def diskVerify(filename, bamcopy, tracks):
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not read from disk !')
+                messagebox.showerror('Error', 'Failed to read from disk !')
                 return
 
         # Read track
@@ -678,7 +724,7 @@ def diskVerify(filename, bamcopy, tracks):
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
-                messagebox.showerror('Error', 'Could not read from disk !')
+                messagebox.showerror('Error', 'Failed to read from disk !')
                 return
             if not fblock == block:
                 errors += 1
@@ -691,11 +737,150 @@ def diskVerify(filename, bamcopy, tracks):
                 '\nErrors: ' + str(errors))
 
     # Finish all up
+    if track > 35: diskbuddy.readblock(18, 0)
     f.close()
     diskbuddy.close()
     progress.destroy()
     messagebox.showinfo('Mission accomplished', 
             'Verifying finished !\nErrors: ' + str(errors))
+
+
+# ===================================================================================
+# Load Files
+# ===================================================================================
+
+
+def loadFiles():
+
+    def readFile(fileindex):
+        # Create output file
+        filename  = cleanstring(directory.filelist[fileindex]['name']) + '.prg'
+        blocksize = directory.filelist[fileindex]['size']
+        try:
+            f = open(folder + '/' + filename, 'wb')
+        except:
+            messagebox.showerror('Error', 'Failed to create ' + filename + ' !')
+            return 1
+
+        # Start read operation
+        progress.setactivity('Transfering \"' + directory.filelist[fileindex]['name'] 
+                             + '\"\nto \"' + filename + '\" ...')
+        progress.setvalue(0)
+        track  = directory.filelist[fileindex]['track']
+        sector = directory.filelist[fileindex]['sector']
+        if diskbuddy.startfastload(track, sector) > 0:
+            f.close()
+            messagebox.showerror('Error', 'Failed to start disk operation !')
+            return 1
+
+        # Read file from disk to output file
+        written = 0;
+        diskbuddy.timeout = 4
+        while 1:
+            block = diskbuddy.getblock()
+            diskbuddy.timeout = 1
+            if not block:
+                f.close()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return 1
+            written += 1
+            progress.setvalue(written * 100 // blocksize)
+            if block[0] == 0:
+                f.write(block[2:block[1]+1])
+                break
+            f.write(block[2:])
+
+        f.close()
+        return 0
+
+
+    # Establish serial connection
+    diskbuddy = Adapter()
+    if not diskbuddy.is_open:
+        messagebox.showerror('Error', 'DiskBuddy64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskbuddy.checkdevice(device.get()):
+        diskbuddy.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskbuddy.uploadbin(FASTLOAD_LOADADDR, FASTLOAD_BIN) > 0:
+        diskbuddy.close()
+        messagebox.showerror('Error', 'Failed to upload fastload.bin !')
+        return
+
+    # Read directory
+    blocks = bytes()
+    if diskbuddy.startfastload(18, 0) > 0:
+        diskbuddy.close()
+        messagebox.showerror('Error', 'Failed to start disk operation !')
+        return
+
+    diskbuddy.timeout = 4
+    while 1:
+        block = diskbuddy.getblock()
+        diskbuddy.timeout = 1
+        if not block:
+            diskbuddy.close()
+            messagebox.showerror('Error', 'Failed to read directory !')
+            return
+        blocks += block
+        if block[0] == 0:
+            break
+
+    directory = Dir(blocks)
+
+    # Draw content window
+    contentWindow = Toplevel(mainWindow)
+    contentWindow.title('Copy PRG files from disk')
+    contentWindow.minsize(200, 100)
+    contentWindow.resizable(width=False, height=False)
+    contentWindow.transient(mainWindow)
+    contentWindow.grab_set()
+
+    actionFrame = Frame(contentWindow, borderwidth = 0)
+    l = Listbox(actionFrame, font = 'TkFixedFont', height = 16, width = 30,
+                             selectmode='extended')
+    l.pack(side='left', fill=BOTH)
+    s = Scrollbar(actionFrame, orient = VERTICAL, command = l.yview)
+    l['yscrollcommand'] = s.set
+    s.pack(side='right', fill='y')
+    actionFrame.pack()
+    Button(contentWindow, text='Copy selected file(s)', 
+            command=contentWindow.quit).pack(pady = 10)
+
+    # Print files
+    indices = list()
+    index = 0
+    for file in directory.filelist:
+        if file['type'] == 'PRG':
+            line  = str(file['size']).rjust(4) + '  '
+            line += ('"' + file['name'] + '"').ljust(20)
+            line += 'PRG'
+            l.insert('end', line)
+            indices.append(index)
+        index += 1
+
+    contentWindow.mainloop()
+    selected = l.curselection()
+
+    if selected:
+        folder = filedialog.askdirectory(title = 'Select output folder')
+        if not folder:
+            contentWindow.destroy()
+            diskbuddy.close()
+            return
+
+        progress = Progressbox(mainWindow, 'DiskBuddy64 - Reading', '')
+        for i in selected:
+            readFile(indices[i])
+        progress.destroy()
+
+    contentWindow.destroy()
+    diskbuddy.close()
 
 
 # ===================================================================================
@@ -787,7 +972,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DiskBuddy64')
+mainWindow.title('DiskBuddy64 - v1.2')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()
@@ -807,6 +992,8 @@ Button(actionFrame, text = 'Format disk', command = diskFormat
 Button(actionFrame, text = 'Copy disk to D64 file', command = diskRead,
             ).pack(padx = 10, pady = 2, fill = 'x')
 Button(actionFrame, text = 'Copy D64 file to disk', command = diskWrite,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(actionFrame, text = 'Copy PRG files from disk', command = loadFiles,
             ).pack(padx = 10, pady = 2, fill = 'x')
 Button(actionFrame, text = 'Show disk directory', command = diskDir,
             ).pack(padx = 10, pady = 2, fill = 'x')

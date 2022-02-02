@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Verify Disk
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -52,7 +52,7 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.1')
+print('DiskBuddy64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -108,12 +108,17 @@ except:
 
 # Check comparison file
 if not filesize == getfilepointer(tracks + 1, 0):
-    f.close()
-    diskbuddy.close()
-    raise AdpError('Wrong file size')
+    if filesize == getfilepointer(41, 0):
+        print('WARNING: This is a disk image with 40 tracks!')
+        tracks = 40
+    else:
+        f.close()
+        diskbuddy.close()
+        raise AdpError('Wrong file size')
 
 
 # Read and verify BAM
+print('')
 print('Verifying BAM ...')
 dbam = BAM(diskbuddy.readblock(18, 0))
 if not dbam.bam:
@@ -135,7 +140,6 @@ verified   = 0
 starttime  = time.time()
 for track in range(1, tracks + 1):
     secnum      = getsectors(track)
-    interleave  = secnum // 2;
     sectors     = [x for x in range(secnum)]
     seclist     = []
 
@@ -145,6 +149,8 @@ for track in range(1, tracks + 1):
             if dbam.blockisfree(track, x): sectors.remove(x)
 
     # Optimize order of sectors for speed
+    if track < 18:  interleave = 6
+    else:           interleave = 5
     sector  = 0
     counter = len(sectors)
     while counter:
@@ -189,6 +195,8 @@ for track in range(1, tracks + 1):
         sys.stdout.flush()
         diskbuddy.timeout = 1
     print('')
+
+if track > 35: diskbuddy.readblock(18, 0)
 
 
 # Finish all up

@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskBuddy64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.1
+// Version:   v1.2
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -77,7 +77,7 @@
 #define CMD_BUF_LEN   64          // command buffer length (don't change)
 
 // Identifiers
-#define VERSION     "1.1"         // version number sent via serial if requested
+#define VERSION     "1.2"         // version number sent via serial if requested
 #define IDENT       "DiskBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -212,6 +212,9 @@ uint8_t buf_request(uint8_t maxcnt) {
 // 5V = logical 1
 // Bytes are sent with low bit first. Data is valid on rising edge of clock
 
+// The weak internal pullup resistors need some time to pull the line HIGH
+#define IEC_PULLUP    4                             // pullup time in us
+
 // Global flags
 uint8_t IEC_error;
 uint8_t IEC_EOI;
@@ -263,8 +266,8 @@ uint8_t IEC_sendByte(uint8_t data) {
     IEC_CLK_setLow();                               // end of clock period
   }
   IEC_DATA_setHigh();                               // release DATA line for handshake
-  uint8_t cnt = 245;                                // waiting counter in 4us steps
-  _delay_us(20);                                    // some time for the weak pull-ups
+  uint8_t cnt = 250;                                // waiting counter in 4us steps
+  _delay_us(IEC_PULLUP);                            // some time for the weak pull-ups
   while(--cnt && IEC_DATA_isHigh()) _delay_us(4);   // wait for listener 'DATA ACCEPTED' (max 1ms)
   if(IEC_DATA_isHigh()) {                           // no response??
     IEC_error = 1;                                  // raise IEC_error
@@ -347,7 +350,7 @@ void IEC_ATN_stop(void) {
 void IEC_turnaround(void) {
   IEC_DATA_setLow();                                // take over DATA line
   IEC_CLK_setHigh();                                // declare 'I AM LISTENER NOW'
-  _delay_us(20);                                    // some time for the weak pull-ups
+  _delay_us(IEC_PULLUP);                            // some time for the weak pull-ups
   while(IEC_CLK_isHigh());                          // wait for listener 'I AM TALKER NOW'
 }
 

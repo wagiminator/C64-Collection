@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -51,7 +51,7 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.1')
+print('DiskBuddy64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -107,12 +107,17 @@ except:
 
 # Check input file
 if not filesize == getfilepointer(tracks + 1, 0):
-    f.close()
-    diskbuddy.close()
-    raise AdpError('Wrong file size')
+    if filesize == getfilepointer(41, 0):
+        print('WARNING: This is a disk image with 40 tracks!')
+        tracks = 40
+    else:
+        f.close()
+        diskbuddy.close()
+        raise AdpError('Wrong file size')
 
 
 # Read BAM if necessary
+print('')
 if bamcopy:
     print('Reading BAM of input file ...')
     f.seek(getfilepointer(18, 0))
@@ -125,27 +130,42 @@ starttime = time.time()
 for track in range(1, tracks + 1):
     secnum      = getsectors(track)
     sectors     = [x for x in range(secnum)]
+    seclist     = []
 
     # Cancel sectors without BAM entry
     if bamcopy and track < 36:
         for x in range(secnum):
             if fbam.blockisfree(track, x): sectors.remove(x)
 
+    # Optimize order of sectors for speed
+    interleave = secnum // 2
+    sector  = 0
+    counter = len(sectors)
+    while counter:
+        if sector >= secnum: sector -= secnum
+        while not sector in sectors:
+            sector += 1
+            if sector >= secnum: sector = 0
+        seclist.append(sector)
+        sectors.remove(sector)
+        sector  += interleave
+        counter -= 1
+
     # Send command to disk drive, if there's something to write on track
-    seclen = len(sectors)
+    seclen = len(seclist)
     if seclen > 0:
-        if diskbuddy.startfastwrite(track, sectors) > 0:
-              f.close()
-              diskbuddy.close()
-              raise AdpError('Failed to start disk operation')
+        if diskbuddy.startfastwrite(track, seclist) > 0:
+            f.close()
+            diskbuddy.close()
+            raise AdpError('Failed to start disk operation')
 
     # Write track
     trackline = ('Track ' + str(track) + ':').ljust(10) + '['
     sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
     sys.stdout.write('\r' + trackline)
     sys.stdout.flush()
-    diskbuddy.timeout = 3
-    for sector in sectors:
+    diskbuddy.timeout = 4
+    for sector in seclist:
         f.seek(getfilepointer(track, sector))
         if diskbuddy.sendblock(f.read(256)) > 0:
             print('')
@@ -156,6 +176,8 @@ for track in range(1, tracks + 1):
         sys.stdout.flush()
     if seclen > 0:  diskbuddy.read(1);
     print('')
+
+diskbuddy.executememory(MEMCMD_SETTRACK18)
 
 
 # Finish all up

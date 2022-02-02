@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Directory
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -99,6 +99,8 @@ while track > 0:
         line += '\"'
         line += (PETtoASC(PETdelpadding(block[ptr+0x05:ptr+0x15])) + '\"').ljust(19)
         line += FILETYPES[block[ptr+0x02] & 0x07]
+        if (block[ptr+0x02] & 0x40) > 0:  line += '<'
+        if (block[ptr+0x02] & 0x80) == 0: line += '*'
         print(line.upper())
         ptr  += 0x20
 

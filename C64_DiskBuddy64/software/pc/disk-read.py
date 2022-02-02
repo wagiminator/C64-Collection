@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -25,9 +25,10 @@
 # - Switch on your floppy disk drive(s)
 # - Execute this skript:
 #
-# - python disk-read.py [-h] [-b] [-d {8,9,10,11}] [-f FILE]
+# - python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-f FILE]
 #   optional arguments:
 #   -h, --help            show help message and exit
+#   -x, --extend          read disk with 40 tracks
 #   -b, --bamonly         only read blocks with BAM entry (recommended)
 #   -d, --device          device number of disk drive (8-11, default=8)
 #   -f FILE, --file FILE  output file (default=output.d64)
@@ -50,18 +51,20 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.1')
+print('DiskBuddy64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
 
 # Get and check command line arguments
 parser = argparse.ArgumentParser(description='Simple command line interface for DiskBuddy64')
+parser.add_argument('-x', '--extend', action='store_true', help='read disk with 40 tracks')
 parser.add_argument('-b', '--bamonly', action='store_true', help='only read blocks with BAM entry (recommended)')
 parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=8, help='device number of disk drive (default=8)')
 parser.add_argument('-f', '--file', default='output.d64', help='output file (default=output.d64)')
 
 args = parser.parse_args(sys.argv[1:])
+if args.extend: tracks = 40
 bamcopy   = args.bamonly
 device    = args.device
 filename  = args.file
@@ -110,6 +113,7 @@ for track in range(1, tracks + 1):
 
 
 # Read BAM if necessary
+print('')
 if bamcopy:
     print('Reading BAM ...')
     dbam = BAM(diskbuddy.readblock(18, 0))
@@ -124,7 +128,6 @@ print('Reading disk ...')
 starttime = time.time()
 for track in range(1, tracks + 1):
     secnum      = getsectors(track)
-    interleave  = secnum // 2;
     sectors     = [x for x in range(secnum)]
     seclist     = []
 
@@ -134,6 +137,8 @@ for track in range(1, tracks + 1):
             if dbam.blockisfree(track, x): sectors.remove(x)
 
     # Optimize order of sectors for speed
+    if track < 18:  interleave = 6
+    else:           interleave = 5
     sector  = 0
     counter = len(sectors)
     while counter:
@@ -174,6 +179,8 @@ for track in range(1, tracks + 1):
         sys.stdout.flush()
         diskbuddy.timeout = 1
     print('')
+
+if track > 35: diskbuddy.readblock(18, 0)
     
 
 # Finish all up
