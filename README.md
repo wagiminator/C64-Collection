@@ -1,6 +1,11 @@
 # Commodore C64 Collection
 Collection of cartridges, adapters and replacements for the Commodore C64.
 
+# [DumpMaster64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DumpMaster64)
+The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The DumpMaster64 is controlled via a command line interface or a graphical front end written in Python.
+
+![DumpMaster64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster_pic1.jpg)
+
 # [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64)
 DiskBuddy64 is a minimal adapter that can interface a Commodore 1541(II) floppy disk drive to your PC via USB in order to read from and write on disks. It uses its own fast loader to minimize the transfer times. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The DiskBuddy64 is controlled via a command line interface or a graphical front end written in Python.
 
