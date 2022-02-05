@@ -177,7 +177,11 @@ python flash-firmware.py
 ![DiskBuddy64_gui1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_gui1.jpg)
 
 ## Working with D64 Files
-Coming soon ...
+There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [WebDrive](https://cbm8bit.com/webdrive/) on [cbm8bit.com](https://cbm8bit.com/). As a web application, it is platform-independent and requires no installation. In addition, you can even visualize the image of the diskette - very cool!
+
+![DumpMaster64_output.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_output.png)
+
+If you are looking for a command line tool for working with D64 files, [cc1541](https://bitbucket.org/PTV_Claus/cc1541) is a good choice.
 
 # References, Links and Notes
 1. [SD2IEC Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
@@ -189,8 +193,10 @@ Coming soon ...
 7. [J. Derogee: IEC disected](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.pdf)
 8. [Immers/Neufeld/Moser: D64 File Format](http://unusedino.de/ec64/technical/formats/d64.html)
 9. [OpenCBM Software](https://github.com/OpenCBM/OpenCBM)
-10. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
-11. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+10. [cc1541 Software](https://bitbucket.org/PTV_Claus/cc1541)
+11. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
+12. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
+13. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 
 ![DiskBuddy64_stick5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick5.jpg)
 ![DiskBuddy64_stick6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick6.jpg)

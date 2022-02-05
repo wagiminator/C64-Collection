@@ -1,7 +1,7 @@
 # DumpMaster64 - Connect your Commodore Datasette or 1541 Floppy Disk Drive to your PC
 The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The DumpMaster64 is controlled via a command line interface or a graphical front end written in Python.
 
-![DumpMaster64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster_pic1.jpg)
+![DumpMaster64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_pic1.jpg)
 
 The DumpMaster64 is a proprietary interface. It does not turn the floppy disk drive or the Datasette into a standard USB mass storage device. Instead, it offers the ability to send low-level commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk or read from and write on tapes. DumpMaster64 cannot read or write copy-protected disks.
 
@@ -242,7 +242,7 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 24. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 25. [AeroSemi: MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
 
-![DumpMaster64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster_pic2.jpg)
+![DumpMaster64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_pic2.jpg)
 
 # License
 ![license.png](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)
