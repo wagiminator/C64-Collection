@@ -81,6 +81,12 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 - Switch on your floppy disk drive.
 - Use the provided Python scripts in the software/pc/ folder on your PC.
 
+## Graphical Front End
+- Execute the respective Python script on your PC: `python diskbuddy-gui.py`.
+- The rest should be self explanatory.
+
+![DiskBuddy64_gui.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_gui.jpg)
+
 ## Command Line Interface
 The following command line tools are available:
 
@@ -168,13 +174,6 @@ optional arguments:
 ```
 python flash-firmware.py
 ```
-
-## Graphical Front End
-- Execute the respective Python script on your PC: `python diskbuddy-gui.py`.
-- The rest should be self explanatory.
-
-![DiskBuddy64_gui2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_gui2.jpg)
-![DiskBuddy64_gui1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_gui1.jpg)
 
 ## Working with D64 Files
 There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [WebDrive](https://cbm8bit.com/webdrive/) on [cbm8bit.com](https://cbm8bit.com/). As a web application, it is platform-independent and requires no installation. In addition, you can even visualize the image of the diskette - very cool!
