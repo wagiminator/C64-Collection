@@ -16,6 +16,9 @@ One of the (not quite so) new 14-pin [tinyAVRs](https://ww1.microchip.com/downlo
 ## USB to Serial Converter
 The [CH340N](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf) (or CH330N) is now in use everywhere with me. At around €0.45 (if you buy [10 pieces](https://lcsc.com/product-detail/USB-ICs_WCH-Jiangsu-Qin-Heng-CH340N_C506813.html)) it is very cheap, fast, small, uncomplicated, reliable and hardly requires any external components (not even a crystal). It's probably the best choice for this small project too. And it is also used as a SerialUPDI programmer for the ATtiny.
 
+## Boost Converter
+In order to provide the approximately 6V for the motor of the Datasette, a boost converter based on the inexpensive [MT3608](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf) is installed on the board. Controlling the motor with 5V would certainly also be possible, but the reduced speed would then have to be compensated by software later. It is difficult to estimate what this would mean for the accuracy of the sampled data. The ATtiny can switch the motor on and off via a MOSFET.
+
 ## IEC Connector
 The floppy disk drive is connected to the adapter via the [6-pin DIN jack](https://aliexpress.com/item/1005001265863686.html). Alternatively, a serial cable can be soldered directly to the corresponding pads.
 
