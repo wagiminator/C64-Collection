@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -46,6 +46,9 @@ FASTREAD_BIN   = 'libs/fastread.bin'
 FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
+
+# Default interleave
+interleave = 4
 
 
 # ===================================================================================
@@ -408,11 +411,12 @@ def diskRead():
 
     # Read disk
     copied = 0
+    errors = 0
     starttime = time.time()
     for track in range(1, tracks + 1):
-        secnum      = getsectors(track)
-        sectors     = [x for x in range(secnum)]
-        seclist     = []
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
 
         # Cancel sectors without BAM entry
         if bamcopy > 0 and track < 36:
@@ -420,8 +424,6 @@ def diskRead():
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        if track < 18:  interleave = 6
-        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -450,14 +452,17 @@ def diskRead():
         diskbuddy.timeout = 3
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
-            block = diskbuddy.getblock()
+            block = diskbuddy.getblockgcr()
             if not block:
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
                 messagebox.showerror('Error', 'Failed to read from disk !')
                 return
-            f.write(block)
+            if not len(block) == 256:
+                errors += 1
+            else:
+                f.write(block)
             diskbuddy.timeout = 1
             copied += 1
         progress.setvalue(copied * 100 // allocated)
@@ -473,7 +478,8 @@ def diskRead():
         diskVerify(filename, bamcopy, tracks)
     else:
         messagebox.showinfo('Mission accomplished', 
-            'Copying finished !\nDuration: ' + str(round(duration)) + ' sec')
+            'Copying finished !\nRead Errors: ' + str(errors) + 
+            '\nDuration: ' + str(round(duration)) + ' sec')
 
 
 # ===================================================================================
@@ -574,7 +580,6 @@ def diskWrite():
                 if fbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        interleave = secnum // 2
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -603,7 +608,7 @@ def diskWrite():
         diskbuddy.timeout = 3
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
-            if diskbuddy.sendblock(f.read(256)) > 0:
+            if diskbuddy.sendblockgcr(f.read(256)) > 0:
                 f.close()
                 diskbuddy.close()
                 progress.destroy()
@@ -690,8 +695,6 @@ def diskVerify(filename, bamcopy, tracks):
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        if track < 18:  interleave = 6
-        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -719,7 +722,7 @@ def diskVerify(filename, bamcopy, tracks):
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
             fblock = f.read(256)
-            block  = diskbuddy.getblock()
+            block  = diskbuddy.getblockgcr()
             if not block:
                 f.close()
                 diskbuddy.close()
@@ -777,7 +780,7 @@ def loadFiles():
         written = 0;
         diskbuddy.timeout = 4
         while 1:
-            block = diskbuddy.getblock()
+            block = diskbuddy.getblock(256)
             diskbuddy.timeout = 1
             if not block:
                 f.close()
@@ -821,7 +824,7 @@ def loadFiles():
 
     diskbuddy.timeout = 4
     while 1:
-        block = diskbuddy.getblock()
+        block = diskbuddy.getblock(256)
         diskbuddy.timeout = 1
         if not block:
             diskbuddy.close()
@@ -972,7 +975,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DiskBuddy64 - v1.2')
+mainWindow.title('DiskBuddy64 v1.3')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()

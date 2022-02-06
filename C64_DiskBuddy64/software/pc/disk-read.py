@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -25,13 +25,14 @@
 # - Switch on your floppy disk drive(s)
 # - Execute this skript:
 #
-# - python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-f FILE]
+# - python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-i INTER] [-f FILE]
 #   optional arguments:
-#   -h, --help            show help message and exit
-#   -x, --extend          read disk with 40 tracks
-#   -b, --bamonly         only read blocks with BAM entry (recommended)
-#   -d, --device          device number of disk drive (8-11, default=8)
-#   -f FILE, --file FILE  output file (default=output.d64)
+#   -h, --help                    show help message and exit
+#   -x, --extend                  read disk with 40 tracks
+#   -b, --bamonly                 only read blocks with BAM entry (recommended)
+#   -d, --device                  device number of disk drive (8-11, default=8)
+#   -i INTER, --interleave INTER  sector interleave (default=4)
+#   -f FILE, --file FILE          output file (default=output.d64)
 #
 # - Example: python disk-read.py -b -f game.d64
 
@@ -51,7 +52,7 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.2')
+print('DiskBuddy64 - Python Command Line Interface v1.3')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -61,13 +62,16 @@ parser = argparse.ArgumentParser(description='Simple command line interface for 
 parser.add_argument('-x', '--extend', action='store_true', help='read disk with 40 tracks')
 parser.add_argument('-b', '--bamonly', action='store_true', help='only read blocks with BAM entry (recommended)')
 parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=8, help='device number of disk drive (default=8)')
+parser.add_argument('-i', '--interleave', type=int, default=4, help='sector interleave (default=4)')
 parser.add_argument('-f', '--file', default='output.d64', help='output file (default=output.d64)')
 
 args = parser.parse_args(sys.argv[1:])
 if args.extend: tracks = 40
-bamcopy   = args.bamonly
-device    = args.device
-filename  = args.file
+bamcopy    = args.bamonly
+device     = args.device
+filename   = args.file
+interleave = args.interleave
+if interleave < 1 or interleave > 17: interleave = 4
 
 
 # Establish serial connection
@@ -125,11 +129,12 @@ if bamcopy:
 
 # Read disk
 print('Reading disk ...')
+errors = 0
 starttime = time.time()
 for track in range(1, tracks + 1):
-    secnum      = getsectors(track)
-    sectors     = [x for x in range(secnum)]
-    seclist     = []
+    secnum  = getsectors(track)
+    sectors = [x for x in range(secnum)]
+    seclist = []
 
     # Cancel sectors without BAM entry
     if bamcopy and track < 36:
@@ -137,8 +142,6 @@ for track in range(1, tracks + 1):
             if dbam.blockisfree(track, x): sectors.remove(x)
 
     # Optimize order of sectors for speed
-    if track < 18:  interleave = 6
-    else:           interleave = 5
     sector  = 0
     counter = len(sectors)
     while counter:
@@ -167,12 +170,15 @@ for track in range(1, tracks + 1):
     diskbuddy.timeout = 3
     for sector in seclist:
         f.seek(getfilepointer(track, sector))
-        block = diskbuddy.getblock()
+        block = diskbuddy.getblockgcr()
         if not block:
             print('')
             f.close()
             diskbuddy.close()
             raise AdpError('Failed to read from disk')
+        if not len(block) == 256:
+            sys.stdout.write('R')
+            errors += 1
         else:
             f.write(block)
             sys.stdout.write('#')
@@ -186,7 +192,8 @@ if track > 35: diskbuddy.readblock(18, 0)
 # Finish all up
 duration = time.time() - starttime
 print('Done.')
-print('Duration:   ', round(duration), 'seconds')
+print('Errors:  ', errors)
+print('Duration:', round(duration), 'seconds')
 print('')
 f.close()
 diskbuddy.close()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read File(s) from Disk
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -83,7 +83,7 @@ def readFile(fileindex):
     written = 0;
     diskbuddy.timeout = 4
     while 1:
-        block = diskbuddy.getblock()
+        block = diskbuddy.getblock(256)
         diskbuddy.timeout = 1
         if not block:
             f.close()
@@ -118,7 +118,7 @@ device = args.device
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.2')
+print('DiskBuddy64 - Python Command Line Interface v1.3')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -159,7 +159,7 @@ if diskbuddy.startfastload(18, 0) > 0:
 
 diskbuddy.timeout = 4
 while 1:
-    block = diskbuddy.getblock()
+    block = diskbuddy.getblock(256)
     diskbuddy.timeout = 1
     if not block:
         diskbuddy.close()

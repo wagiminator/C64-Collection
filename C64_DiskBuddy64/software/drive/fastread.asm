@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Reading
-; Version:   v1.2
+; Version:   v1.3
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -62,17 +62,11 @@ start:
 
 ; Read sectors from disk
 ; ----------------------
-    ldx #$05          ; number of retries
-retry:
     lda #$e0          ; read job at $0500
     sta $02           ; set job -> start disk operation
 waitcomplete:
     lda $02           ; read job status
     bmi waitcomplete  ; wait for job to complete
-    cmp #$01          ; was it successful?
-    beq finish        ; -> finish
-    dex               ; decrease retry counter
-    bne retry         ; try again (max 5x)
 
 ; Finish all up
 ; -------------
@@ -86,46 +80,13 @@ finish:
 
 
 ; ====================================================================
-; Job Routine (reads list of sectors on track and sends them via IEC)
+; Fast IEC Function (sends one data byte)
 ; ====================================================================
 
-; Read sector from disk
-; ---------------------
-readjob:
-    ldx $05           ; get sector index
-    lda $0207,x       ; get sector from list in command buffer
-    sta $0b           ; set sector for disk operation
-    lda #$03          ; set buffer pointer:
-    sta $31           ; -> $0300
-    jsr $f50a         ; find beginning of block
-wr01:
-    bvc wr01          ; byte ready?
-    clv
-    lda $1c01         ; get data byte
-    sta ($30),y       ; and write in buffer
-    iny               ; increase buffer index
-    bne wr01          ; repeat 256 times
-    ldy #$ba          ; buffer index GCR buffer
-wr02:
-    bvc wr02          ; byte ready?
-    clv
-    lda $1c01         ; get data byte
-    sta $0100,y       ; write in GCR buffer
-    iny               ; ($01BA - $01FF)
-    bne wr02          ; repeat 69 times
-    jsr $f8e0         ; decode GCR
-    jsr $f5e9         ; calculate parity
-    cmp $3a           ; agreement?
-    bne return        ; no -> 'READ ERROR'
-
-; Send 256 bytes to adapter via fast IEC
-; --------------------------------------
-    ldx #$00          ; buffer index
 sendbyte:
-    lda $0300,x       ; 4 read byte from buffer
-    ldy #$08          ; 2 mark 'START SENDING BYTE':
-    sty $1800         ; 4 -> pull CLK LOW
-    tay               ; 2 save original in y
+    ldx #$08          ; 2 mark 'START SENDING BYTE':
+    stx $1800         ; 4 -> pull CLK LOW
+    tax               ; 2 save original in x
     lsr               ; 2 get high nibble
     lsr               ; 2
     lsr               ; 2
@@ -134,16 +95,57 @@ sendbyte:
     asl               ; 2
     and #$0F          ; 2
     sta $1800         ; 4 transfer bit 6 and 4
-    tya               ; 2 get original byte
+    txa               ; 2 get original byte
     and #$0F          ; 2 get low nibble
     sta $1800         ; 4 transfer bit 3 and 1
     asl               ; 2
     and #$0F          ; 2
     sta $1800         ; 4 transfer bit 2 and 0
-    ldy #$00          ; 2 mark 'END OF BYTE':
-    sty $1800         ; 4 -> release CLK HIGH
-    inx               ; 2
-    bne sendbyte      ; 3 repeat for all 256 bytes
+    ldx #$00          ; 2 mark 'END OF BYTE':
+    stx $1800         ; 4 -> release CLK HIGH
+    rts               ; 6 return
+
+
+; ====================================================================
+; Job Routine (reads list of sectors on track and sends them via IEC)
+; ====================================================================
+
+; Read sector from disk
+; ---------------------
+readjob:
+    ldy $05           ; get sector index
+    lda $0207,y       ; get sector from list in command buffer
+    sta $0b           ; set sector for disk operation
+    jsr $f50a         ; find beginning of block
+wr01:
+    bvc wr01          ; byte ready?
+    clv
+    lda $1c01         ; get data byte
+    sta $0300,y       ; and write in buffer
+    iny               ; increase buffer index
+    bne wr01          ; repeat 256 times
+    ldy #$bb          ; buffer index GCR buffer
+wr02:
+    bvc wr02          ; byte ready?
+    clv
+    lda $1c01         ; get data byte
+    sta $0100,y       ; write in GCR buffer
+    iny               ; ($01BB - $01FF)
+    bne wr02          ; repeat 69 times
+
+; Send GCR-encoded block (325 bytes) to adapter via fast IEC
+; ----------------------------------------------------------
+sl01:
+    lda $0300,y       ; read byte from data buffer
+    jsr sendbyte      ; send byte via fast IEC
+    iny               ; increase buffer index
+    bne sl01          ; repeat 256 times
+    ldy #$bb          ; buffer index GCR buffer
+sl02:
+    lda $0100,y       ; read byte from GCR buffer
+    jsr sendbyte      ; send byte via fast IEC
+    iny               ; ($01BB - $01FF)
+    bne sl02          ; repeat 69 times
 
 ; Prepare next sector
 ; -------------------
@@ -154,7 +156,4 @@ sendbyte:
 ; Set return code and terminate job
 ; ---------------------------------
     lda #$01          ; set return code 'OK'
-    .byte $2c         ; skip next instruction
-return:
-    lda #$05          ; set return code 'READ ERROR'
     jmp $f969         ; finish job

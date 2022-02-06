@@ -27,7 +27,9 @@ Two PCB versions are available, one with micro USB and IEC connector, the other 
 
 # Software
 ## Floppy Disk Drive
-The main reason for the low speed of the 1541 floppy disk drive is the slow serial data transfer to the computer. As with most fast loaders, a proprietary transmission protocol is used here to accelerate this. Instead of the synchronous serial protocol with handshake and lots of waiting times, an asynchronous 2-bit parallel data transmission is used. For this to work, the sender and receiver must understand this protocol. For this purpose, a corresponding program is loaded into the RAM area of the memory and executed on the floppy disk drive side. The corresponding source codes (in 6502 assembly) can be found in the software/drive/ folder. For a more detailed explanation of the functional principle, I recommend Michael Steil's [website](https://www.pagetable.com/?p=568). Take the opportunity to watch his [Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08), then you will know (almost) everything you need to know about the Commodore floppy disk drives.
+The main reason for the low speed of the 1541 floppy disk drive is the slow serial data transfer to the computer. As with most fast loaders, a proprietary transmission protocol is used here to accelerate this. Instead of the synchronous serial protocol with handshake and lots of waiting times, an asynchronous 2-bit parallel data transmission is used. For this to work, the sender and receiver must understand this protocol. For this purpose, a corresponding program is loaded into the RAM area of the memory and executed on the floppy disk drive side. The corresponding source codes (in 6502 assembly) can be found in the software/drive/ folder. To increase the speed even further, the GCR encoding and decoding is not done by the floppy disk drive, but by the PC. Reading or writing an entire 35-track floppy disk takes 37 seconds - not a world record, but about 12 times faster than normal speed and sufficient for most purposes.
+
+For a more detailed explanation of some functional principle, I recommend Michael Steil's [website](https://www.pagetable.com/?p=568). Take the opportunity to watch his [Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08), then you will know (almost) everything you need to know about the Commodore floppy disk drives.
 
 ## DiskBuddy64 Adapter
 The DiskBuddy64 adapter bridges the gap between your PC and the Commodore 1541 floppy disk drives. It communicates with the floppy disk drive via bit banging of the IEC protocol and with the PC via the integrated USB-to-serial converter. The adapter also supports the proprietary protocol for faster data transmission. It essentially provides the basic functions of the IEC protocol in such a way that they can be called up from the PC using serial commands via USB. The source codes of the firmware can be found in the software/avr/ folder.
@@ -123,40 +125,44 @@ Example: python disk-format.py -t games -i a7
 
 ### Reading from floppy disk to a D64 image file
 ```
-python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-f FILE]
+python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-i INTER] [-f FILE]
 
 optional arguments:
--h, --help            show help message and exit
--x, --extend          read disk with 40 tracks
--b, --bamonly         only read blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  output file (default=output.d64)
+-h, --help                    show help message and exit
+-x, --extend                  read disk with 40 tracks
+-b, --bamonly                 only read blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-f FILE, --file FILE          output file (default=output.d64)
 
 Example: python disk-read.py -b -f game.d64
 ```
 
 ### Writing a D64 image file to floppy disk
 ```
-python disk-write.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+python disk-write.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] -f FILE
 
 optional arguments:
--h, --help            show help message and exit
--b, --bamonly         only write blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  input file (*.d64)
+-h, --help                    show help message and exit
+-b, --bamonly                 only write blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-f FILE, --file FILE          input file (*.d64)
 
 Example: python disk-write.py -b -f game.d64
 ```
 
 ### Comparing D64 image file with floppy disk content (verify)
 ```
-python disk-verify.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+python disk-verify.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] [-e ERRORS] -f FILE
 
 optional arguments:
--h, --help            show help message and exit
--b, --bamonly         only verify blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  d64 file to compare the disk with
+-h, --help                    show help message and exit
+-b, --bamonly                 only verify blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-e ERRORS, --errors ERRORS    tolerated errors until abort (default=0)
+-f FILE, --file FILE          d64 file to compare the disk with
 
 Example: python disk-verify.py -b -f game.d64
 ```

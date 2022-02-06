@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Disk Status
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator

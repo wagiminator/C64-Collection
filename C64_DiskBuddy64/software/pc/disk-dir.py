@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Directory
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -38,11 +38,11 @@ from libs.disktools import *
 
 
 # Constants
-FASTREAD_BIN = 'libs/fastread.bin'
+FASTLOAD_BIN = 'libs/fastload.bin'
 
 
 # Get and check command line arguments
-parser = argparse.ArgumentParser(description='Simple command line interface for DiskBuddy64')
+parser = argparse.ArgumentParser(description='Simple command line interface for DumpMaster64')
 parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=8, help='device number of disk drive (default=8)')
 args = parser.parse_args(sys.argv[1:])
 device = args.device
@@ -61,51 +61,50 @@ if not diskbuddy.checkdevice(device):
 
 
 # Upload fast loader to disk drive RAM
-if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+if diskbuddy.uploadbin(FASTLOAD_LOADADDR, FASTLOAD_BIN) > 0:
     diskbuddy.close()
     raise AdpError('Failed to upload fast loader')
 
 
-# Read BAM
-dbam = BAM(diskbuddy.readblock(18, 0))
-if not dbam.bam:
+# Read directory
+blocks = bytes()
+if diskbuddy.startfastload(18, 0) > 0:
     diskbuddy.close()
-    raise AdpError('Failed to read the BAM')
+    raise AdpError('Failed to start disk operation')
+
+diskbuddy.timeout = 4
+while 1:
+    block = diskbuddy.getblock(256)
+    diskbuddy.timeout = 1
+    if not block:
+        diskbuddy.close()
+        raise AdpError('Failed to read directory')
+    blocks += block
+    if block[0] == 0:
+        break
+
+directory = Dir(blocks)
 
 
 # Print disk title
 print('')
-print(dbam.getheader())
+print(directory.bam.getheader())
 
 
-# Get number of free blocks
-blocksfree = dbam.getblocksfree()
+# Print files
+for file in directory.filelist:
+    line  = str(file['size']).ljust(5)
+    line += '\"'
+    line += (file['name'] + '\"').ljust(19)
+    line += file['type']
+    if file['locked']: line += '<'
+    if not file['closed']: line += '*'
+    print(line.upper())
 
 
-# Read file entries
-track  = 18
-sector = 1
-while track > 0:
-    block = diskbuddy.readblock(track, sector)
-    if not block:
-      diskbuddy.close()
-      raise AdpError('Failed to read directory')
-
-    track  = block[0]
-    sector = block[1]
-    ptr    = 0
-    while ptr < 0xFF and block[ptr+0x02] > 0:
-        line  = str(int.from_bytes(block[ptr+0x1E:ptr+0x20], byteorder='little')).ljust(5)
-        line += '\"'
-        line += (PETtoASC(PETdelpadding(block[ptr+0x05:ptr+0x15])) + '\"').ljust(19)
-        line += FILETYPES[block[ptr+0x02] & 0x07]
-        if (block[ptr+0x02] & 0x40) > 0:  line += '<'
-        if (block[ptr+0x02] & 0x80) == 0: line += '*'
-        print(line.upper())
-        ptr  += 0x20
-
+# Print free blocks
+print(directory.bam.getblocksfree(), 'BLOCKS FREE.')
 
 # Finish all up
-print(blocksfree, 'BLOCKS FREE.')
 print('')
 diskbuddy.close()
