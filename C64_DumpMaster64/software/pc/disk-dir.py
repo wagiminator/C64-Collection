@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Directory
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -39,7 +39,6 @@ from libs.disktools import *
 
 # Constants
 FASTLOAD_BIN = 'libs/fastload.bin'
-FILETYPES    = ['DEL', 'SEQ', 'PRG', 'USR', 'REL']
 
 
 # Get and check command line arguments
@@ -75,7 +74,7 @@ if dumpmaster.startfastload(18, 0) > 0:
 
 dumpmaster.timeout = 4
 while 1:
-    block = dumpmaster.getblock()
+    block = dumpmaster.getblock(256)
     dumpmaster.timeout = 1
     if not block:
         dumpmaster.close()
@@ -89,7 +88,7 @@ directory = Dir(blocks)
 
 # Print disk title
 print('')
-print(directory.bam.getheader())
+print(directory.header)
 
 
 # Print files
@@ -104,7 +103,8 @@ for file in directory.filelist:
 
 
 # Print free blocks
-print(directory.bam.getblocksfree(), 'BLOCKS FREE.')
+print(directory.blocksfree, 'BLOCKS FREE.')
+
 
 # Finish all up
 print('')

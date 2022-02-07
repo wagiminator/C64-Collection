@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Adapter Library
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -186,31 +186,40 @@ class Adapter(Serial):
     # Read single sector from disk and return block data
     def readblock(self, track, sector):
         seclist = bytes([sector])
-        if self.startfastread(track, seclist) > 0:
-            return None
-        self.timeout = 4
-        block = self.getblock()
-        self.timeout = 1
-        return block
+        for retry in range(3):
+            if self.startfastread(track, seclist) > 0:
+                return None
+            self.timeout = 4
+            block = self.getblockgcr()
+            self.timeout = 1
+            if block and len(block) == 256:
+                return block
+        return None
+
+    # Get raw GCR-encoded block via fast IEC and decode
+    def getblockgcr(self):
+        return decodeblock(self.getblock(325))
 
     # Get block data via fast IEC
-    def getblock(self):
+    def getblock(self, size):
         reply = self.read(1)
-        if not reply:
+        if not reply or reply[0] > 0:
             return None
-        if reply[0] > 0:
-            return 0
-        block = self.read(256)
-        if not block or not len(block) == 256:
+        block = self.read(size)
+        if not block or not len(block) == size:
             return None
         return block
+
+    # GCR-encode data block and send via fast IEC
+    def sendblockgcr(self, data):
+        return self.sendblock(encodeblock(data))
 
     # Send block data via fast IEC
     def sendblock(self, data):
         reply = self.read(1)
         if not reply or reply[0] > 0:
             return 1
-        if not self.write(data) == 256:
+        if not self.write(data) == len(data):
             return 1
         return 0
 
@@ -237,13 +246,6 @@ class Adapter(Serial):
         ieccmd += bytes([track, sector])
         return self.iec_command(CMD_LOADFILE, ieccmd)
 
-    # Start writing a file to disk
-    def startfastsave(self, track, sector):
-        ieccmd  = b'M-E'
-        ieccmd += FASTSAVE_STARTADDR.to_bytes(2, byteorder='little')
-        ieccmd += bytes([track, sector])
-        return self.iec_command(CMD_SAVEFILE, ieccmd)
-
     # Start formating disk using fastformat
     def startfastformat(self, tracks, bump, demag, verify, diskname, diskident):
         ieccmd  = b'M-E'
@@ -251,6 +253,77 @@ class Adapter(Serial):
         ieccmd += bytes([tracks + 1, 0x01, bump, 0x01, demag, verify])
         ieccmd += b'0:' + (diskname + ',' + diskident).encode()
         return self.iec_command(CMD_FORMATDISK, ieccmd)
+
+
+# ===================================================================================
+# GCR Encoding and Decoding Functions
+# ===================================================================================
+
+# Encode an entire block
+def encodeblock(data):
+    if not data or not len(data) == 256:
+        return None
+    parity = 0
+    for x in data: parity ^= x
+    data = b'\x07' + data + bytes([parity, 0x00, 0x00])
+    return encodedata(data)
+
+# Encode data stream
+def encodedata(data):
+    result = bytes()
+    for q in range(0, len(data), 4): result += encodequartet(data[q:q+4])
+    return result
+
+# Encode 4 bytes
+def encodequartet(data):
+    temp  = 0
+    for i in range(4):
+        temp <<= 5
+        temp  += GCR_TABLE[data[i] >> 4]
+        temp <<= 5
+        temp  += GCR_TABLE[data[i] & 0x0F]
+    result = bytes()
+    for i in range(5):
+        result += bytes([(temp >> (8 * (4 - i))) & 0xFF])
+    return result
+
+# Decode an entire block
+def decodeblock(data):
+    if not data or not len(data) == 325:
+        return None
+    data = decodedata(data)
+    parity = data[257];
+    data = data[1:257]
+    for x in data: parity ^= x
+    if not parity == 0:
+        return b'\x01'
+    return data
+
+# Decode data stream
+def decodedata(data):
+    result = bytes()
+    for q in range(0, len(data), 5): result += decodequintet(data[q:q+5])
+    return result
+
+# Decode 5 bytes
+def decodequintet(data):
+    temp  = 0
+    for i in range(5):
+        temp <<= 8
+        temp  += (data[i])
+    result = bytes()
+    for i in range(4):
+        tempbyte = (temp >> (10 * (3 - i))) & 0x3FF
+        result  += bytes([(GCR_DECTAB[tempbyte >> 5] << 4) + GCR_DECTAB[tempbyte & 0x1F]])
+    return result
+
+# GCR encoding table
+GCR_TABLE = [0b01010, 0b01011, 0b10010, 0b10011, 0b01110, 0b01111, 0b10110, 0b10111,
+             0b01001, 0b11001, 0b11010, 0b11011, 0b01101, 0b11101, 0b11110, 0b10101]
+
+# GCR decoding table
+GCR_DECTAB = [0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 1, 0, 12, 4, 5, 
+              0, 0, 2, 3, 0, 15, 6, 7, 0, 9, 10, 11, 0, 13, 14, 0]
 
 
 # ===================================================================================
@@ -320,8 +393,6 @@ FASTWRITE_LOADADDR   = 0x0500
 FASTWRITE_STARTADDR  = 0x0503
 FASTLOAD_LOADADDR    = 0x0500
 FASTLOAD_STARTADDR   = 0x0500
-FASTSAVE_LOADADDR    = 0x0500
-FASTSAVE_STARTADDR   = 0x0500
 FASTFORMAT_LOADADDR  = 0x0500
 FASTFORMAT_STARTADDR = 0x0503
 

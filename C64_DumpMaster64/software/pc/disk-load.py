@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read File(s) from Disk
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -83,7 +83,7 @@ def readFile(fileindex):
     written = 0;
     dumpmaster.timeout = 4
     while 1:
-        block = dumpmaster.getblock()
+        block = dumpmaster.getblock(256)
         dumpmaster.timeout = 1
         if not block:
             f.close()
@@ -118,7 +118,7 @@ device = args.device
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DumpMaster64 - Python Command Line Interface v1.0')
+print('DumpMaster64 - Python Command Line Interface v1.1')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -128,19 +128,13 @@ print('Connecting to DumpMaster64 ...')
 dumpmaster = Adapter()
 if not dumpmaster.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port', dumpmaster.port)
-print('Firmware version:', dumpmaster.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = dumpmaster.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not dumpmaster.checkdevice(device):
     dumpmaster.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    dumpmaster.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast loader to disk drive RAM
@@ -159,7 +153,7 @@ if dumpmaster.startfastload(18, 0) > 0:
 
 dumpmaster.timeout = 4
 while 1:
-    block = dumpmaster.getblock()
+    block = dumpmaster.getblock(256)
     dumpmaster.timeout = 1
     if not block:
         dumpmaster.close()
@@ -173,6 +167,7 @@ directory = Dir(blocks)
 
 # Print files
 print('')
+print('Disk title:', directory.title)
 indices = list()
 index = 0
 counter = 1
@@ -210,6 +205,6 @@ try:
 except:
     raise AdpError('Invalid choice')
 
-index = indices[number- 1]
+index = indices[number - 1]
 readFile(index)
 dumpmaster.close()

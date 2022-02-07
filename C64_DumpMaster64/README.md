@@ -1,9 +1,11 @@
 # DumpMaster64 - Connect your Commodore Datasette or 1541 Floppy Disk Drive to your PC
-The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The DumpMaster64 is controlled via a command line interface or a graphical front end written in Python.
+The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The DumpMaster64 is controlled via a command line interface or a graphical front end written in Python.
+
+The DumpMaster64 is a proprietary interface. It does not turn the floppy disk drive or the Datasette into a standard USB mass storage device. Instead, it offers the ability to send low-level commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk or read from and write on tapes. Thanks to the integrated fast loader, the adapter reads or writes floppy disks at twelve times the normal speed, dumping an entire disk in about 37 seconds. DumpMaster64 cannot read or write copy-protected disks.
+
+The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
 
 ![DumpMaster64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_pic1.jpg)
-
-The DumpMaster64 is a proprietary interface. It does not turn the floppy disk drive or the Datasette into a standard USB mass storage device. Instead, it offers the ability to send low-level commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk or read from and write on tapes. DumpMaster64 cannot read or write copy-protected disks.
 
 # Hardware
 The schematic is shown below:
@@ -116,40 +118,44 @@ Example: python disk-format.py -t games -i a7
 
 ### Reading from floppy disk to a D64 image file
 ```
-python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-f FILE]
+python disk-read.py [-h] [-x] [-b] [-d {8,9,10,11}] [-i INTER] [-f FILE]
 
 optional arguments:
--h, --help            show help message and exit
--x, --extend          read disk with 40 tracks
--b, --bamonly         only read blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  output file (default=output.d64)
+-h, --help                    show help message and exit
+-x, --extend                  read disk with 40 tracks
+-b, --bamonly                 only read blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-f FILE, --file FILE          output file (default=output.d64)
 
 Example: python disk-read.py -b -f game.d64
 ```
 
 ### Writing a D64 image file to floppy disk
 ```
-python disk-write.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+python disk-write.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] -f FILE
 
 optional arguments:
--h, --help            show help message and exit
--b, --bamonly         only write blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  input file (*.d64)
+-h, --help                    show help message and exit
+-b, --bamonly                 only write blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-f FILE, --file FILE          input file (*.d64)
 
 Example: python disk-write.py -b -f game.d64
 ```
 
 ### Comparing D64 image file with floppy disk content (verify)
 ```
-python disk-verify.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+python disk-verify.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] [-e ERRORS] -f FILE
 
 optional arguments:
--h, --help            show help message and exit
--b, --bamonly         only verify blocks with BAM entry (recommended)
--d, --device          device number of disk drive (8-11, default=8)
--f FILE, --file FILE  d64 file to compare the disk with
+-h, --help                    show help message and exit
+-b, --bamonly                 only verify blocks with BAM entry (recommended)
+-d, --device                  device number of disk drive (8-11, default=8)
+-i INTER, --interleave INTER  sector interleave (default=4)
+-e ERRORS, --errors ERRORS    tolerated errors until abort (default=0)
+-f FILE, --file FILE          d64 file to compare the disk with
 
 Example: python disk-verify.py -b -f game.d64
 ```

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -25,12 +25,13 @@
 # - Switch on your floppy disk drive(s)
 # - Execute this skript:
 #
-# - python disk-write.py [-h] [-b] [-d {8,9,10,11}] -f FILE
+# - python disk-write.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] -f FILE
 #   optional arguments:
-#   -h, --help            show help message and exit
-#   -b, --bamonly         only write blocks with BAM entry (recommended)
-#   -d, --device          device number of disk drive (8-11, default=8)
-#   -f FILE, --file FILE  input file (*.d64)
+#   -h, --help                    show help message and exit
+#   -b, --bamonly                 only write blocks with BAM entry (recommended)
+#   -d, --device                  device number of disk drive (8-11, default=8)
+#   -i INTER, --interleave INTER  sector interleave (default=4)
+#   -f FILE,  --file FILE         input file (*.d64)
 #
 # - Example: python disk-write.py -b -f game.d64
 
@@ -51,7 +52,7 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DumpMaster64 - Python Command Line Interface v1.0')
+print('DumpMaster64 - Python Command Line Interface v1.1')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -60,12 +61,15 @@ print('--------------------------------------------------')
 parser = argparse.ArgumentParser(description='Simple command line interface for DumpMaster64')
 parser.add_argument('-b', '--bamonly', action='store_true', help='only write blocks with BAM entry (recommended)')
 parser.add_argument('-d', '--device', choices={8, 9, 10, 11}, type=int, default=8, help='device number of disk drive (default=8)')
+parser.add_argument('-i', '--interleave', type=int, default=4, help='sector interleave (default=4)')
 parser.add_argument('-f', '--file', required=True, help='input file (*.d64)')
 
 args = parser.parse_args(sys.argv[1:])
-bamcopy  = args.bamonly
-device   = args.device
-filename = args.file
+bamcopy    = args.bamonly
+device     = args.device
+filename   = args.file
+interleave = args.interleave
+if interleave < 1 or interleave > 17: interleave = 4
 
 
 # Establish serial connection
@@ -73,19 +77,13 @@ print('Connecting to DumpMaster64 ...')
 dumpmaster = Adapter()
 if not dumpmaster.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port', dumpmaster.port)
-print('Firmware version:', dumpmaster.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = dumpmaster.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not dumpmaster.checkdevice(device):
     dumpmaster.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    dumpmaster.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast writer to disk drive RAM
@@ -106,6 +104,7 @@ except:
 
 
 # Check input file
+print('Checking image file ...')
 if not filesize == getfilepointer(tracks + 1, 0):
     if filesize == getfilepointer(41, 0):
         print('WARNING: This is a disk image with 40 tracks!')
@@ -125,12 +124,12 @@ if bamcopy:
 
 
 # Write disk
-print('Writing disk ...')
+print('Writing to disk ...')
 starttime = time.time()
 for track in range(1, tracks + 1):
-    secnum      = getsectors(track)
-    sectors     = [x for x in range(secnum)]
-    seclist     = []
+    secnum  = getsectors(track)
+    sectors = [x for x in range(secnum)]
+    seclist = []
 
     # Cancel sectors without BAM entry
     if bamcopy and track < 36:
@@ -138,7 +137,6 @@ for track in range(1, tracks + 1):
             if fbam.blockisfree(track, x): sectors.remove(x)
 
     # Optimize order of sectors for speed
-    interleave = secnum // 2
     sector  = 0
     counter = len(sectors)
     while counter:
@@ -167,7 +165,7 @@ for track in range(1, tracks + 1):
     dumpmaster.timeout = 4
     for sector in seclist:
         f.seek(getfilepointer(track, sector))
-        if dumpmaster.sendblock(f.read(256)) > 0:
+        if dumpmaster.sendblockgcr(f.read(256)) > 0:
             print('')
             f.close()
             dumpmaster.close()

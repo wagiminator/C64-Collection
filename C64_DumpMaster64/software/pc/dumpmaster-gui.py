@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -47,6 +47,9 @@ FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
 
+# Default interleave
+interleave = 4
+
 
 # ===================================================================================
 # Progress Box Class - Shows a Progress Bar
@@ -83,7 +86,6 @@ class Progressbox(Toplevel):
 # ===================================================================================
 # Show Disk Directory
 # ===================================================================================
-
 
 def diskDir():
     # Establish serial connection
@@ -167,7 +169,6 @@ def diskDir():
 # ===================================================================================
 # Format Disk
 # ===================================================================================
-
 
 def diskFormat():
     # Draw parameter entry window
@@ -267,7 +268,6 @@ def diskFormat():
 # Read Disk Image
 # ===================================================================================
 
-
 def diskRead():
     # Draw parameter entry window
     parameterWindow = Toplevel(mainWindow)
@@ -353,11 +353,12 @@ def diskRead():
 
     # Read disk
     copied = 0
+    errors = 0
     starttime = time.time()
     for track in range(1, tracks + 1):
-        secnum      = getsectors(track)
-        sectors     = [x for x in range(secnum)]
-        seclist     = []
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
 
         # Cancel sectors without BAM entry
         if bamcopy > 0 and track < 36:
@@ -365,8 +366,6 @@ def diskRead():
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        if track < 18:  interleave = 6
-        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -395,14 +394,17 @@ def diskRead():
         dumpmaster.timeout = 3
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
-            block = dumpmaster.getblock()
+            block = dumpmaster.getblockgcr()
             if not block:
                 f.close()
                 dumpmaster.close()
                 progress.destroy()
                 messagebox.showerror('Error', 'Failed to read from disk !')
                 return
-            f.write(block)
+            if not len(block) == 256:
+                errors += 1
+            else:
+                f.write(block)
             dumpmaster.timeout = 1
             copied += 1
         progress.setvalue(copied * 100 // allocated)
@@ -418,13 +420,13 @@ def diskRead():
         diskVerify(filename, bamcopy, tracks)
     else:
         messagebox.showinfo('Mission accomplished', 
-            'Copying finished !\nDuration: ' + str(round(duration)) + ' sec')
+            'Copying finished !\nRead Errors: ' + str(errors) + 
+            '\nDuration: ' + str(round(duration)) + ' sec')
 
 
 # ===================================================================================
 # Write Disk Image
 # ===================================================================================
-
 
 def diskWrite():
     # Draw parameter entry window
@@ -509,9 +511,9 @@ def diskWrite():
     progress = Progressbox(mainWindow, 'Writing to disk', 'Copy D64 file to disk ...')
     starttime = time.time()
     for track in range(1, tracks + 1):
-        secnum      = getsectors(track)
-        sectors     = [x for x in range(secnum)]
-        seclist     = []
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
 
         # Cancel sectors without BAM entry
         if bamcopy > 0 and track < 36:
@@ -519,7 +521,6 @@ def diskWrite():
                 if fbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        interleave = secnum // 2
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -548,7 +549,7 @@ def diskWrite():
         dumpmaster.timeout = 3
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
-            if dumpmaster.sendblock(f.read(256)) > 0:
+            if dumpmaster.sendblockgcr(f.read(256)) > 0:
                 f.close()
                 dumpmaster.close()
                 progress.destroy()
@@ -575,7 +576,6 @@ def diskWrite():
 # ===================================================================================
 # Verify Disk Image
 # ===================================================================================
-
 
 def diskVerify(filename, bamcopy, tracks):
     # Establish serial connection
@@ -625,9 +625,9 @@ def diskVerify(filename, bamcopy, tracks):
     errors    = 0
     verified  = 0
     for track in range(1, tracks + 1):
-        secnum      = getsectors(track)
-        sectors     = [x for x in range(secnum)]
-        seclist     = []
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
 
         # Cancel sectors without BAM entry
         if bamcopy > 0 and track < 36:
@@ -635,8 +635,6 @@ def diskVerify(filename, bamcopy, tracks):
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        if track < 18:  interleave = 6
-        else:           interleave = 5
         sector  = 0
         counter = len(sectors)
         while counter:
@@ -664,7 +662,7 @@ def diskVerify(filename, bamcopy, tracks):
         for sector in seclist:
             f.seek(getfilepointer(track, sector))
             fblock = f.read(256)
-            block  = dumpmaster.getblock()
+            block  = dumpmaster.getblockgcr()
             if not block:
                 f.close()
                 dumpmaster.close()
@@ -694,7 +692,6 @@ def diskVerify(filename, bamcopy, tracks):
 # Load Files from Disk
 # ===================================================================================
 
-
 def loadFiles():
 
     def readFile(fileindex):
@@ -722,7 +719,7 @@ def loadFiles():
         written = 0;
         dumpmaster.timeout = 4
         while 1:
-            block = dumpmaster.getblock()
+            block = dumpmaster.getblock(256)
             dumpmaster.timeout = 1
             if not block:
                 f.close()
@@ -766,7 +763,7 @@ def loadFiles():
 
     dumpmaster.timeout = 4
     while 1:
-        block = dumpmaster.getblock()
+        block = dumpmaster.getblock(256)
         dumpmaster.timeout = 1
         if not block:
             dumpmaster.close()
@@ -839,7 +836,6 @@ def tapeRead():
         messagebox.showerror('Error', 'DumpMaster64 Adapter not found !')
         return
 
-
     # Open output file and write file header
     fileName = filedialog.asksaveasfilename(title = 'Select output file',
                 filetypes = (("TAP files","*.tap"), ('All files','*.*')))
@@ -856,7 +852,6 @@ def tapeRead():
 
     f.write(b'C64-TAPE-RAW\x01\x00\x00\x00\x00\x00\x00\x00')
 
-
     # Create information window
     contentWindow = Toplevel(mainWindow)
     contentWindow.title('Reading from tape')
@@ -867,7 +862,6 @@ def tapeRead():
     canvas = Canvas(contentWindow, width=256, height=172)
     canvas.pack()
     canvas.create_rectangle(0, 0, 256, 128, fill="white")
-
 
     # Send read command to DumpMaster64 and wait for PLAY pressed
     text1 = canvas.create_text(128, 150, text='PRESS PLAY ON TAPE', fill='black', anchor='c', font=('Helvetica', 12, 'bold'))
@@ -937,13 +931,11 @@ def tapeRead():
                 line1 = canvas.create_line(x, 0, x, 128, fill='black')
                 contentWindow.update_idletasks()
         
-
     taptime  = taptime * 8 // 1000000 + 1
     f.seek(16)
     f.write(fsize.to_bytes(4, byteorder='little'))
     testsum  = int.from_bytes(dumpmaster.read(2), byteorder='little')
     overflow = dumpmaster.read(1)[0]
-
 
     # Close output file and serial connection
     f.close()
@@ -973,7 +965,6 @@ def tapeWrite():
         messagebox.showerror('Error', 'DumpMaster64 Adapter not found !')
         return
 
-
     # Open input file
     fileName = filedialog.askopenfilename(title = 'Select input file',
                 filetypes = (("TAP files","*.tap"), ('All files','*.*')))
@@ -989,14 +980,12 @@ def tapeWrite():
         dumpmaster.close()
         return
 
-
     # Check file header
     if fileSize < 20 or not f.read(12) == b'C64-TAPE-RAW':
         messagebox.showerror('Error', 'Wrong file header !')
         dumpmaster.close()
         f.close()
         return
-
 
     # Check TAP version
     tapversion = f.read(1)[0]
@@ -1006,7 +995,6 @@ def tapeWrite():
         f.close()
         return
 
-
     # Check size of data area
     f.seek(16)
     datasize = int.from_bytes(f.read(4), byteorder='little')
@@ -1015,7 +1003,6 @@ def tapeWrite():
         dumpmaster.close()
         f.close()
         return
-
 
     # Preparing data and store it in temp file
     try:
@@ -1064,7 +1051,6 @@ def tapeWrite():
     datasize = tcount
     taptime  = taptime * 8 // 1000000 + 1
 
-
     # Send write command to DumpMaster64 and wait for RECORD pressed
     progress.setvalue(0)
     progress.setactivity('Recording time: ' + str(taptime//60) + ' min ' + str(taptime%60) + ' sec\n\nPRESS RECORD & PLAY ON TAPE')
@@ -1085,7 +1071,6 @@ def tapeWrite():
         messagebox.showerror('Timeout', 'Didn\'t I say something about pressing RECORD?')
         return
   
-
     # Read data from temp file and write to tape
     progress.setvalue(0)
     progress.setactivity('Recording in progress ...')
@@ -1116,12 +1101,10 @@ def tapeWrite():
     underrun = dumpmaster.read(1)[0]
     stopped  = dumpmaster.read(1)[0]
 
-
     # Close temp file and serial connection
     t.close()
     dumpmaster.close()
     progress.destroy()
-
 
     # Validate data and checksum and print infos
     if underrun > 0:
@@ -1199,7 +1182,6 @@ def showContent():
 # ===================================================================================
 # Flash Firmware
 # ===================================================================================
-
 
 def flashFirmware():
     # Valid target MCUs
@@ -1285,7 +1267,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DumpMaster64 v1.0')
+mainWindow.title('DumpMaster64 v1.1')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()

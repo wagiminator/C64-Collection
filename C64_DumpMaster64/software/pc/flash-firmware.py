@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Flash Firmware
-# Version:   v1.0
+# Version:   v1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -44,7 +44,7 @@ FIRMWARE_BIN = 'libs/firmware.bin'
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DumpMaster64 - Python Command Line Interface v1.0')
+print('DumpMaster64 - Python Command Line Interface v1.1')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
