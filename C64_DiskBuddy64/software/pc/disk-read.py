@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -71,7 +71,7 @@ bamcopy    = args.bamonly
 device     = args.device
 filename   = args.file
 interleave = args.interleave
-if interleave < 1 or interleave > 17: interleave = 4
+if interleave < 1 or interleave > 16: interleave = 4
 
 
 # Establish serial connection
@@ -79,19 +79,13 @@ print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port:', diskbuddy.port)
-print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = diskbuddy.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not diskbuddy.checkdevice(device):
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    diskbuddy.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast loader to disk drive RAM
@@ -117,9 +111,8 @@ for track in range(1, tracks + 1):
 
 
 # Read BAM if necessary
-print('')
 if bamcopy:
-    print('Reading BAM ...')
+    print('Reading and checking BAM ...')
     dbam = BAM(diskbuddy.readblock(18, 0))
     if not dbam.bam:
         f.close()
@@ -128,7 +121,9 @@ if bamcopy:
 
 
 # Read disk
-print('Reading disk ...')
+print('Reading from disk ...')
+print('')
+copied = 0
 errors = 0
 starttime = time.time()
 for track in range(1, tracks + 1):
@@ -163,9 +158,10 @@ for track in range(1, tracks + 1):
             raise AdpError('Failed to start disk operation')
 
     # Read track
-    trackline = ('Track ' + str(track) + ':').ljust(10) + '['
-    sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
-    sys.stdout.write('\r' + trackline)
+    trackline = list('\r' + ('Track ' + str(track) + ':').ljust(10) + '[' + '-' * secnum + ']')
+    for x in range(secnum):
+        if not x in seclist: trackline[x + 12] = '0'
+    sys.stdout.write(''.join(trackline))
     sys.stdout.flush()
     diskbuddy.timeout = 3
     for sector in seclist:
@@ -177,23 +173,26 @@ for track in range(1, tracks + 1):
             diskbuddy.close()
             raise AdpError('Failed to read from disk')
         if not len(block) == 256:
-            sys.stdout.write('R')
+            trackline[sector + 12] = 'R'
             errors += 1
         else:
             f.write(block)
-            sys.stdout.write('#')
+            trackline[sector + 12] = '#'
+            copied += 1
+        sys.stdout.write(''.join(trackline))
         sys.stdout.flush()
         diskbuddy.timeout = 1
     print('')
-
-if track > 35: diskbuddy.readblock(18, 0)
     
 
 # Finish all up
+diskbuddy.executememory(MEMCMD_SETTRACK18)
 duration = time.time() - starttime
-print('Done.')
-print('Errors:  ', errors)
-print('Duration:', round(duration), 'seconds')
-print('')
 f.close()
 diskbuddy.close()
+
+print('')
+print(copied, 'blocks copied.')
+print('Errors:  ', errors, 'bad sectors')
+print('Duration:', round(duration), 'seconds')
+print('')

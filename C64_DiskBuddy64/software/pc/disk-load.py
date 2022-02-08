@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read File(s) from Disk
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -128,19 +128,13 @@ print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port', diskbuddy.port)
-print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = diskbuddy.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not diskbuddy.checkdevice(device):
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    diskbuddy.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast loader to disk drive RAM
@@ -173,6 +167,7 @@ directory = Dir(blocks)
 
 # Print files
 print('')
+print('Disk title:', directory.title)
 indices = list()
 index = 0
 counter = 1

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Disk Tools Library
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -87,7 +87,11 @@ class Dir:
         self.dirpass()
 
     def dirpass(self):
-        self.filelist = list()
+        self.title      = self.bam.getdiskname()
+        self.ident      = self.bam.getdiskident()
+        self.blocksfree = self.bam.getblocksfree()
+        self.header     = self.bam.getheader()
+        self.filelist   = list()
         for ptr in range(len(self.dir) // 0x20):
             base = 0x20 * ptr
             if self.dir[base+0x02] > 0:

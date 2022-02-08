@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -90,19 +90,13 @@ print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port:', diskbuddy.port)
-print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = diskbuddy.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not diskbuddy.checkdevice(device):
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    diskbuddy.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast formatter to disk drive RAM
@@ -137,7 +131,7 @@ print('')
 
 # Finish all up
 duration = time.time() - starttime
-print('Done.')
+print(tracks, 'tracks formatted.')
 print('Duration:', round(duration), 'seconds')
 print('')
 diskbuddy.close()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -69,7 +69,7 @@ bamcopy    = args.bamonly
 device     = args.device
 filename   = args.file
 interleave = args.interleave
-if interleave < 1 or interleave > 17: interleave = 4
+if interleave < 1 or interleave > 16: interleave = 4
 
 
 # Establish serial connection
@@ -77,19 +77,13 @@ print('Connecting to DiskBuddy64 ...')
 diskbuddy = Adapter()
 if not diskbuddy.is_open:
     raise AdpError('Adapter not found')
-print('Adapter found on port:', diskbuddy.port)
-print('Firmware version:', diskbuddy.getversion())
 
 
-# Check if IEC device ist present and supported
-magic = diskbuddy.detectdevice(device)
-if not device_is_known(magic): 
+# Check if IEC device ist present
+print('Connecting to IEC device', device, '...')
+if not diskbuddy.checkdevice(device):
     diskbuddy.close()
     raise AdpError('IEC device ' + str(device) + ' not found')
-print('IEC device', device, 'found:', IEC_DEVICES[magic])
-if not device_is_supported(magic):
-    diskbuddy.close()
-    raise AdpError(IEC_DEVICES[magic] + ' is not supported')
 
 
 # Upload fast writer to disk drive RAM
@@ -121,7 +115,7 @@ if not filesize == getfilepointer(tracks + 1, 0):
 
 
 # Read BAM if necessary
-print('')
+
 if bamcopy:
     print('Reading BAM of input file ...')
     f.seek(getfilepointer(18, 0))
@@ -129,7 +123,9 @@ if bamcopy:
 
 
 # Write disk
-print('Writing disk ...')
+print('Writing to disk ...')
+print('')
+copied = 0
 starttime = time.time()
 for track in range(1, tracks + 1):
     secnum  = getsectors(track)
@@ -163,9 +159,10 @@ for track in range(1, tracks + 1):
             raise AdpError('Failed to start disk operation')
 
     # Write track
-    trackline = ('Track ' + str(track) + ':').ljust(10) + '['
-    sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
-    sys.stdout.write('\r' + trackline)
+    trackline = list('\r' + ('Track ' + str(track) + ':').ljust(10) + '[' + '-' * secnum + ']')
+    for x in range(secnum):
+        if not x in seclist: trackline[x + 12] = '0'
+    sys.stdout.write(''.join(trackline))
     sys.stdout.flush()
     diskbuddy.timeout = 4
     for sector in seclist:
@@ -175,18 +172,21 @@ for track in range(1, tracks + 1):
             f.close()
             diskbuddy.close()
             raise AdpError('Failed to write sector to disk')
-        sys.stdout.write('#')
+        trackline[sector + 12] = '#'
+        sys.stdout.write(''.join(trackline))
         sys.stdout.flush()
-    if seclen > 0:  diskbuddy.read(1);
+        copied += 1
+    if seclen > 0: diskbuddy.read(1)
     print('')
-
-diskbuddy.executememory(MEMCMD_SETTRACK18)
 
 
 # Finish all up
+diskbuddy.executememory(MEMCMD_SETTRACK18)
 duration = time.time() - starttime
-print('Done.')
-print('Duration:', round(duration), 'seconds')
-print('')
 f.close()
 diskbuddy.close()
+
+print('')
+print(copied, 'blocks copied.')
+print('Duration:', round(duration), 'seconds')
+print('')
