@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Verify Disk
-# Version:   v1.1
+# Version:   v1.1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -73,7 +73,7 @@ filename   = args.file
 maxerrors  = args.errors
 interleave = args.interleave
 if maxerrors < 0: maxerrors = 0
-if interleave < 1 or interleave > 17: interleave = 4
+if interleave < 1 or interleave > 16: interleave = 4
 
 
 # Establish serial connection
@@ -120,8 +120,7 @@ if not filesize == getfilepointer(tracks + 1, 0):
 
 
 # Read and verify BAM
-print('')
-print('Verifying BAM ...')
+print('Reading and verifying BAM ...')
 dbam = BAM(dumpmaster.readblock(18, 0))
 if not dbam.bam:
     f.close()
@@ -137,6 +136,7 @@ if not dbam.bam == fbam.bam:
 
 # Read disk
 print('Verifying disk ...')
+print('')
 errors    = 0
 verified  = 0
 starttime = time.time()
@@ -172,9 +172,10 @@ for track in range(1, tracks + 1):
             raise AdpError('Failed to start disk operation')
 
     # Read track
-    trackline = ('Track ' + str(track) + ':').ljust(10) + '['
-    sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
-    sys.stdout.write('\r' + trackline)
+    trackline = list('\r' + ('Track ' + str(track) + ':').ljust(10) + '[' + '-' * secnum + ']')
+    for x in range(secnum):
+        if not x in seclist: trackline[x + 12] = '0'
+    sys.stdout.write(''.join(trackline))
     sys.stdout.flush()
     dumpmaster.timeout = 3
     for sector in seclist:
@@ -187,14 +188,15 @@ for track in range(1, tracks + 1):
             dumpmaster.close()
             raise AdpError('Failed to read from disk')
         if not len(block) == 256:
-            sys.stdout.write('R')
+            trackline[sector + 12] = 'R'
             errors += 1
         elif fblock == block:
-            sys.stdout.write('#')
+            trackline[sector + 12] = '#'
         else:
-            sys.stdout.write('V')
+            trackline[sector + 12] = 'V'
             errors += 1
         verified += 1
+        sys.stdout.write(''.join(trackline))
         sys.stdout.flush()
         dumpmaster.timeout = 1
     print('')
@@ -206,17 +208,17 @@ for track in range(1, tracks + 1):
             print('Use --bamonly and verify again!')
         raise AdpError('Too many verification errors')
 
-if track > 35: dumpmaster.readblock(18, 0)
-
 
 # Finish all up
+dumpmaster.executememory(MEMCMD_SETTRACK18)
 duration = time.time() - starttime
-print('Done.')
-print('Verified:', verified, 'sectors')
+f.close()
+dumpmaster.close()
+
+print('')
+print(verified, 'blocks verified.')
 print('Errors:  ', errors)
 print('Duration:', round(duration), 'seconds')
 if not bamcopy and errors > 0:
     print('Use --bamonly and verify again!')
 print('')
-f.close()
-dumpmaster.close()

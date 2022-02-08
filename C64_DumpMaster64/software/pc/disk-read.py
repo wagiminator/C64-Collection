@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.1
+# Version:   v1.1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -71,7 +71,7 @@ bamcopy    = args.bamonly
 device     = args.device
 filename   = args.file
 interleave = args.interleave
-if interleave < 1 or interleave > 17: interleave = 4
+if interleave < 1 or interleave > 16: interleave = 4
 
 
 # Establish serial connection
@@ -111,9 +111,8 @@ for track in range(1, tracks + 1):
 
 
 # Read BAM if necessary
-print('')
 if bamcopy:
-    print('Reading BAM ...')
+    print('Reading and checking BAM ...')
     dbam = BAM(dumpmaster.readblock(18, 0))
     if not dbam.bam:
         f.close()
@@ -122,7 +121,9 @@ if bamcopy:
 
 
 # Read disk
-print('Reading disk ...')
+print('Reading from disk ...')
+print('')
+copied = 0
 errors = 0
 starttime = time.time()
 for track in range(1, tracks + 1):
@@ -157,9 +158,10 @@ for track in range(1, tracks + 1):
             raise AdpError('Failed to start disk operation')
 
     # Read track
-    trackline = ('Track ' + str(track) + ':').ljust(10) + '['
-    sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
-    sys.stdout.write('\r' + trackline)
+    trackline = list('\r' + ('Track ' + str(track) + ':').ljust(10) + '[' + '-' * secnum + ']')
+    for x in range(secnum):
+        if not x in seclist: trackline[x + 12] = '0'
+    sys.stdout.write(''.join(trackline))
     sys.stdout.flush()
     dumpmaster.timeout = 3
     for sector in seclist:
@@ -171,23 +173,26 @@ for track in range(1, tracks + 1):
             dumpmaster.close()
             raise AdpError('Failed to read from disk')
         if not len(block) == 256:
-            sys.stdout.write('R')
+            trackline[sector + 12] = 'R'
             errors += 1
         else:
             f.write(block)
-            sys.stdout.write('#')
+            trackline[sector + 12] = '#'
+            copied += 1
+        sys.stdout.write(''.join(trackline))
         sys.stdout.flush()
         dumpmaster.timeout = 1
     print('')
 
-if track > 35: dumpmaster.readblock(18, 0)
-
 
 # Finish all up
+dumpmaster.executememory(MEMCMD_SETTRACK18)
 duration = time.time() - starttime
-print('Done.')
-print('Errors:  ', errors)
-print('Duration:', round(duration), 'seconds')
-print('')
 f.close()
 dumpmaster.close()
+
+print('')
+print(copied, 'blocks copied.')
+print('Errors:  ', errors, 'bad sectors')
+print('Duration:', round(duration), 'seconds')
+print('')

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.1
+# Version:   v1.1.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -69,7 +69,7 @@ bamcopy    = args.bamonly
 device     = args.device
 filename   = args.file
 interleave = args.interleave
-if interleave < 1 or interleave > 17: interleave = 4
+if interleave < 1 or interleave > 16: interleave = 4
 
 
 # Establish serial connection
@@ -116,7 +116,6 @@ if not filesize == getfilepointer(tracks + 1, 0):
 
 
 # Read BAM if necessary
-print('')
 if bamcopy:
     print('Reading BAM of input file ...')
     f.seek(getfilepointer(18, 0))
@@ -125,6 +124,8 @@ if bamcopy:
 
 # Write disk
 print('Writing to disk ...')
+print('')
+copied = 0
 starttime = time.time()
 for track in range(1, tracks + 1):
     secnum  = getsectors(track)
@@ -158,9 +159,10 @@ for track in range(1, tracks + 1):
             raise AdpError('Failed to start disk operation')
 
     # Write track
-    trackline = ('Track ' + str(track) + ':').ljust(10) + '['
-    sys.stdout.write(trackline + '-' * seclen + '0' * (secnum - seclen) + ']')
-    sys.stdout.write('\r' + trackline)
+    trackline = list('\r' + ('Track ' + str(track) + ':').ljust(10) + '[' + '-' * secnum + ']')
+    for x in range(secnum):
+        if not x in seclist: trackline[x + 12] = '0'
+    sys.stdout.write(''.join(trackline))
     sys.stdout.flush()
     dumpmaster.timeout = 4
     for sector in seclist:
@@ -170,18 +172,21 @@ for track in range(1, tracks + 1):
             f.close()
             dumpmaster.close()
             raise AdpError('Failed to write sector to disk')
-        sys.stdout.write('#')
+        trackline[sector + 12] = '#'
+        sys.stdout.write(''.join(trackline))
         sys.stdout.flush()
+        copied += 1
     if seclen > 0:  dumpmaster.read(1);
     print('')
 
-dumpmaster.executememory(MEMCMD_SETTRACK18)
-
 
 # Finish all up
+dumpmaster.executememory(MEMCMD_SETTRACK18)
 duration = time.time() - starttime
-print('Done.')
-print('Duration:', round(duration), 'seconds')
-print('')
 f.close()
 dumpmaster.close()
+
+print('')
+print(copied, 'blocks copied.')
+print('Duration:', round(duration), 'seconds')
+print('')
