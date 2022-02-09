@@ -128,36 +128,36 @@ readjob:
     sta $0b           ; set sector for disk operation
     jsr $f50a         ; find beginning of block
 wr01:
-    bvc wr01          ; byte ready?
+    bvc *             ; byte received?
     clv
-    lda $1c01         ; get data byte
-    sta $0300,y       ; and write in buffer
+    lda $1c01         ; get received byte
+    sta $0300,y       ; and write into data buffer ($0300 - $03ff)
     iny               ; increase buffer index
-    bne wr01          ; repeat 256 times
+    bne wr01          ; repeat for 256 bytes
     ldy #$bb          ; index overflow buffer
 wr02:
-    bvc wr02          ; byte ready?
+    bvc *             ; byte received?
     clv
-    lda $1c01         ; get data byte
-    sta $0100,y       ; write in overflow buffer
-    iny               ; ($01BB - $01FF)
-    bne wr02          ; repeat 69 times
+    lda $1c01         ; get received byte
+    sta $0100,y       ; write into overflow buffer ($01bb - $01ff)
+    iny               ; increase buffer index
+    bne wr02          ; repeat for 69 bytes
 
 ; Send GCR-encoded block (325 bytes) to adapter via fast IEC
 ; ----------------------------------------------------------
     lda #$02          ; declare 'START SENDING BLOCK':
     sta $1800         ; -> pull DATA LOW
 sl01:
-    lda $0300,y       ; read byte from data buffer
+    lda $0300,y       ; read byte from data buffer ($0300 - $03ff)
     jsr sendbyte      ; send byte via fast IEC
     iny               ; increase buffer index
-    bne sl01          ; repeat 256 times
+    bne sl01          ; repeat for 256 bytes
     ldy #$bb          ; index overflow buffer
 sl02:
-    lda $0100,y       ; read byte from overflow buffer
+    lda $0100,y       ; read byte from overflow buffer ($01bb - $01ff)
     jsr sendbyte      ; send byte via fast IEC
-    iny               ; ($01BB - $01FF)
-    bne sl02          ; repeat 69 times
+    iny               ; increase buffer index
+    bne sl02          ; repeat for 69 bytes
 
 ; Prepare next sector
 ; -------------------

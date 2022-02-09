@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Writing
-; Version:   v1.1
+; Version:   v1.1.1
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -134,15 +134,15 @@ writejob:
 waitready:
     bit $1800         ; test DATA line
     beq waitready     ; wait for DATA LOW    
-    ldy #$bb          ; index overflow buffer $01bb-$01ff
+    ldy #$bb          ; index overflow buffer
 rloop1:
     jsr receivebyte   ; get byte from IEC
-    sta $0100,y       ; write to overflow buffer (69 bytes)
+    sta $0100,y       ; write into overflow buffer ($01bb-$01ff)
     iny               ; increase buffer index
     bne rloop1        ; repeat for 69 bytes
 rloop2:
     jsr receivebyte   ; get byte from IEC
-    sta $0300,y       ; write to data buffer (256 bytes)
+    sta $0300,y       ; write into data buffer ($0300 - $03ff)
     iny               ; increase buffer index
     bne rloop2        ; repeat for 256 bytes
 
@@ -157,10 +157,10 @@ rloop2:
 ; ------------------
     ldy #$09          ; 9 bytes gap after header
 gaploop:
-    bvc gaploop       ; byte ready?
+    bvc *             ; byte received?
     clv
     dey               ; decrease GAP byte counter
-    bne gaploop       ; skip 9 GAP bytes
+    bne gaploop       ; repeat for 9 GAP bytes
 
 ; Switch head to write mode
 ; -------------------------
@@ -175,43 +175,36 @@ gaploop:
 ; ------------------------------
     lda #$ff          ; SYNC byte: #$ff
     ldy #$05          ; SYNC byte counter: 5 times
-    sta $1c01         ; write to disk
+    sta $1c01         ; set byte to be written
     clv
 syncloop:
-    bvc syncloop      ; wait for SYNC byte written
+    bvc *             ; wait for SYNC byte to be written
     clv
     dey               ; decrease SYNC byte conter
     bne syncloop      ; repeat for 5 SYNC bytes
 
 ; Write GCR coded data block
 ; --------------------------
-    ldy #$bb          ; index overflow buffer $01bb-$01ff
+    ldy #$bb          ; index overflow buffer
 gcrloop:
-    lda $0100,y       ; write overflow buffer (69 bytes)
-wr01:
-    bvc wr01          ; wait for ready
+    lda $0100,y       ; get byte from overflow buffer ($01bb-$01ff)
+    bvc *             ; wait for previous byte to be written
     clv
-    sta $1c01         ; write byte
+    sta $1c01         ; set byte to be written
     iny               ; increase buffer index
     bne gcrloop       ; repeat for 69 bytes
 dataloop:
-    lda $0300,y       ; write data buffer (256 bytes)
-wr02:
-    bvc wr02          ; wait for ready
+    lda $0300,y       ; get byte from data buffer ($0300 - $03ff)
+    bvc *             ; wait for previous byte to be written
     clv
-    sta $1c01         ; write byte
+    sta $1c01         ; set byte to be written
     iny               ; increase buffer index
     bne dataloop      ; repeat for 256 bytes
 
 ; Switch head back to read mode
 ; -----------------------------
-wr03:
-    bvc wr03          ; byte ready?
-    lda $1c0c         ; PCR to input again
-    ora #$e0
-    sta $1c0c
-    lda #$00          ; port A (read/write head)
-    sta $1c03         ; to input
+    bvc *             ; wait for last byte to be written
+    jsr $fe00         ; switch to reading
 
 ; Prepare next sector
 ; --------------------
