@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Loading
-; Version:   v1.1
+; Version:   v1.1.2
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -31,7 +31,7 @@
 ; "M-E"<addrLow><addrHigh><track><sector>
 ;
 ; $0200 - $0202 "M-E"       Memory Execute command
-; $0203 - $0204 <addrL/H>   start address of this program in RAM ($0500)
+; $0203 - $0204 <addrL/H>   start address of this program in RAM ($0503)
 ; $0205         <track>     track on disk to start reading
 ; $0206         <sector>    sector on track to start reading
 
@@ -39,16 +39,19 @@
 .setcpu "6502"
 .org $0500
 
+    jmp readjob       ; jump to read job (called by job loop)
+
+; ====================================================================
+; Start Routine (start program here)
+; ====================================================================
 
 ; Initial setup
 ; -------------
 start:
-    lda #$00          ; set buffer number:
-    sta $f9           ; -> buffer at $0300
     lda $0205         ; get track from command buffer
-    sta $06           ; set track for disk operation
+    sta $0a           ; set track for disk operation
     lda $0206         ; get sector from command buffer
-    sta $07           ; set sector for disk operation
+    sta $0b           ; set sector for disk operation
     jsr $c118         ; turn on DRIVE LED
     lda #$12          ; speed up stepper
     sta $1c07
@@ -57,18 +60,21 @@ start:
 
 ; Read sector from disk
 ; ---------------------
-readsector:   
-    ldx #$03          ; number of retries
+readsector:
+    lda $0a           ; get current track
+    cmp #41           ; track >= 41?
+    bcs readerror     ; 'WRONG TRACK' -> finish
+    ldx #$05          ; number of retries
 retry:
-    lda #$80          ; job number for reading sector
-    sta $00           ; set job -> start disk operation
+    lda #$e0          ; read job at $0500
+    sta $02           ; set job -> start disk operation
 waitcomplete:
-    lda $00
+    lda $02           ; read job status
     bmi waitcomplete  ; wait for job to complete
     cmp #$01          ; was it successful?
     beq sendblock     ; -> send data block via IEC
     dex               ; decrease retry counter
-    bne retry         ; try again (max 3x)
+    bne retry         ; try again (max 5x)
 
 ; Declare 'READ ERROR' and finish
 ; -------------------------------
@@ -114,9 +120,9 @@ sendbyte:
 ; Prepare next sector
 ; -------------------
     lda $0301         ; get next sector
-    sta $07           ; set sector for disk operation
+    sta $0b           ; set sector for disk operation
     lda $0300         ; get next track
-    sta $06           ; set track for disk operation
+    sta $0a           ; set track for disk operation
     bne readsector    ; repeat until end of file
 
 ; Finish all up
@@ -128,3 +134,42 @@ finish:
     and #$F7
     sta $1c00
     rts               ; end of mission
+
+
+; ====================================================================
+; Job Routine (reads a sector from disk)
+; ====================================================================
+
+; Read sector from disk
+; ---------------------
+readjob:
+    lda #$03          ; set buffer pointer:
+    sta $31           ; -> $0300
+    jsr $f50a         ; find beginning of block
+wr01:
+    bvc *             ; byte ready?
+    clv
+    lda $1c01         ; get data byte
+    sta ($30),y       ; and write in data buffer
+    iny               ; increase buffer index
+    bne wr01          ; repeat for 256 bytes
+    ldy #$ba          ; buffer index overflow buffer
+wr02:
+    bvc *             ; byte ready?
+    clv
+    lda $1c01         ; get data byte
+    sta $0100,y       ; write in overflow buffer ($01ba - $01ff)
+    iny               ; increase buffer index
+    bne wr02          ; repeat for 69 bytes
+    jsr $f8e0         ; decode GCR
+    jsr $f5e9         ; calculate parity
+    cmp $3a           ; agreement?
+    bne return        ; no -> 'READ ERROR'
+
+; Set return code and terminate job
+; ---------------------------------
+    lda #$01          ; set return code 'OK'
+    .byte $2c         ; skip next instruction
+return:
+    lda #$05          ; set return code 'READ ERROR'
+    jmp $f969         ; finish job

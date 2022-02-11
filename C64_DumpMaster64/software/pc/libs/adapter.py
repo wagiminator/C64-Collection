@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Adapter Library
-# Version:   v1.1
+# Version:   v1.1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -392,7 +392,7 @@ FASTREAD_STARTADDR   = 0x0503
 FASTWRITE_LOADADDR   = 0x0500
 FASTWRITE_STARTADDR  = 0x0503
 FASTLOAD_LOADADDR    = 0x0500
-FASTLOAD_STARTADDR   = 0x0500
+FASTLOAD_STARTADDR   = 0x0503
 FASTFORMAT_LOADADDR  = 0x0500
 FASTFORMAT_STARTADDR = 0x0503
 

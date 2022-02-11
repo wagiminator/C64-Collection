@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.1
+# Version:   v1.1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -47,8 +47,9 @@ FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
 
-# Default interleave
+# Default variables
 interleave = 4
+trackgap   = 6
 
 
 # ===================================================================================
@@ -366,10 +367,10 @@ def diskRead():
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        sector  = 0
+        sector  = trackgap * (track - 1)
         counter = len(sectors)
         while counter:
-            if sector >= secnum: sector -= secnum
+            sector %= secnum
             while not sector in sectors:
                 sector += 1
                 if sector >= secnum: sector = 0
@@ -410,8 +411,8 @@ def diskRead():
         progress.setvalue(copied * 100 // allocated)
 
     # Finish all up
-    if verify == 0 and tracks > 35:
-        dumpmaster.readblock(18, 0)
+    if verify == 0:
+        dumpmaster.executememory(MEMCMD_SETTRACK18)
     duration = time.time() - starttime
     f.close()
     dumpmaster.close()
@@ -521,10 +522,10 @@ def diskWrite():
                 if fbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        sector  = 0
+        sector  = trackgap * (track - 1)
         counter = len(sectors)
         while counter:
-            if sector >= secnum: sector -= secnum
+            sector %= secnum
             while not sector in sectors:
                 sector += 1
                 if sector >= secnum: sector = 0
@@ -560,7 +561,7 @@ def diskWrite():
         progress.setvalue(copied * 100 // allocated)
 
     # Finish all up
-    if verify == 0 and tracks > 35:
+    if verify == 0:
         dumpmaster.executememory(MEMCMD_SETTRACK18)
     duration = time.time() - starttime
     f.close()
@@ -635,10 +636,10 @@ def diskVerify(filename, bamcopy, tracks):
                 if dbam.blockisfree(track, x): sectors.remove(x)
 
         # Optimize order of sectors for speed
-        sector  = 0
+        sector  = trackgap * (track - 1)
         counter = len(sectors)
         while counter:
-            if sector >= secnum: sector -= secnum
+            sector %= secnum
             while not sector in sectors:
                 sector += 1
                 if sector >= secnum: sector = 0
@@ -680,7 +681,7 @@ def diskVerify(filename, bamcopy, tracks):
                 '\nErrors: ' + str(errors))
 
     # Finish all up
-    if track > 35: dumpmaster.readblock(18, 0)
+    dumpmaster.executememory(MEMCMD_SETTRACK18)
     f.close()
     dumpmaster.close()
     progress.destroy()
@@ -798,7 +799,7 @@ def loadFiles():
     indices = list()
     index = 0
     for file in directory.filelist:
-        if file['type'] == 'PRG':
+        if file['type'] == 'PRG' and file['size'] > 0:
             line  = str(file['size']).rjust(4) + '  '
             line += ('"' + file['name'] + '"').ljust(20)
             line += 'PRG'
