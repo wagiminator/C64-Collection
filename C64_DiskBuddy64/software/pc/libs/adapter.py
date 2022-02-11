@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Adapter Library
-# Version:   v1.3
+# Version:   v1.3.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -262,7 +262,7 @@ class Adapter(Serial):
 
 # Encode an entire block
 def encodeblock(data):
-    if not len(data) == 256:
+    if not data or not len(data) == 256:
         return None
     parity = 0
     for x in data: parity ^= x
@@ -290,7 +290,7 @@ def encodequartet(data):
 
 # Decode an entire block
 def decodeblock(data):
-    if not len(data) == 325:
+    if not data or not len(data) == 325:
         return None
     data = decodedata(data)
     parity = data[257];
@@ -393,7 +393,7 @@ FASTREAD_STARTADDR   = 0x0503
 FASTWRITE_LOADADDR   = 0x0500
 FASTWRITE_STARTADDR  = 0x0503
 FASTLOAD_LOADADDR    = 0x0500
-FASTLOAD_STARTADDR   = 0x0500
+FASTLOAD_STARTADDR   = 0x0503
 FASTSAVE_LOADADDR    = 0x0500
 FASTSAVE_STARTADDR   = 0x0500
 FASTFORMAT_LOADADDR  = 0x0500

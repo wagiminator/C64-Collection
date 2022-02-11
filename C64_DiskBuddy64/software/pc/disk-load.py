@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read File(s) from Disk
-# Version:   v1.3.1
+# Version:   v1.3.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -172,7 +172,7 @@ indices = list()
 index = 0
 counter = 1
 for file in directory.filelist:
-    if file['type'] == 'PRG':
+    if file['type'] == 'PRG' and file['size'] > 0:
         print(('(' + str(counter) + ')').ljust(5), end='')
         print(('\"' + file['name'] + '\"').ljust(22), end='')
         if counter % 2 == 0:

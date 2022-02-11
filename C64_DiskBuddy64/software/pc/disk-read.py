@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.3.1
+# Version:   v1.3.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -46,6 +46,7 @@ from libs.disktools import *
 
 # Constants and variables
 FASTREAD_BIN = 'libs/fastread.bin'
+trackgap = 5
 tracks = 35
 
 
@@ -137,10 +138,10 @@ for track in range(1, tracks + 1):
             if dbam.blockisfree(track, x): sectors.remove(x)
 
     # Optimize order of sectors for speed
-    sector  = 0
+    sector  = trackgap * (track - 1)
     counter = len(sectors)
     while counter:
-        if sector >= secnum: sector -= secnum
+        sector %= secnum
         while not sector in sectors:
             sector += 1
             if sector >= secnum: sector = 0

@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Writing
-; Version:   v1.3.1
+; Version:   v1.3.2
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -149,12 +149,10 @@ gaploop:
 
 ; Switch head to write mode
 ; -------------------------
+    lda #$ce          ; change PCR
+    sta $1c0c         ; to output
     lda #$ff          ; port A (read/write head)
     sta $1c03         ; to output
-    lda $1c0c         ; change PCR to output
-    and #$1f
-    ora #$c0
-    sta $1c0c
 
 ; Write 5 times SYNC byte (#$ff)
 ; ------------------------------
