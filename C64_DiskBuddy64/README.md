@@ -1,9 +1,11 @@
 # DiskBuddy64 - Connect your Commodore 1541 Floppy Disk Drive to a PC
-DiskBuddy64 is a minimal adapter that can interface a Commodore 1541(II) floppy disk drive to your PC via USB in order to read from and write on disks. It uses its own fast loader to minimize the transfer times. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The DiskBuddy64 is controlled via a command line interface or a graphical front end written in Python.
+DiskBuddy64 is a minimal adapter that can interface a Commodore 1541(II) floppy disk drive to your PC via USB in order to read from and write on disks. It uses its own fast loader to minimize the transfer times. The DiskBuddy64 is controlled via a command line interface or a graphical front end written in Python.
+
+The DiskBuddy64 is a proprietary interface. It does not turn the floppy disk drive into a standard USB mass storage device. Instead, it offers the ability to send low-level IEC commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk. Thanks to the integrated fast loader, the adapter reads or writes floppy disks at twelve times the normal speed, dumping an entire disk in about 32 seconds. DiskBuddy64 cannot read or write copy-protected disks.
+
+The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
 
 ![DiskBuddy64_pic5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_pic5.jpg)
-
-The DiskBuddy64 is a proprietary interface. It does not turn the floppy disk drive into a standard USB mass storage device. Instead, it offers the ability to send low-level IEC commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk. DiskBuddy64 cannot read or write copy-protected disks.
 
 # Hardware
 The schematic is shown below:
