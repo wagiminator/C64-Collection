@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DumpMaster64 - Adapter Firmware
-// Version:   v1.1
+// Version:   v1.2
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -89,8 +89,8 @@
 #define TAP_PACKSIZE  64          // length of data package for writing (32, 64, or 128)
 
 // Identifiers
-#define VERSION     "1.1"         // version number sent via serial if requested
-#define IDENT       "DumpMaster64"// identifier sent via serial if requested
+#define VERSION   "1.2"           // version number sent via serial if requested
+#define IDENT     "DumpMaster64"  // identifier sent via serial if requested
 
 // Pin manipulation macros
 enum {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PB0, PB1, PB2, PB3};    // enumerate pin designators
@@ -794,11 +794,12 @@ void IEC_writeAsynch(uint8_t data) {
 }
 
 // Write data block via fast IEC
-void IEC_writeBlock(void) {
+void IEC_writeBlock(uint16_t cnt) {
+  if(!cnt) cnt = 256;                               // 256 bytes if cnt = 0
   BUF_reset();                                      // reset buffer
   WDT_reset();                                      // reset watchdog
   UART_write(0);                                    // request sector data from PC
-  for(uint16_t i=0; i<325; i++)                     // get data block from PC
+  for(uint16_t i=0; i<cnt; i++)                     // get data block from PC
     BUF_buffer[i] = UART_read();                    // data byte UART -> buffer
   IEC_DATA_setLow();                                // declare 'READY TO SEND BLOCK'
   while(IEC_CLK_isHigh());                          // wait for reply
@@ -809,7 +810,7 @@ void IEC_writeBlock(void) {
     while(IEC_DATA_isLow());                        // wait for line released
     return;                                         // return
   }
-  for(uint16_t i=0; i<325; i++)                     // transfer block data to drive
+  for(uint16_t i=0; i<cnt; i++)                     // transfer block data to drive
     IEC_writeAsynch(BUF_buffer[i]);                 // data byte buffer -> IEC
 }
 
@@ -845,7 +846,7 @@ void IEC_readTrack(void) {
 void IEC_writeTrack(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   uint8_t cnt = BUF_buffer[7];                      // get number of sectors to write
-  while(!IEC_error && cnt--) IEC_writeBlock();      // read data via UART and write sector
+  while(!IEC_error && cnt--) IEC_writeBlock(325);   // read data via UART and write sector
   if(!IEC_error) {                                  // no error until last byte?
     IEC_DATA_setLow();                              // declare 'READY'
     while(IEC_CLK_isHigh());                        // wait for status
@@ -864,14 +865,15 @@ void IEC_loadFile(void) {
   while(!IEC_error && !IEC_EOI) IEC_readBlock(256); // read sectors and send data via UART
 }
 
-// <length>"M-E"<addrLow><addrHigh><Track+1><Orig><Bump><ShowProgress><Demagn><Verify>0:<Name>,<ID1><ID2>
+// <length>"M-E"<addrLow><addrHigh><tracks><bump><clear><verify>:<name>,<ID1><ID2>
 void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   uint8_t cnt = BUF_buffer[6];                      // get number of tracks
-  while(cnt--) {                                    // for each track:
+  while(!IEC_error && cnt--) {                      // for each track:
     WDT_reset();                                    // reset watchdog
     while(IEC_DATA_isHigh());                       // wait for track complete
-    UART_write(cnt);                                // send info to pc
+    IEC_error = IEC_CLK_isLow();                    // get return code
+    UART_write(IEC_error);                          // send return code to pc
     while(IEC_DATA_isLow());                        // wait for end of signal
   }
 }
@@ -943,7 +945,7 @@ int main(void) {
       case WRITELAST:   IEC_sendLast(BUF_buffer[1]); break;             //  9 09
       case WRITEBYTES:  IEC_writeBuffer(BUF_buffer+1, BUF_buffer[0]); break;  // 10 0A
       case READFAST:    IEC_readBlock(BUF_buffer[1]); break;            // 11 0B
-      case WRITEFAST:   IEC_writeBlock(); break;                        // 12 0C
+      case WRITEFAST:   IEC_writeBlock(BUF_buffer[1]); break;           // 12 0C
       case OPEN:        break;                                          // 13 0D
       case CLOSE:       break;                                          // 14 0E
       case RESET:       IEC_reset(); break;                             // 15 0F

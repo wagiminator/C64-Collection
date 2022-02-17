@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Graphical User Interface
-# Version:   v1.3.2
+# Version:   v1.4
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -45,6 +45,7 @@ FIRMWARE_BIN   = 'libs/firmware.bin'
 FASTREAD_BIN   = 'libs/fastread.bin'
 FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
 
 # Default variables
@@ -290,7 +291,7 @@ def diskFormat():
         return
 
     # Upload fast loader to disk drive RAM
-    if diskbuddy.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+    if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or diskbuddy.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         diskbuddy.close()
         messagebox.showerror('Error', 'Failed to upload fastformat.bin !')
         return
@@ -303,16 +304,15 @@ def diskFormat():
 
     progress = Progressbox(mainWindow, 'DiskBuddy64 - Formatting disk', 'Formatting disk ...')
     starttime = time.time()
-    diskbuddy.read(1)
-    diskbuddy.timeout = 4
+    diskbuddy.timeout = 6
     for x in range(tracks):
         progr = diskbuddy.read(1)
-        if not progr:
+        if not progr or progr[0] > 0:
             diskbuddy.close()
             progress.destroy()
             messagebox.showerror('Error', 'Failed to format the disk !')
             return
-        progress.setvalue((tracks - progr[0]) * 100 // tracks)
+        progress.setvalue(x * 100 // (tracks - 1))
 
     # Finish all up
     duration = time.time() - starttime
@@ -976,7 +976,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DiskBuddy64 v1.3')
+mainWindow.title('DiskBuddy64 v1.4')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()

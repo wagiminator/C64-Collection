@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Reading
-; Version:   v1.3.1
+; Version:   v1.4
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -50,7 +50,7 @@
 start:
     lda $0205         ; get track from command buffer
     cmp #41           ; track >= 41?
-    bcs finish        ; 'WRONG TRACK' -> finish
+    bcs finish        ; 'WRONG TRACK ERROR' -> finish
     sta $0a           ; set track for disk operation
     lda #$00          ; sector index start value (#$00)
     sta $05           ; store in $05
@@ -58,7 +58,7 @@ start:
     lda #$12          ; speed up stepper
     sta $1c07
     jsr $c63d         ; check drive and initialize
-    bne finish        ; 'READ ERROR' -> finish
+    bne finish        ; 'INIT ERROR' -> finish
 
 ; Read sectors from disk
 ; ----------------------
@@ -73,9 +73,6 @@ waitcomplete:
 finish:
     lda #$3a          ; stepper back to normal speed
     sta $1c07
-    lda $1c00         ; turn off DRIVE LED
-    and #$F7
-    sta $1c00
     rts               ; end of mission
 
 
@@ -118,16 +115,16 @@ readjob:
     sta $0b           ; set sector for disk operation
     jsr $f50a         ; find beginning of block
 wr01:
-    bvc *             ; byte received?
-    clv
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
     lda $1c01         ; get received byte
     sta $0300,y       ; and write into data buffer ($0300 - $03ff)
     iny               ; increase buffer index
     bne wr01          ; repeat for 256 bytes
     ldy #$bb          ; index overflow buffer
 wr02:
-    bvc *             ; byte received?
-    clv
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
     lda $1c01         ; get received byte
     sta $0100,y       ; write into overflow buffer ($01bb - $01ff)
     iny               ; increase buffer index

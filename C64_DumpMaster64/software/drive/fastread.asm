@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Reading
-; Version:   v1.1
+; Version:   v1.2
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -50,7 +50,7 @@
 start:
     lda $0205         ; get track from command buffer
     cmp #41           ; track >= 41?
-    bcs readerror     ; 'WRONG TRACK' -> finish
+    bcs error         ; 'WRONG TRACK ERROR' -> finish
     sta $0a           ; set track for disk operation
     lda #$00          ; sector index start value (#$00)
     sta $05           ; store in $05
@@ -58,7 +58,7 @@ start:
     lda #$12          ; speed up stepper
     sta $1c07
     jsr $c63d         ; check drive and initialize
-    bne readerror     ; 'READ ERROR' -> finish
+    bne error         ; 'INIT ERROR' -> finish
 
 ; Read sectors from disk
 ; ----------------------
@@ -68,12 +68,12 @@ waitcomplete:
     lda $02           ; read job status
     bmi waitcomplete  ; wait for job to complete
     cmp #$01          ; was it successful?
-    beq finish        ; -> finish
+    beq finish        ; 'SUCCESS' -> finish
 
-; Declare 'READ ERROR' and finish
-; -------------------------------
-readerror:
-    lda #$0a          ; declare 'READ ERROR':
+; Declare 'ERROR' and quit
+; ------------------------
+error:
+    lda #$0a          ; declare 'ERROR':
     sta $1800         ; -> pull CLK and DATA LOW
     lsr
     sta $1800         ; release CLK and DATA
@@ -83,9 +83,6 @@ readerror:
 finish:
     lda #$3a          ; stepper back to normal speed
     sta $1c07
-    lda $1c00         ; turn off DRIVE LED
-    and #$F7
-    sta $1c00
     rts               ; end of mission
 
 
@@ -128,16 +125,16 @@ readjob:
     sta $0b           ; set sector for disk operation
     jsr $f50a         ; find beginning of block
 wr01:
-    bvc *             ; byte received?
-    clv
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
     lda $1c01         ; get received byte
     sta $0300,y       ; and write into data buffer ($0300 - $03ff)
     iny               ; increase buffer index
     bne wr01          ; repeat for 256 bytes
     ldy #$bb          ; index overflow buffer
 wr02:
-    bvc *             ; byte received?
-    clv
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
     lda $1c01         ; get received byte
     sta $0100,y       ; write into overflow buffer ($01bb - $01ff)
     iny               ; increase buffer index

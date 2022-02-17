@@ -1,662 +1,399 @@
-; Copyright (C) 1994-2004 Joe Forster/STA <sta(at)c64(dot)org>
-; Copyright (C) 1999      Michael Klein <michael(dot)klein(at)puffin(dot)lb(dot)shuttle(dot)de>
-; Copyright (C) 2005      Spiro Trikaliotis
-; Copyright (C) 2005      Wolfgang Moser (http://d81.de)
-; All rights reserved.
+; ====================================================================
+; Project:   DumpMaster64 - Fast Format
+; Version:   v1.2
+; Year:      2022
+; Author:    Stefan Wagner
+; Github:    https://github.com/wagiminator
+; EasyEDA:   https://easyeda.com/wagiminator
+; License:   http://creativecommons.org/licenses/by-sa/3.0/
+; ====================================================================
 ;
-; This file is part of OpenCBM
+; Description:
+; ------------
+; This implementation formats a disk.
 ;
-; Redistribution and use in source and binary forms, with or without
-; modification, are permitted provided that the following conditions are met:
+; References:
+; -----------
+; Joe Forster/Michael Klein/Spiro Trikaliotis/Wolfgang Moser:
+; cbmformat (part of OpenCBM: https://github.com/OpenCBM/OpenCBM)
 ;
-;     * Redistributions of source code must retain the above copyright
-;       notice, this list of conditions and the following disclaimer.
-;     * Redistributions in binary form must reproduce the above copyright
-;       notice, this list of conditions and the following disclaimer in
-;       the documentation and/or other materials provided with the
-;       distribution.
-;     * Neither the name of the OpenCBM team nor the names of its
-;       contributors may be used to endorse or promote products derived
-;       from this software without specific prior written permission.
+; Assembling Instructions:
+; ------------------------
+; ca65 -l -t c64 fastformat.a65
+; ld65 -t c64 -o fastformat.bin fastformat.o
 ;
-; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
-; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
-; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+; Operating Instructions:
+; -----------------------
+; "M-E"<addrLow><addrHigh><tracks><bump><clear><verify>:<name>,<id1><id2>
 ;
-; -----------------------------------------------------------------------------------
-;
-; 2021 by Stefan Wagner: 
-; - Minor changes to the handshake procedure to make it work with DiskBuddy64.
-; - Correction of command line format.
-;
-; -----------------------------------------------------------------------------------
-
-JOB_BUMP	= $C0 ; bump the head
-JOB_EXEC2	= $E0 ; execute after drive runs
-
-CMDNUM_NEW	= $0B ; command number for "NEW" command
-
-JOB2	= $02 ; job code for buffer 2
-TRACK2	= $0A ; track for buffer 2 ($0500-$05FF)
-SECTOR2	= $0B ; sector for buffer 2 ($0500-$05FF)
-HDRID1	= $16 ; 1st character of disk ID
-HDRID2	= $17 ; 2nd character of disk ID
-DRVTRK	= $22 ; Track currently under R/W head on drive #0
-BUFPTR	= $30 ; Pointer to the currently active buffer
-HDRPNT	= $32 ; Pointer to active values in header
-HBID	= $39 ; Header block ID ($08)
-CHKSUM	= $3A ; storage for data or header checksum
-SECTR	= $43 ; sector counter
-GAPLEN	= $90 ; temporary storage
-FILDRV	= $E2 ; default flag, drive # (all 0 on 1541)
-JOBNUM	= $F9 ; current job number
-CMDNUM	= $22A ; command code number
-FILTBL	= $27B ; ???
-
-TmpGap	= $01b0
-
-STACK	= $0100
-CMDBUF	= $0200
-BUFFER0	= $0300
-BUFFER1	= $0400
-BUFFER2	= $0500
-BUFFER4	= $0700
-
-BC_PB	= $1800
-
-DC_SETTINGS	= $1C00
-DC_DATA	= $1C01
-DC_DATADDR	= $1C03
-DC_PCR	= $1C0C
-
-ERROUT	= $C1C8
-TAGCMD	= $C1EE
-ONEDRV	= $C312
-SETDRIVENUM	= $C388
-INITDR	= $D042
-DOJOB	= $D58C
-WRITEBAM	= $EE40
-MAXSEC	= $F24B
-BINGCR	= $F78F
-ERRR	= $F969
-STPIN	= $FA63
-MOVUP	= $FDE5
-MOVOVR	= $FDF5
-TRACK_FF	= $FDA3
-KILL	= $FE00
-TRACK_55	= $FE0E
-FBTOG	= $FE30
-ZONESECTR = $fed1
-ZONEBOUNDARIES	= $FED7
-SLOWS	= $FEF3
-
-StartTrack = 1
-Security = 2
-MinGAP = 5
-
-.org BUFFER2
-
-	jmp JobRoutine
-
-; here is the program entry
-
-; the command-line has the following format:
-;        M-E<StartLow><StartHigh><Tracks+1><Orig><Bump><ShowProgress><Demagn><Verify>0:<Name>,<ID1><ID2>
-;                                                                                1   11 1
-; Byte:  012    3         4          5        6    7         8          9        0   12 3..x x  x    x
-;                                                                                            +  +    +
-;                                                                                            1  2    3
-;
-
-CMDBUF_TRACKS	= CMDBUF+5
-CMDBUF_ORIG	= CMDBUF+6
-CMDBUF_BUMP	= CMDBUF+7
-CMDBUF_PROGRESS	= CMDBUF+8
-CMDBUF_DEMAGNET	= CMDBUF+9
-CMDBUF_VERIFY	= CMDBUF+10
-
-Start:
-	lda #CMDNUM_NEW	; set the command number for "new" command
-	sta CMDNUM	; 
-
-	jsr TAGCMD
-	jsr ONEDRV
-	lda FILDRV
-	jsr SETDRIVENUM
-
-	; set the header id into appropriate zp locations
-	ldy FILTBL
-	lda CMDBUF,y
-	sta HDRID1
-	lda CMDBUF+1,y
-	sta HDRID2
-
-	; set track number to start with in buffer #2
-	lda #StartTrack
-	sta TRACK2
-
-	ldx #$02
-	stx JOBNUM
-
-	; execute bump if it was given on the command line
-	lda CMDBUF_BUMP	; get bump value
-	beq NoBump	; if 0, do not execute a bump
-	lda #JOB_BUMP
-	jsr DOJOB	; execute the job in A
-
-	; execute program in buffer #2
-NoBump:
-	lda #JOB_EXEC2
-	jsr DOJOB
-
-	; if an error occurred, process that error
-	lda JOB2
-	cmp #1
-	bne ErrorOccurred
-
-	jsr INITDR	; @@@
-	jmp WRITEBAM	; write BAM and quit
-	; -------------------------------------
-
-ErrorOccurred:
-	lda JOB2
-;	sec		; here, carry is set ("bcs ErrorOccurred")
-	adc #$20-2-1
-	jmp ERROUT
-
-; This is the IRQ routine
-JobRoutine:
-	; set the current buffer address
-	; BUFPTR = 0 is assumed!
-	lda #>BUFFER1
-	sta BUFPTR+1
-
-	; start with a gap which is most likely too small
-	lda #MinGAP
-	sta GAPLEN
-
-	; set the value for an empty sector
-	; if <Orig> is set, it has the content $4B/$01/$01/.../$01;
-	; else, it is set to all 0.
-	
-	ldy CMDBUF_ORIG	; get <Orig> parameter
-	beq NotOrig	; if 0, we do not need to set $4B/$01/.../$01 pattern
-
-	ldy #$00	; start with first byte
-	lda #$4b	; value for the first byte
-	sta (BUFPTR),y	; store it
-	iny		; advance to next byte
-
-	; set all bytes for the sector
-NotOrig:
-	tya
-ClrBuf:
-	sta (BUFPTR),y
-	iny
-	bne ClrBuf
-
-	; now, calculate the checksum for the buffer
-	tya		; A = 0
-ChkBuf:
-	eor (BUFPTR),y
-	iny
-	bne ChkBuf
-	sta CHKSUM	; store the checksum.
-
-	jsr BINGCR	; convert the buffer into GCR, more bytes in $01BB-$01FF
-
-	; copy $01BA-$01FF to $07BA-$07FF
-	ldy #$ba
-CopyGCR:
-	lda STACK,y
-	sta BUFFER4,y
-	iny
-	bne CopyGCR
-
-NxtTrk:
-	jsr status	; perform handshake for next sector if needed
-
-	; check for write protect
-	lda DC_SETTINGS
-	and #$10
-	beq WrtPrtc
-
-	jsr BegWrt	; set write mode, start overwriting
-	jsr FrmtTrk	; Format the track
-
-	bcs JobErr
-
-	inc TRACK2	; Increment track number
-
-	lda TRACK2
-	cmp CMDBUF_TRACKS
-	bcs RetOk	; last track written, jump
-
-	; increment the track
-	inc DRVTRK	; increment track number
-
-	; advance to next track
-	ldy #$02	; advance for 2 half-tracks
-AdvTrk:
-	jsr STPIN	; advance one half-track to the inner of the disk
-
-	; wait for R/W head to react
-	ldx #$80
-Delay:
-	jsr SLOWS
-	dex
-	bne Delay
-
-	dey
-	bne AdvTrk
-	beq NxtTrk	; unconditional: Process next track
-	; ---------------------------------------------------
-
-RetOk:
-	lda #$01
-	.byte $2c
-
-WrtPrtc:
-	lda #$08
-JobErr:
-	jmp ERRR
-
-
-; Format one track
-
-FrmtTrk:
-	lda TRACK2	; get track no
-
-	ldx #3
-ZoneTrk:
-	cmp SpdTrk,x
-	beq NewZone
-	dex
-	bpl ZoneTrk
-	bmi OldZone
-
-NewZone:
-	lda SpdADD,x
-;	sec		; here, carry is already set
-	adc GAPLEN
-	sta GAPLEN
-
-	lda DC_SETTINGS
-	and #$9f
-	ora SpdMask,x
-	sta DC_SETTINGS
-
-	lda ZONESECTR,x
-	sta SECTR
-
-OldZone:
-	lda CMDBUF_DEMAGNET	; get bump value
-	beq NoDemagnetize
-
-	jsr TRACK_FF	; overwrite track with $ff
-	jsr TRACK_55	; overwrite track with $55
-
-NoDemagnetize:
-	; prepare the header infos for the track
-	ldy #$00	; start with sector 0
-	sty SECTOR2
-
-PrepSec:
-	lda HBID
-	sta BUFFER0,y
-	lda TRACK2
-	sta BUFFER0+3,y
-	lda HDRID2
-	sta BUFFER0+4,y
-	lda HDRID1
-	sta BUFFER0+5,y
-
-	lda #$0f	; set the intra header GAP value
-	sta BUFFER0+6,y
-	sta BUFFER0+7,y
-
-	lda SECTOR2
-	sta BUFFER0+2,y
-
-	; calculate checksum and store it
-	eor TRACK2
-	eor HDRID2
-	eor HDRID1
-	sta BUFFER0+1,y
-
-	; advance write pointer by 8
-	tya
-	clc
-	adc #$8
-	tay
-
-	; advance sector number and continue if this was not the last one
-	inc SECTOR2
-	lda SECTOR2
-	cmp SECTR
-	bcc PrepSec
-
-	; convert $0300-... into GCR ($01BB-$01FF)
-	lda #>BUFFER0
-	sta BUFPTR+1
-	jsr FBTOG
-
-	; copy GCR data to $0300-$0344
-	ldy #$ba
-	jsr MOVUP	; move $0300-$03BA to $0345-$03FF
-	jsr MOVOVR	; move $01BB-$01FF to $0300-$0344
-
-Restart:
-	lda #$00
-	sta HDRPNT
-
-	; store the next sector onto disk
-NxtSec:
-	ldy GAPLEN
-	jsr SyncWrt	; write GAP & sync
-
-	; write header info onto disk
-	ldx #$0A	; write 10 byte
-	ldy HDRPNT	; where to start with data
-
-SecNByt:
-	lda BUFFER0,y	; write next byte
-SecByte:
-	bvc SecByte	; wait for end of previous byte
-	clv
-	sta DC_DATA	; to DC
-	iny
-	dex
-	bne SecNByt
-
-	sty HDRPNT	; remember where to get the next hdr byte from
-
-	; write gap between header and data block
-	ldy #$09	; 9 byte GAP
-	jsr SyncWrt	; write GAP and sync
-
-	; write the data block
-	ldy #$bb
-NxtByt:
-	lda BUFFER4,y
-DtaByt:
-	bvc DtaByt
-	clv
-	sta DC_DATA
-	iny
-	bne NxtByt
-
-NxtByt2:
-	lda BUFFER1,y
-DtaByt2:
-	bvc DtaByt2
-	clv
-	sta DC_DATA
-	iny
-	bne NxtByt2
-
-	; check if there is another sector to be written
-	dec SECTOR2
-	bne NxtSec	; another sector, process that one
-
-DtaByt3:
-	bvc DtaByt3	; wait for the current byte to be written
-	clv
-DtaByt4:
-	bvc DtaByt4	; wait for another byte to be written
-	clv
-
-	; put DC into read mode again and quit
-	jsr KILL
-	; ----------------------------------------------------
-
-	; try to find out how many byte are left until the next SYNC mark
-
-;	ldy #0	; unnecessary
-
-	ldx GAPLEN
-	dex		; subtract 2 as we already have waited 2 additional bytes
-	dex
-
-	dey		; Y = -1; this is the marker that the GAP is too big
-
-	; test for sync
-RdWait:
-	lda DC_SETTINGS
-	bpl SyncFnd
-	bvc RdWait	; wait for the next byte
-	clv
-	LDA DC_DATA	; clear the value from the buffer
-	dex
-	bne RdWait
-	iny
-	ldx SECTR
-	bne RdWait
-	; ---------------------------------
-
-
-	; we have found a sync. First of all, clear the oldest entry from the
-	; input port so that we can get another one
-SyncFnd:
-	stx TmpGap	; store the remaining gap for later testing
-
-	clv		; allow for accounting the next byte
-	lda DC_DATA	; clear the value from the buffer
-
-	sty HDRPNT	; remember the additional GAP we want to add
-
-	ldx #10		; read 10 byte
-	ldy #0		; where to start with data reading
-
-
-CmpByte:
-	bvc CmpByte	; wait for end of byte
-	clv
-	lda DC_DATA	; read data from DC
-	cmp BUFFER0,y	; compare with the expected data
-	bne Smaller	; we found a wrong sync, we have a problem
-	iny
-	dex
-	bne CmpByte
-
-	; check if there are more byte left than there are sectors
-	lda HDRPNT
-;	beq Verify
-	bpl SyncAdd
-
-	; now, check how much byte are missing for a complete gap.
-	; if it is not too much, do not do anything
-	ldx TmpGap
-	cpx #Security
-	bcc Verify
-
-	; the GAP was too big. Now, half it (and make sure it is not zero)
-Smaller:
-	lda GAPLEN
-	lsr
-	bne StoreGap
-	lda #MinGAP
-	bne StoreGap
-
-SyncAdd:
-	; if the additional gap is one or less, ignore it
-	cmp #2
-	bcc Verify
-
-	; add the additional gap the the gap already used
-	clc
-	adc GAPLEN
-StoreGap:
-	sta GAPLEN
-
-	; restart the formatting
-GapFin:
-	lda SECTR	; reset the sector counter
-	sta SECTOR2
-	jsr BegWrt	; set write mode, overwrite first byte
-	jmp Restart	; beq Restart	; continue with writing of the next sector
-	; ----------------------
-
-
-; write Y times $55, then write 5 times $FF (sync)
-
-SyncWrt:
-	lda #$55
-
-	; handle first byte specially so we save the 6 byte
-GapWrt:
-	bvc GapWrt
-	sta DC_DATA
-	clv
-	dey
-	bne GapWrt
-	ldy #$05
-	lda #$ff
-
-; write Y times the contents of A onto disk
-
-BlkWrt:
-	bvc BlkWrt	; wait for end of previous byte
-	sta DC_DATA	; write the data byte
-	clv
-	dey		; another one? than write that
-	bne BlkWrt
-	rts
-
-Verify:
-	lda CMDBUF_VERIFY	; check if we should verify
-	beq VerOk	; no, skip verify
-
-	ldx SECTR	; get the number of sectors to check
-	stx SECTOR2
-
-	ldy #10
-	sty HDRPNT	; where to start reading sector info
-
-	bne VerData	; skip finding the block header
-	; ----------------
-
-	; verify the next sector
-VerNxtSec:
-	lda DC_SETTINGS
-	bmi VerNxtSec	; wait for sync mark
-
-	clv
-	LDA DC_DATA	; clear the value from the buffer
-	
-	ldx #10		; read 10 byte
-	ldy HDRPNT	; where to start with data reading
-
-VerHdr:
-	bvc VerHdr	; wait for end of byte
-	clv
-	lda DC_DATA	; read data from DC
-	cmp BUFFER0,y	; compare with the expected data
-	bne VerErrorHdr	; we found a wrong sync, we have a problem
-	iny
-	dex
-	bne VerHdr
-
-	sty HDRPNT
-
-VerData:
-	lda DC_SETTINGS
-	bmi VerData	; wait for sync mark
-
-	clv
-	lda DC_DATA
-
-	ldy #$bb
-
-VerDt0:
-	bvc VerDt0
-	clv
-	lda DC_DATA
-	cmp BUFFER4,y
-	bne VerErrorData
-	iny
-	bne VerDt0
-
-VerDt1:
-	bvc VerDt1
-	clv
-	lda DC_DATA
-	cmp BUFFER1,y
-	bne VerErrorData
-	iny
-	bne VerDt1
-
-	dec SECTOR2
-	bne VerNxtSec
-
-VerOk:
-	clc
-	rts
-
-VerOut:
-	lda #8
-
-	.byte $2c
-
-VerErrorHdr:
-	lda #9
-
-	.byte $2c
-
-VerErrorData:
-	lda #5
-	sec
-	rts
-
-BegWrt:	; set R/W head into write mode
-
-	lda #$ce
-	sta DC_PCR
-	lda #$ff
-	sta DC_DATADDR
-
-	; Overwrite start of track with 256 x $55 byte
-	ldy #$00
-	lda #$55
-	jmp BlkWrt
-
-	; speedzone masks for setting the correct data rate
-SpdMask:	.byte $0,$20,$40,$60
-
-	; inter sector gap for every speedzone
-;SpdGAP:	.byte $a,$c,$12,$8
-
-	; the differences in the inter sector gap for every speed zone
-	; relative to the speed zone before
-	; as carry is alway set when this add is performed,
-	; we subtract 1 from every value
-SpdADD:	.byte <(-3-1), <(-5-1),9-1,<(0-1)
-
-	; the tracks at which each zone starts
-SpdTrk:	.byte 31, 25, 18, 1
-
-	; wait for handshake if ShowProgress is active
-	; this allows the PC to update the progress indicator
-status:
-	lda CMDBUF_PROGRESS	; ShowProgress
-	beq back	; if 0, do not handshake, thus quit
-	; here, A=1 is assumed
-
-	; set data out
-	asl		; A = 2
-	sta BC_PB
-
-	; release data out
-	asl	
-	sta BC_PB
-
-back:
-	rts
+; $0200 - $0202 "M-E"       Memory Execute command
+; $0203 - $0204 <addrL/H>   start address of this program in RAM ($0503)
+; $0205         <tracks>    number of tracks to format
+; $0206         <bump>      1 = perform head bump
+; $0207         <clear>     1 = clear (demagnetize) disk
+; $0208         <verify>    1 = verify disk after formatting
+; $0209         ':'         separator
+; $020a - ...   <name>      disk name (up to 16 characters)
+;               ','         separator
+;               <id1>       disk id1
+;               <id2>       disk id2
+
+
+TRACKS      = $0205   ; command buffer address for max track
+BUMPFLAG    = $0206   ; command buffer address for bumb flag
+CLEARFLAG   = $0207   ; command buffer address for clear flag
+VERIFYFLAG  = $0208   ; command buffer address for verify flag
+NAMEPOS     = $0a     ; index for disk name in command buffer
+SECTORS     = $43     ; storage of number of sectors of current track
+GAPLEN	    = $90     ; storage of current inter-sector gap length
+
+
+.setcpu "6502"
+.org $0500
+
+    jmp diskformat    ; jump to format job (called by job loop)
+
+; ====================================================================
+; Start Routine (start program here)
+; ====================================================================
+
+; Initial checks
+; --------------
+start:
+    lda $1c00         ; read port B
+    and #$10          ; isolate bit for write protection
+    beq error         ; 'WRITE PROTECT' -> finish
+    lda TRACKS        ; get max track from command buffer
+    cmp #41           ; track >= 41?
+    bcs error         ; 'WRONG TRACK' -> finish
+
+; Prepare disk operation
+; ----------------------
+    ldx #$01          ; set start track (#$01)
+    stx $0a
+    inx               ; set current buffer number (#$02)
+    stx $f9
+    jsr $c118         ; turn on DRIVE LED
+
+; Bump the head
+; -------------
+    lda BUMPFLAG      ; get bump flag from command buffer
+    beq parse         ; -> skip if zero
+    lda #$c0          ; job code for head bump
+    jsr $d58c         ; execute job
+
+; Parse command line and set parameters
+; -------------------------------------
+parse:
+    lda #$0b          ; command code for "NEW"
+    sta $022a         ; set command code number
+    jsr $c1ee         ; parse command line, find ':' and ','
+    lda #NAMEPOS      ; move filename pointer behind ':'
+    sta $027a
+    ldy $027b         ; get comma position + 1
+    lda $0200,y       ; set disk ID1
+    sta $16
+    lda $0201,y       ; set disk ID2
+    sta $17
+
+; Create empty sector data
+; ------------------------
+    lda #$04          ; set buffer pointer to $0400
+    sta $31
+    lda #$00          ; all zeros
+    tay               ; set buffer index (#$00)
+cesloop:
+    sta ($30),y       ; clear the buffer
+    iny               ; increase buffer index
+    bne cesloop       ; repeat for 256 bytes
+    sta $3a           ; set checksum (must also be zero)
+    jsr $f78f         ; GCR encode block
+
+; Move sector data in overflow buffer
+; -----------------------------------
+    ldy #$ba          ; overflow buffer index
+mesloop:
+    lda $0100,y       ; from $01ba-$01ff
+    sta $0700,y       ; to   $07ba-$07ff
+    iny               ; increase buffer index
+    bne mesloop       ; repeat for 70 bytes
+
+; Format tracks on disk, write BAM and quit
+; -----------------------------------------
+    lda #$e0          ; diskformat job at $0500
+    jsr $d58c         ; execute job
+    lda $02           ; read job status
+    cmp #$01          ; was it successful?
+    bne error         ; no -> 'WRITE ERROR'
+    jsr $d00e         ; init
+    jmp $ee40         ; create and write BAM, then quit
+
+; Declare 'ERROR' and quit
+; ------------------------
+error:
+    lda #$0a          ; declare 'ERROR':
+    sta $1800         ; pull DATA and CLOCK low
+    lsr
+    sta $1800         ; release lines
+    rts               ; end of mission
+
+
+; ====================================================================
+; Job Routine (formats the disk)
+; ====================================================================
+
+diskformat:
+
+; Get and set track parameters
+; ----------------------------
+    lda $0a           ; get current track
+    ldx #$04          ; zone list index
+gnsloop:
+    cmp ZONES-1,x     ; compare with zone change values
+    dex               ; decrease list index
+    bcs gnsloop       ; repeat until zone is found
+    lda $1c00         ; set zone speed
+    and #$9f
+    ora SPEEDS,x      ; speed mask of current zone
+    sta $1c00         ; set speed
+    lda GAPS,x        ; get inter-sector gap length
+    sta GAPLEN        ; and store it here
+    lda $fed1,x       ; get number of sectors
+    sta SECTORS       ; and store it here
+
+; Switch head to write mode
+; -------------------------
+    lda #$ce          ; change PCR
+    sta $1c0c         ; to output
+    lda #$ff          ; port A (read/write head)
+    sta $1c03         ; to output
+
+; Demagnetize track
+; -----------------
+    lda CLEARFLAG     ; get clear flag from command buffer
+    beq trail         ; -> skip if zero
+    jsr $fda3         ; overwrite track with #$ff
+    jsr $fe0e         ; overwrite track with #$55
+
+; Start writing trailing GAP
+; --------------------------
+trail:
+    ldy #$00          ; 256 times ...
+    lda #$55          ; GAP byte (#$55 = #%01010101)
+    jsr writebytes    ; write them on disk (continued)
+
+; Prepare header for all sectors
+; ------------------------------
+;   ldy #$00          ; header pointer of sector 0
+    ldx #$00          ; start with sector 0
+headerloop:
+    lda #$08          ; header block ID
+    sta $0300,y       ; -> pos 0
+    lda $0a           ; current track
+    sta $0303,y       ; -> pos 3
+    lda $17           ; 2nd character of disk ID
+    sta $0304,y       ; -> pos 4
+    lda $16           ; 1st character of disk ID
+    sta $0305,y       ; -> pos 5
+    lda #$0f	      ; header padding
+    sta $0306,y       ; -> pos 6
+    sta $0307,y       ; -> pos 7
+    txa               ; current sector
+    sta $0302,y       ; -> pos 2
+    eor $0a           ; calculate checksum
+    eor $17
+    eor $16
+    sta $0301,y       ; -> pos 1
+    tya               ; increase header pointer by 8
+    clc
+    adc #$8
+    tay
+    inx               ; increase sector
+    cpx SECTORS       ; max sector number reached?
+    bcc headerloop    ; repeat for all sectors
+    stx $0b           ; store as sector counter
+
+; GCR encode sector headers
+; -------------------------
+    lda #$03          ; set buffer pointer to $0300
+    sta $31
+    jsr $fe30         ; GCR encode headers
+
+; Move header data
+; ----------------
+    ldy #$ba
+    jsr $fde5         ; move $0300-$03ba to $0345-$03ff
+    jsr $fdf5         ; move $01bb-$01ff to $0300-$0344
+
+; Write sectors to disk
+; ---------------------
+secstart:
+    lda #$00          ; start with sector 0
+    sta $32           ; pointer to current header data
+
+; Write GAP and SYNC between sectors
+; ----------------------------------
+secloop:
+    ldy GAPLEN        ; number of inter-sector GAP bytes
+    jsr syncwrite     ; write GAP and SYNC
+
+; Write sector header onto disk
+; -----------------------------
+    ldx #$0a          ; write 10 byte
+    ldy $32	          ; get pointer to current header data
+wshloop:
+    lda $0300,y       ; get header data byte
+    bvc *             ; wait for end of previous byte
+    clv               ; clear overflow flag
+    sta $1c01         ; set byte for writing
+    iny               ; increase header pointer
+    dex               ; decrease loop counter
+    bne wshloop       ; repeat for all 10 header bytes
+    sty $32           ; store current header pointer
+
+; Write GAP and SYNC between header and data block
+; ------------------------------------------------
+    ldy #$09          ; 9 bytes GAP
+    jsr syncwrite     ; write GAP and SYNC
+
+; Write GCR coded data block
+; --------------------------
+    ldy #$bb          ; index overflow buffer $07bb-$07ff
+wdbloop1:
+    lda $0700,y       ; get byte from overflow buffer
+    bvc *             ; wait for previous byte to be written
+    clv               ; clear overflow flag
+    sta $1c01         ; set byte for writing
+    iny               ; increase buffer index
+    bne wdbloop1      ; repeat for 69 bytes
+wdbloop2:
+    lda $0400,y       ; get byte from data buffer
+    bvc *             ; wait for previous byte to be written
+    clv               ; clear overflow flag
+    sta $1c01         ; set byte for writing
+    iny               ; increase buffer index
+    bne wdbloop2      ; repeat for 256 bytes
+
+; Advance to next sector
+; ----------------------
+    dec $0b
+    bne secloop       ; repeat for all sectors
+
+; Finish writing
+; --------------
+    bvc *             ; wait for last byte to be written
+    clv               ; clear overflow flag
+    bvc *             ; wait for another byte to be written
+    clv               ; clear overflow flag
+    jsr $fe00         ; switch back to reading
+
+; Verify track
+; ------------
+    lda VERIFYFLAG    ; get verify flag from command buffer
+    beq handshake     ; -> skip if zero
+verifyloop:
+    jsr $f556         ; wait for SYNC
+    ldx #$0a          ; check 10 header bytes
+    ldy $0b           ; get header pointer
+vt01:
+    bvc *             ; wait for byte to be received
+    clv               ; clear overflow flag
+    lda $1c01         ; get data byte
+    cmp $0300,y       ; compare with header data
+    bne vererror      ; verification error?
+    iny               ; increase buffer index
+    dex               ; decrease loop counter
+    bne vt01          ; repeat for all 10 header bytes
+    sty $0b           ; store current header pointer
+    jsr $f556         ; wait for SYNC
+
+    ldy #$bb          ; index overflow buffer $07bb-$07ff
+vt02:
+    bvc *             ; wait for byte to be received
+    clv               ; clear overflow flag
+    lda $1c01         ; get data byte
+    cmp $0700,y       ; compare with overflow buffer
+    bne vererror      ; verification error?
+    iny               ; increase buffer index
+    bne vt02          ; repeat 69 times
+vt03:
+    bvc *             ; wait for byte to be received
+    clv               ; clear overflow flag
+    lda $1c01         ; get data byte
+    cmp $0400,y       ; compare with data buffer
+    bne vererror      ; verification error?
+    iny               ; increase buffer index
+    bne vt03          ; repeat 256 times
+
+    dec SECTORS       ; decrease sector counter
+    bne verifyloop    ; repeat for all sectors
+
+; Send 'TRACK SUCCESS' to adapter
+; -------------------------------
+handshake:
+    lda #$02          ; pull DATA LOW
+    sta $1800         ; -> declare 'TRACK SUCCESS'
+    asl
+    sta $1800         ; release DATA line
+
+; Advance to next track
+; ---------------------
+    lda $0a           ; get current track number
+    cmp TRACKS        ; last track written?
+    bcs terminate     ; -> terminate job
+    inc $0a           ; increment track number
+    inc $22           ; track under r/w head
+    ldy #$02          ; advance for 2 half-tracks
+advloop1:
+    jsr $fa63         ; advance half-track inwards
+    ldx #$80          ; wait for r/w head to react
+advloop2:
+    jsr $fef3         ; delay about 40us
+    dex               ; decrease delay counter
+    bne advloop2      ; delay about 5ms (128*40us)
+    dey               ; decrease half-track counter
+    bne advloop1      ; repeat for 2 half-tracks
+    jmp diskformat    ; proceed with next track
+
+; Set return code and terminate job
+; ---------------------------------
+terminate:
+    lda #$01          ; set return code 'OK'
+    .byte $2c         ; skip next instruction
+vererror:
+    lda #$20          ; set return code 'ERROR'
+    jmp $f969         ; terminate job
+
+
+; ====================================================================
+; Sub Routines
+; ====================================================================
+
+; Write y*GAP, then 5*SYNC to disk
+; --------------------------------
+syncwrite:
+    lda #$55          ; GAP byte (#$55)
+swloop:
+    bvc *             ; wait for previous byte to be written
+    clv               ; clear overflow flag
+    sta $1c01         ; set byte for writing
+    dey               ; decrease counter
+    bne swloop        ; repeat for all bytes
+    ldy #$05          ; bytes counter
+    lda #$ff          ; SYNC byte (#$ff)
+
+; Write y*accu to disk
+; --------------------
+writebytes:
+    bvc *             ; wait for previous byte to be written
+    clv               ; clear overflow flag
+    sta $1c01         ; set byte for writing
+    dey               ; decrease counter
+    bne writebytes    ; repeat for y bytes
+    rts
+
+; Track zone parameters
+; ---------------------
+ZONES:    .byte 255, 31, 25, 18
+SPEEDS:   .byte $00, $20, $40, $60
+GAPS:     .byte $0a, $0c, $12, $08

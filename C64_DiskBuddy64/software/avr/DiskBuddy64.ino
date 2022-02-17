@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskBuddy64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.3
+// Version:   v1.4
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -77,7 +77,7 @@
 #define CMD_BUF_LEN   64          // command buffer length (don't change)
 
 // Identifiers
-#define VERSION     "1.3"         // version number sent via serial if requested
+#define VERSION     "1.4"         // version number sent via serial if requested
 #define IDENT       "DiskBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -141,7 +141,7 @@ void UART_println(const char *str) {
 // WDT init
 void WDT_init(void) {
   while(WDT.STATUS & WDT_SYNCBUSY_bm);              // wait for synchronization
-  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_4KCLK_gc); // set timer to 4 seconds
+  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_8KCLK_gc); // set timer to 4 seconds
 }
 
 // ===================================================================================
@@ -506,12 +506,11 @@ void IEC_writeAsynch(uint8_t data) {
 }
 
 // Write data block via fast IEC
-void IEC_writeBlock(void) {
-  uint16_t reqcnt = 325;                            // reset request counter
+void IEC_writeBlock(uint16_t cnt) {
+  if(!cnt) cnt = 256;                               // zero means 256
+  uint16_t reqcnt = cnt;                            // reset request counter
   buf_requested  = 0;                               // reset requested counter
   buf_head = 0; buf_tail = 0;                       // reset buffer pointer
-  reqcnt  -= buf_request(CMD_BUF_LEN - 1);          // request first data package
-  uint16_t cnt = 325;                               // counter variable
   WDT_reset();                                      // reset watchdog
   do {
     if(reqcnt) reqcnt -= buf_request(reqcnt);       // request next data package
@@ -552,7 +551,7 @@ void IEC_readTrack(void) {
 void IEC_writeTrack(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   uint8_t cnt = CMD_buf[7];                         // get number of sectors to write
-  while(cnt--) IEC_writeBlock();                    // read data via UART and write sector
+  while(cnt--) IEC_writeBlock(325);                 // read data via UART and write sector
   UART_write(0);                                    // send 'job finished'
 }
 
@@ -564,14 +563,15 @@ void IEC_loadFile(void) {
   } while(!IEC_error && !IEC_EOI);                  // repeat until error or end of file
 }
 
-// <length>"M-E"<addrLow><addrHigh><Track+1><Orig><Bump><ShowProgress><Demagn><Verify>0:<Name>,<ID1><ID2>
+// <length>"M-E"<addrLow><addrHigh><tracks><bump><clear><verify>:<name>,<ID1><ID2>
 void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   uint8_t cnt = CMD_buf[6];                         // get number of tracks
-  while(cnt--) {                                    // for each track:
+  while(!IEC_error && cnt--) {                      // for each track:
     WDT_reset();                                    // reset watchdog
     while(IEC_DATA_isHigh());                       // wait for track complete
-    UART_write(cnt);                                // send info to pc
+    IEC_error = IEC_CLK_isLow();                    // get return code
+    UART_write(IEC_error);                          // send return code to pc
     while(IEC_DATA_isLow());                        // wait for end of signal
   }
 }
@@ -615,7 +615,7 @@ int main(void) {
       case 'r':         IEC_readTrack(); break;       // read track from disk
       case 'w':         IEC_writeTrack(); break;      // write track to disk
       case 'l':         IEC_loadFile(); break;        // load a file from disk
-      case 's':         break;                        // save a file to disk
+;     case 's':         break;                        // save a file to disk
       case 'f':         IEC_format(); break;          // format disk
       case 'm':         IEC_readMem(); break;         // read memory
       case 'c':         IEC_sendCommand(); break;     // send command to IEC device
@@ -633,10 +633,10 @@ int main(void) {
       case WRITELAST:   IEC_sendLast(CMD_buf[1]); break;                //  9 09
       case WRITEBYTES:  IEC_writeBuffer(CMD_buf+1, CMD_buf[0]); break;  // 10 0A
       case READFAST:    IEC_readBlock(CMD_buf[1]); break;               // 11 0B
-      case WRITEFAST:   IEC_writeBlock(); break;                        // 12 0C
-      case OPEN:        break;                                          // 13 0D
-      case CLOSE:       break;                                          // 14 0E
-      case RESET:       break;                                          // 15 0F
+      case WRITEFAST:   IEC_writeBlock(CMD_buf[1]); break;              // 12 0C
+;     case OPEN:        break;                                          // 13 0D
+;     case CLOSE:       break;                                          // 14 0E
+;     case RESET:       break;                                          // 15 0F
       case RELEASE:     IEC_release(); break;                           // 16 10
       case GETDEVICE:   UART_write(IEC_device); break;                  // 17 11
       case SETDEVICE:   IEC_device = CMD_buf[1]; break;                 // 18 12

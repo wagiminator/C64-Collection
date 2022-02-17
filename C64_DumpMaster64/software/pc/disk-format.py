@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Format Disk
-# Version:   v1.1
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -48,6 +48,7 @@ from libs.disktools import *
 
 # Constants and variables
 FASTFORMAT_BIN = 'libs/fastformat.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 tracks = 35
 bump   = 1
 demag  = 0
@@ -57,7 +58,7 @@ verify = 0
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DumpMaster64 - Python Command Line Interface v1.1')
+print('DumpMaster64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -101,9 +102,9 @@ if not dumpmaster.checkdevice(device):
 
 # Upload fast formatter to disk drive RAM
 print('Uploading fast formatter ...')
-if dumpmaster.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
-    dumpmaster.close()
-    raise AdpError('Failed to upload fast formatter')
+if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+        dumpmaster.close()
+        raise AdpError('Failed to upload fast formatter')
 
 
 # Format the disk
@@ -116,11 +117,10 @@ print('')
 sys.stdout.write('Formatting: [' + '-' * (tracks) + ']\r')
 sys.stdout.write('Formatting: [')
 sys.stdout.flush()
-dumpmaster.read(1)
 dumpmaster.timeout = 4
 for x in range(tracks):
     progress = dumpmaster.read(1)
-    if not progress:
+    if not progress or progress[0] > 0:
         print('')
         dumpmaster.close()
         raise AdpError('Failed to format the disk')

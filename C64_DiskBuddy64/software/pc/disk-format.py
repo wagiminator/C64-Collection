@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.3.1
+# Version:   v1.4
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -48,6 +48,7 @@ from libs.disktools import *
 
 # Constants and variables
 FASTFORMAT_BIN = 'libs/fastformat.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 tracks = 35
 bump   = 1
 demag  = 0
@@ -57,7 +58,7 @@ verify = 0
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.3')
+print('DiskBuddy64 - Python Command Line Interface v1.4')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -101,9 +102,9 @@ if not diskbuddy.checkdevice(device):
 
 # Upload fast formatter to disk drive RAM
 print('Uploading fast formatter ...')
-if diskbuddy.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
-    diskbuddy.close()
-    raise AdpError('Failed to upload fast formatter')
+if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or diskbuddy.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+        diskbuddy.close()
+        raise AdpError('Failed to upload fast formatter')
 
 
 # Format the disk
@@ -115,11 +116,10 @@ starttime = time.time()
 sys.stdout.write('Formatting: [' + '-' * (tracks) + ']\r')
 sys.stdout.write('Formatting: [')
 sys.stdout.flush()
-diskbuddy.read(1)
-diskbuddy.timeout = 4
+diskbuddy.timeout = 6
 for x in range(tracks):
     progress = diskbuddy.read(1)
-    if not progress:
+    if not progress or progress[0] > 0:
         print('')
         diskbuddy.close()
         raise AdpError('Failed to format the disk')

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.1.2
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -53,7 +53,7 @@ tracks = 35
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DumpMaster64 - Python Command Line Interface v1.1')
+print('DumpMaster64 - Python Command Line Interface v1.2')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 

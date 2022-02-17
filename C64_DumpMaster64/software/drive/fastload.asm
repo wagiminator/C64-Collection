@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Loading
-; Version:   v1.1.2
+; Version:   v1.2
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -23,8 +23,8 @@
 ;
 ; Assembling Instructions:
 ; ------------------------
-; ca65 -l -t c64 fastread.a65
-; ld65 -t c64 -o fastread.bin fastread.o
+; ca65 -l -t c64 fastload.a65
+; ld65 -t c64 -o fastload.bin fastload.o
 ;
 ; Operating Instructions:
 ; -----------------------
@@ -56,14 +56,14 @@ start:
     lda #$12          ; speed up stepper
     sta $1c07
     jsr $c63d         ; check drive and initialize
-    bne readerror     ; 'READ ERROR' -> finish
+    bne error         ; 'INIT ERROR' -> finish
 
 ; Read sector from disk
 ; ---------------------
 readsector:
     lda $0a           ; get current track
     cmp #41           ; track >= 41?
-    bcs readerror     ; 'WRONG TRACK' -> finish
+    bcs error         ; 'WRONG TRACK ERROR' -> finish
     ldx #$05          ; number of retries
 retry:
     lda #$e0          ; read job at $0500
@@ -76,10 +76,10 @@ waitcomplete:
     dex               ; decrease retry counter
     bne retry         ; try again (max 5x)
 
-; Declare 'READ ERROR' and finish
-; -------------------------------
-readerror:
-    lda #$0a          ; declare 'READ ERROR':
+; Declare 'ERROR' and quit
+; ------------------------
+error:
+    lda #$0a          ; declare 'ERROR':
     sta $1800         ; -> pull CLK and DATA LOW
     lsr
     sta $1800         ; release CLK and DATA
@@ -119,10 +119,10 @@ sendbyte:
 
 ; Prepare next sector
 ; -------------------
-    lda $0301         ; get next sector
-    sta $0b           ; set sector for disk operation
-    lda $0300         ; get next track
-    sta $0a           ; set track for disk operation
+    lda $0301         ; get next sector from block just read
+    sta $0b           ; set sector for next disk operation
+    lda $0300         ; get next track from block just read
+    sta $0a           ; set track for next disk operation
     bne readsector    ; repeat until end of file
 
 ; Finish all up
@@ -130,9 +130,6 @@ sendbyte:
 finish:
     lda #$3a          ; stepper back to normal speed
     sta $1c07
-    lda $1c00         ; turn off DRIVE LED
-    and #$F7
-    sta $1c00
     rts               ; end of mission
 
 
@@ -147,17 +144,17 @@ readjob:
     sta $31           ; -> $0300
     jsr $f50a         ; find beginning of block
 wr01:
-    bvc *             ; byte ready?
-    clv
-    lda $1c01         ; get data byte
-    sta ($30),y       ; and write in data buffer
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
+    lda $1c01         ; get received data byte
+    sta ($30),y       ; and write in data buffer ($0300 - $03ff)
     iny               ; increase buffer index
     bne wr01          ; repeat for 256 bytes
     ldy #$ba          ; buffer index overflow buffer
 wr02:
-    bvc *             ; byte ready?
-    clv
-    lda $1c01         ; get data byte
+    bvc *             ; wait for byte to be read
+    clv               ; clear overflow flag
+    lda $1c01         ; get received data byte
     sta $0100,y       ; write in overflow buffer ($01ba - $01ff)
     iny               ; increase buffer index
     bne wr02          ; repeat for 69 bytes

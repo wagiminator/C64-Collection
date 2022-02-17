@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Writing
-; Version:   v1.3.2
+; Version:   v1.4
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -50,11 +50,11 @@
 ; -------------
 start:
     lda $1c00         ; read port B
-    and #$10          ; isolate bit for 'WRITE PROTECT'
-    beq finish        ; 'WRITE PROTECT' -> finish
+    and #$10          ; isolate bit for write protection
+    beq finish        ; 'WRITE PROTECT ERROR' -> finish
     lda $0205         ; get track from command buffer
     cmp #41           ; track >= 41?
-    bcs finish        ; 'WRONG TRACK' -> finish
+    bcs finish        ; 'WRONG TRACK ERROR' -> finish
     sta $0a           ; set track for disk operation
     lda #$00          ; sector index start value (#$00)
     sta $05           ; store in $05
@@ -62,7 +62,7 @@ start:
     lda #$12          ; speed up stepper
     sta $1c07
     jsr $c63d         ; check drive and initialize
-    bne finish        ; 'WRITE ERROR' -> finish
+    bne finish        ; 'INIT ERROR' -> finish
 
 ; Write sectors to disk
 ; ---------------------
@@ -77,9 +77,6 @@ waitcomplete:
 finish:
     lda #$3a          ; stepper back to normal speed
     sta $1c07
-    lda $1c00         ; turn off DRIVE LED
-    and #$F7
-    sta $1c00
     rts               ; end of mission
 
 
@@ -113,7 +110,7 @@ waitready:
 
 
 ; ====================================================================
-; Job Function (reads sectors via fast IEC and writes them on track)
+; Job Routine (reads sectors via fast IEC and writes them on track)
 ; ====================================================================
 
 ; Receive GCR-encoded block (325 bytes) from adapter via fast IEC
@@ -142,8 +139,8 @@ rloop2:
 ; ------------------
     ldy #$09          ; 9 bytes gap after header
 gaploop:
-    bvc *             ; byte received?
-    clv
+    bvc *             ; wait for the byte to be read
+    clv               ; clear overflow flag
     dey               ; decrease GAP byte counter
     bne gaploop       ; repeat for 9 GAP bytes
 
@@ -156,13 +153,13 @@ gaploop:
 
 ; Write 5 times SYNC byte (#$ff)
 ; ------------------------------
-    lda #$ff          ; SYNC byte: #$ff
+;   lda #$ff          ; SYNC byte: #$ff
     ldy #$05          ; SYNC byte counter: 5 times
     sta $1c01         ; set byte to be written
-    clv
+    clv               ; clear overflow flag
 syncloop:
     bvc *             ; wait for SYNC byte to be written
-    clv
+    clv               ; clear overflow flag
     dey               ; decrease SYNC byte conter
     bne syncloop      ; repeat for 5 SYNC bytes
 
@@ -172,14 +169,14 @@ syncloop:
 gcrloop:
     lda $0100,y       ; get byte from overflow buffer ($01bb-$01ff)
     bvc *             ; wait for previous byte to be written
-    clv
+    clv               ; clear overflow flag
     sta $1c01         ; set byte to be written
     iny               ; increase buffer index
     bne gcrloop       ; repeat for 69 bytes
 dataloop:
     lda $0300,y       ; get byte from data buffer ($0300 - $03ff)
     bvc *             ; wait for previous byte to be written
-    clv
+    clv               ; clear overflow flag
     sta $1c01         ; set byte to be written
     iny               ; increase buffer index
     bne dataloop      ; repeat for 256 bytes
@@ -187,7 +184,7 @@ dataloop:
 ; Switch head back to read mode
 ; -----------------------------
     bvc *             ; wait for last byte to be written
-    jsr $fe00         ; switch to reading
+    jsr $fe00         ; switch back to reading
 
 ; Prepare next sector
 ; --------------------

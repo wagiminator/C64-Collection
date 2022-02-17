@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.1.2
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -45,6 +45,7 @@ FIRMWARE_BIN   = 'libs/firmware.bin'
 FASTREAD_BIN   = 'libs/fastread.bin'
 FASTLOAD_BIN   = 'libs/fastload.bin'
 FASTWRITE_BIN  = 'libs/fastwrite.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 FASTFORMAT_BIN = 'libs/fastformat.bin'
 
 # Default variables
@@ -203,12 +204,12 @@ def diskFormat():
     Checkbutton(parameterWindow, text="Verify on the fly", variable=var4).grid(
                             row=5, columnspan=2, sticky=W, padx=10, pady=4)
 
-    Button(parameterWindow, text='OK', command=parameterWindow.quit).grid(
+    Button(parameterWindow, text='Start formatting', command=parameterWindow.quit).grid(
                             row=6, columnspan=2, sticky=EW, padx=4, pady=4)
     parameterWindow.mainloop()
 
-    diskName  = ent1.get()
-    diskIdent = ent2.get()
+    diskName  = ent1.get().upper()
+    diskIdent = ent2.get().upper()
     demag     = var1.get()
     bump      = var2.get()
     verify    = var4.get()
@@ -233,7 +234,7 @@ def diskFormat():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastformat.bin !')
         return
@@ -246,16 +247,15 @@ def diskFormat():
 
     progress = Progressbox(mainWindow, 'Formatting disk', 'Formatting disk ...')
     starttime = time.time()
-    dumpmaster.read(1)
     dumpmaster.timeout = 4
     for x in range(tracks):
         progr = dumpmaster.read(1)
-        if not progr:
+        if not progr or progr[0] > 0:
             dumpmaster.close()
             progress.destroy()
             messagebox.showerror('Error', 'Failed to format the disk !')
             return
-        progress.setvalue((tracks - progr[0]) * 100 // tracks)
+        progress.setvalue(x * 100 // (tracks - 1))
 
     # Finish all up
     duration = time.time() - starttime
@@ -1268,18 +1268,12 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DumpMaster64 v1.1')
+mainWindow.title('DumpMaster64 v1.2')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()
 device.set(8)
 devices = [('#8',8), ('#9',9), ('#10',10), ('#11',11)]
-
-#deviceFrame = Frame(mainWindow, borderwidth = 2, relief = 'groove')
-#Label(deviceFrame, text = '1. Select device number:').grid(row=0,columnspan=4,pady=5)
-#for txt, val in devices:
-#    Radiobutton(deviceFrame, text=txt, variable=device, value=val).grid(row=1,column=val-8,padx=5)
-#deviceFrame.pack(padx = 10, pady = 10, ipadx = 5, ipady = 5, fill = 'x')
 
 actionFrame = Frame(mainWindow, borderwidth = 2, relief = 'groove')
 Label(actionFrame, text = 'Floppy Disk Functions:').pack(pady = 5)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Adapter Library
-# Version:   v1.1.2
+# Version:   v1.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -183,6 +183,18 @@ class Adapter(Serial):
         f.close()
         return reply
 
+    # Upload binary to disk drive RAM via fast IEC
+    def fastuploadbin(self, loadaddr, filename):
+        try:
+            f = open(filename, 'rb')
+        except:
+            sys.stderr.write('ERROR: Failed to open ' + filename + '\n')
+            return 1
+
+        reply = self.sendmemory(loadaddr, f.read())
+        f.close()
+        return reply
+
     # Read single sector from disk and return block data
     def readblock(self, track, sector):
         seclist = bytes([sector])
@@ -223,6 +235,26 @@ class Adapter(Serial):
             return 1
         return 0
 
+    # Write to memory of IEC device via fast IEC
+    def sendmemory(self, addr, data):
+        size = len(data)
+        while size > 0:
+            if size > 256:  length = 256
+            else:           length = size
+            ieccmd  = b'M-E'
+            ieccmd += FASTUPLOAD_STARTADDR.to_bytes(2, byteorder='little')
+            ieccmd += addr.to_bytes(2, byteorder='little')
+            ieccmd += bytes([length % 256])
+            if self.iec_command(CMD_IEC_CMD, ieccmd) > 0: return 1
+            if self.iec_command(CMD_WRITEFAST, bytes([length % 256])) > 0: return 1
+            self.write(data[:length])
+            reply = self.read(1)
+            if not reply or reply[0] > 0: return 1
+            data  = data[length:]
+            addr += length
+            size -= length
+        return 0
+
     # Start reading list of sectors from a single track
     def startfastread(self, track, seclist):
         ieccmd  = b'M-E'
@@ -250,8 +282,8 @@ class Adapter(Serial):
     def startfastformat(self, tracks, bump, demag, verify, diskname, diskident):
         ieccmd  = b'M-E'
         ieccmd += FASTFORMAT_STARTADDR.to_bytes(2, byteorder='little')
-        ieccmd += bytes([tracks + 1, 0x01, bump, 0x01, demag, verify])
-        ieccmd += b'0:' + (diskname + ',' + diskident).encode()
+        ieccmd += bytes([tracks, bump, demag, verify])
+        ieccmd += (':' + diskname + ',' + diskident).encode()
         return self.iec_command(CMD_FORMATDISK, ieccmd)
 
 
@@ -395,6 +427,8 @@ FASTLOAD_LOADADDR    = 0x0500
 FASTLOAD_STARTADDR   = 0x0503
 FASTFORMAT_LOADADDR  = 0x0500
 FASTFORMAT_STARTADDR = 0x0503
+FASTUPLOAD_LOADADDR  = 0x0400
+FASTUPLOAD_STARTADDR = 0x0400
 
 MEMCMD_INITIALIZE    = 0xC63D
 MEMCMD_LOADBAM       = 0xD042
