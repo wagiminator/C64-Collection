@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.2
+# Version:   v1.3
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -248,14 +248,14 @@ def diskFormat():
     progress = Progressbox(mainWindow, 'Formatting disk', 'Formatting disk ...')
     starttime = time.time()
     dumpmaster.timeout = 4
-    for x in range(tracks):
+    for x in range(tracks + 1):
         progr = dumpmaster.read(1)
         if not progr or progr[0] > 0:
             dumpmaster.close()
             progress.destroy()
             messagebox.showerror('Error', 'Failed to format the disk !')
             return
-        progress.setvalue(x * 100 // (tracks - 1))
+        progress.setvalue(x * 100 // tracks)
 
     # Finish all up
     duration = time.time() - starttime
@@ -1268,7 +1268,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DumpMaster64 v1.2')
+mainWindow.title('DumpMaster64 v1.3')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()

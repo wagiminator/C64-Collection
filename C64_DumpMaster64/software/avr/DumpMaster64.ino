@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DumpMaster64 - Adapter Firmware
-// Version:   v1.2
+// Version:   v1.3
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -89,7 +89,7 @@
 #define TAP_PACKSIZE  64          // length of data package for writing (32, 64, or 128)
 
 // Identifiers
-#define VERSION   "1.2"           // version number sent via serial if requested
+#define VERSION   "1.3"           // version number sent via serial if requested
 #define IDENT     "DumpMaster64"  // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -518,6 +518,8 @@ void IEC_release(void) {
   IEC_CLK_setHigh();                                // release CLK line
   IEC_DATA_setHigh();                               // release DATA line
   IEC_RST_setHigh();                                // release RST line
+  while(IEC_CLK_isLow());                           // make sure CLK is high
+  while(IEC_DATA_isLow());                          // make sure DATA is high
 }
 
 // Perform reset
@@ -657,7 +659,7 @@ uint8_t IEC_unlisten(void) {
   if(IEC_ATN_start()) return 1;                     // start sending under 'ATTENTION'
   if(IEC_sendByte(IEC_UNLISTEN)) return 1;          // send 'UNLISTEN'
   IEC_ATN_stop();                                   // stop sending under 'ATTENTION'
-  IEC_CLK_setHigh();                                // release CLK line
+  IEC_release();                                    // release all lines
   return 0;                                         // return success
 }
 
@@ -676,7 +678,7 @@ uint8_t IEC_untalk(void) {
   if(IEC_ATN_start()) return 1;                     // start sending under 'ATTENTION'
   if(IEC_sendByte(IEC_UNTALK)) return 1;            // send 'UNTALK'
   IEC_ATN_stop();                                   // stop sending under 'ATTENTION'
-  IEC_CLK_setHigh();                                // release CLK line
+  IEC_release();                                    // release all lines
   return 0;                                         // return success
 }
 
@@ -868,7 +870,7 @@ void IEC_loadFile(void) {
 // <length>"M-E"<addrLow><addrHigh><tracks><bump><clear><verify>:<name>,<ID1><ID2>
 void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
-  uint8_t cnt = BUF_buffer[6];                      // get number of tracks
+  uint8_t cnt = BUF_buffer[6] + 1;                  // get number of tracks
   while(!IEC_error && cnt--) {                      // for each track:
     WDT_reset();                                    // reset watchdog
     while(IEC_DATA_isHigh());                       // wait for track complete
