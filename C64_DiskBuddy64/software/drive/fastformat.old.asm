@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast Format
-; Version:   v1.5
+; Version:   v1.4
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -96,8 +96,6 @@ parse:
     sta $16
     lda $0201,y       ; set disk ID2
     sta $17
-    lda #$05          ; set initial inter-sector gap
-    sta GAPLEN
 
 ; Create empty sector data
 ; ------------------------
@@ -121,8 +119,8 @@ mesloop:
     iny               ; increase buffer index
     bne mesloop       ; repeat for 70 bytes
 
-; Format tracks on disk, write BAM and finish
-; -------------------------------------------
+; Format tracks on disk, write BAM and quit
+; -----------------------------------------
     lda #$e0          ; diskformat job at $0500
     jsr $d58c         ; execute job
     lda $02           ; read job status
@@ -153,37 +151,43 @@ diskformat:
 ; Get and set track parameters
 ; ----------------------------
     lda $0a           ; get current track
-    ldx #$03          ; zone list index
+    ldx #$04          ; zone list index
 gnsloop:
-    cmp ZONES,x       ; compare with zone change values
-    beq newzone       ; zone change? -> prepare new zone
+    cmp ZONES-1,x     ; compare with zone change values
     dex               ; decrease list index
-    bpl gnsloop       ; check next zone
-    bmi cleartrack    ; no zone change -> skip newzone
-
-newzone:
-    lda GAPADDS,x     ; get change of inter-sector gap length
-    adc GAPLEN        ; add to current gap length (carry is set)
-    sta GAPLEN        ; and store it
+    bcs gnsloop       ; repeat until zone is found
     lda $1c00         ; set zone speed
     and #$9f
     ora SPEEDS,x      ; speed mask of current zone
-    sta $1c00
+    sta $1c00         ; set speed
+    lda GAPS,x        ; get inter-sector gap length
+    sta GAPLEN        ; and store it here
     lda $fed1,x       ; get number of sectors
     sta SECTORS       ; and store it here
 
+; Switch head to write mode
+; -------------------------
+    lda #$ce          ; change PCR
+    sta $1c0c         ; to output
+    lda #$ff          ; port A (read/write head)
+    sta $1c03         ; to output
+
 ; Demagnetize track
 ; -----------------
-cleartrack:
-    jsr trailgap      ; write trailing GAP
     lda CLEARFLAG     ; get clear flag from command buffer
-    beq header        ; -> skip if zero
+    beq trail         ; -> skip if zero
     jsr $fda3         ; overwrite track with #$ff
     jsr $fe0e         ; overwrite track with #$55
 
+; Start writing trailing GAP
+; --------------------------
+trail:
+    ldy #$00          ; 256 times ...
+    lda #$55          ; GAP byte (#$55 = #%01010101)
+    jsr writebytes    ; write them on disk (continued)
+
 ; Prepare header for all sectors
 ; ------------------------------
-header:
 ;   ldy #$00          ; header pointer of sector 0
     ldx #$00          ; start with sector 0
 headerloop:
@@ -287,96 +291,31 @@ wdbloop2:
     clv               ; clear overflow flag
     jsr $fe00         ; switch back to reading
 
-; Test whether sectors are evenly distributed on track
-; ----------------------------------------------------
-    lda SECTORS       ; get number of sectors
-    sta $0b           ; and reset the sector counter
-    ldx GAPLEN        ; get current inter-sector gap length
-    dex               ; subtract the 2 additional waited bytes
-    dex
-    dey               ; y=-1: marker/counter for excess gaps
-testgap:              ; count the GAP bytes until SYNC of sector 0
-    lda $1c00
-    bpl syncfound     ; SYNC found?
-    bvc testgap       ; wait for the next byte
-    clv               ; clear overflow flag
-    lda $1c01         ; clear received data byte
-    dex               ; decrease GAP byte counter
-    bne testgap       ; repeat
-    iny               ; increase marker/counter for excess gaps
-    ldx SECTORS       ; now put total number of sectors into x
-    bne testgap       ; and continue counting
-
-syncfound:
-    stx $05           ; store the remaining gap for later testing
-    clv               ; allow for accounting the next byte
-    lda $1c01         ; clear received data byte
-    sty $10           ; store additional GAP bytes to add
-    ldx #$0a          ; read 10 header bytes
-    ldy #$00          ; header pointer sector 0
-cmpbyte:
-    bvc *             ; wait for byte to be received
-    clv               ; clear overflow flag
-    lda $1c01         ; get received data byte
-    cmp $0300,y       ; compare with expected header 0 data
-    bne lessgap       ; header 0 overwritten -> GAPLEN was too big
-    iny               ; increase header pointer
-    dex               ; decrease bytes counter
-    bne cmpbyte       ; repeat for all 10 header bytes
-    sty $32           ; store header pointer for later
-
-    lda $10           ; check number of additional GAP bytes per sector
-    bpl moregap       ; increase gap if necessary
-    ldx $05           ; get missing GAP bytes
-    cpx #$02          ; just a few?
-    bcc verify        ; -> can be ignored
-
-lessgap:
-    lda GAPLEN        ; get current gap length
-    lsr               ; and half it
-    bne storegap      ; if not zero, store it
-    beq vererror      ; zero -> totally messed up
-
-moregap:
-    cmp #$02          ; just a few?
-    bcc verify        ; -> can be ignored
-    clc
-    adc GAPLEN        ; add additional GAP bytes
-
-storegap:
-    sta GAPLEN        ; store new gap length
-    jsr trailgap      ; switch to write mode, write trailing GAP
-    jmp secstart      ; write track again with new gaps
-
 ; Verify track
 ; ------------
-verify:
     lda VERIFYFLAG    ; get verify flag from command buffer
     beq handshake     ; -> skip if zero
-    bne verifyblock   ; first header was already checked
-
-verifyheader:
+verifyloop:
     jsr $f556         ; wait for SYNC
     ldx #$0a          ; check 10 header bytes
-    ldy $32           ; get header pointer
+    ldy $0b           ; get header pointer
 vt01:
     bvc *             ; wait for byte to be received
     clv               ; clear overflow flag
-    lda $1c01         ; get received data byte
+    lda $1c01         ; get data byte
     cmp $0300,y       ; compare with header data
     bne vererror      ; verification error?
     iny               ; increase buffer index
     dex               ; decrease loop counter
     bne vt01          ; repeat for all 10 header bytes
-    sty $32           ; store current header pointer
-
-verifyblock:
+    sty $0b           ; store current header pointer
     jsr $f556         ; wait for SYNC
+
     ldy #$bb          ; index overflow buffer $07bb-$07ff
 vt02:
     bvc *             ; wait for byte to be received
     clv               ; clear overflow flag
-    lda $1c01         ; get received data byte
+    lda $1c01         ; get data byte
     cmp $0700,y       ; compare with overflow buffer
     bne vererror      ; verification error?
     iny               ; increase buffer index
@@ -384,14 +323,14 @@ vt02:
 vt03:
     bvc *             ; wait for byte to be received
     clv               ; clear overflow flag
-    lda $1c01         ; get received data byte
+    lda $1c01         ; get data byte
     cmp $0400,y       ; compare with data buffer
     bne vererror      ; verification error?
     iny               ; increase buffer index
     bne vt03          ; repeat 256 times
 
-    dec $0b           ; decrease sector counter
-    bne verifyheader  ; repeat for all sectors
+    dec SECTORS       ; decrease sector counter
+    bne verifyloop    ; repeat for all sectors
 
 ; Send status to adapter
 ; ----------------------
@@ -400,7 +339,7 @@ handshake:
 
 ; Advance to next track
 ; ---------------------
-    lda $0a           ; get track number
+    lda $0a           ; get current track number
     cmp TRACKS        ; last track written?
     bcs terminate     ; -> terminate job
     inc $0a           ; increment track number
@@ -431,19 +370,8 @@ vererror:
 ; Sub Routines
 ; ====================================================================
 
-; Start writing trailing GAP
-; --------------------------
-trailgap:
-    lda #$ce          ; change PCR
-    sta $1c0c         ; to output
-    lda #$ff          ; port A (read/write head)
-    sta $1c03         ; to output
-    ldy #$00          ; 256 times ...
-    lda #$55          ; GAP byte (#$55 = #%01010101)
-    bne writebytes    ; write them on disk
-
-; Write y*GAP, then 5*SYNC
-; ------------------------
+; Write Y times GAP, then 5 times SYNC to disk
+; --------------------------------------------
 syncwrite:
     lda #$55          ; GAP byte (#$55)
 swloop:
@@ -455,8 +383,8 @@ swloop:
     ldy #$05          ; bytes counter
     lda #$ff          ; SYNC byte (#$ff)
 
-; Write y*accu to disk
-; --------------------
+; Write Y times A to disk
+; --------------------------
 writebytes:
     bvc *             ; wait for previous byte to be written
     clv               ; clear overflow flag
@@ -467,6 +395,6 @@ writebytes:
 
 ; Track zone parameters
 ; ---------------------
-ZONES:    .byte 31, 25, 18, 1
+ZONES:    .byte 255, 31, 25, 18
 SPEEDS:   .byte $00, $20, $40, $60
-GAPADDS:  .byte $fc, $fa, $08, $ff
+GAPS:     .byte $0a, $0c, $12, $08

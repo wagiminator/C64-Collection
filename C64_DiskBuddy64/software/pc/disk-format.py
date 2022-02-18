@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.4
+# Version:   v1.5
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -58,7 +58,7 @@ verify = 0
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.4')
+print('DiskBuddy64 - Python Command Line Interface v1.5')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 
@@ -116,15 +116,16 @@ starttime = time.time()
 sys.stdout.write('Formatting: [' + '-' * (tracks) + ']\r')
 sys.stdout.write('Formatting: [')
 sys.stdout.flush()
-diskbuddy.timeout = 6
-for x in range(tracks):
+diskbuddy.timeout = 4
+for x in range(tracks + 1):
     progress = diskbuddy.read(1)
     if not progress or progress[0] > 0:
         print('')
         diskbuddy.close()
         raise AdpError('Failed to format the disk')
-    sys.stdout.write('#')
-    sys.stdout.flush()
+    if x > 0:
+        sys.stdout.write('#')
+        sys.stdout.flush()
 
 print('')
 

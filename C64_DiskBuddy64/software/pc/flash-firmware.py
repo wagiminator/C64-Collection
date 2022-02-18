@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Flash Firmware
-# Version:   v1.4
+# Version:   v1.5
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -44,7 +44,7 @@ FIRMWARE_BIN = 'libs/firmware.bin'
 # Print Header
 print('')
 print('--------------------------------------------------')
-print('DiskBuddy64 - Python Command Line Interface v1.4')
+print('DiskBuddy64 - Python Command Line Interface v1.5')
 print('(C) 2022 by Stefan Wagner - github.com/wagiminator')
 print('--------------------------------------------------')
 

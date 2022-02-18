@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Disk Tools Library
-# Version:   v1.4
+# Version:   v1.5
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator

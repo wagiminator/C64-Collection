@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskBuddy64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.4
+// Version:   v1.5
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -77,7 +77,7 @@
 #define CMD_BUF_LEN   64          // command buffer length (don't change)
 
 // Identifiers
-#define VERSION     "1.4"         // version number sent via serial if requested
+#define VERSION     "1.5"         // version number sent via serial if requested
 #define IDENT       "DiskBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -141,7 +141,7 @@ void UART_println(const char *str) {
 // WDT init
 void WDT_init(void) {
   while(WDT.STATUS & WDT_SYNCBUSY_bm);              // wait for synchronization
-  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_8KCLK_gc); // set timer to 4 seconds
+  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_4KCLK_gc); // set timer to 4 seconds
 }
 
 // ===================================================================================
@@ -249,6 +249,8 @@ void IEC_release(void) {
   IEC_ATN_setHigh();                                // release ATN line
   IEC_CLK_setHigh();                                // release CLK line
   IEC_DATA_setHigh();                               // release DATA line
+  while(IEC_CLK_isLow());                           // make sure CLK is high
+  while(IEC_DATA_isLow());                          // make sure DATA is high
 }
 
 // Send a data byte
@@ -381,7 +383,7 @@ uint8_t IEC_unlisten(void) {
   if(IEC_ATN_start()) return 1;                     // start sending under 'ATTENTION'
   if(IEC_sendByte(IEC_UNLISTEN)) return 1;          // send 'UNLISTEN'
   IEC_ATN_stop();                                   // stop sending under 'ATTENTION'
-  IEC_CLK_setHigh();                                // release CLK line
+  IEC_release();                                    // release all lines
   return 0;                                         // return success
 }
 
@@ -400,7 +402,7 @@ uint8_t IEC_untalk(void) {
   if(IEC_ATN_start()) return 1;                     // start sending under 'ATTENTION'
   if(IEC_sendByte(IEC_UNTALK)) return 1;            // send 'UNTALK'
   IEC_ATN_stop();                                   // stop sending under 'ATTENTION'
-  IEC_CLK_setHigh();                                // release CLK line
+  IEC_release();                                    // release all lines
   return 0;                                         // return success
 }
 
@@ -566,7 +568,7 @@ void IEC_loadFile(void) {
 // <length>"M-E"<addrLow><addrHigh><tracks><bump><clear><verify>:<name>,<ID1><ID2>
 void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
-  uint8_t cnt = CMD_buf[6];                         // get number of tracks
+  uint8_t cnt = CMD_buf[6] + 1;                     // get number of tracks
   while(!IEC_error && cnt--) {                      // for each track:
     WDT_reset();                                    // reset watchdog
     while(IEC_DATA_isHigh());                       // wait for track complete
@@ -615,7 +617,7 @@ int main(void) {
       case 'r':         IEC_readTrack(); break;       // read track from disk
       case 'w':         IEC_writeTrack(); break;      // write track to disk
       case 'l':         IEC_loadFile(); break;        // load a file from disk
-;     case 's':         break;                        // save a file to disk
+//    case 's':         break;                        // save a file to disk
       case 'f':         IEC_format(); break;          // format disk
       case 'm':         IEC_readMem(); break;         // read memory
       case 'c':         IEC_sendCommand(); break;     // send command to IEC device
@@ -634,9 +636,9 @@ int main(void) {
       case WRITEBYTES:  IEC_writeBuffer(CMD_buf+1, CMD_buf[0]); break;  // 10 0A
       case READFAST:    IEC_readBlock(CMD_buf[1]); break;               // 11 0B
       case WRITEFAST:   IEC_writeBlock(CMD_buf[1]); break;              // 12 0C
-;     case OPEN:        break;                                          // 13 0D
-;     case CLOSE:       break;                                          // 14 0E
-;     case RESET:       break;                                          // 15 0F
+//    case OPEN:        break;                                          // 13 0D
+//    case CLOSE:       break;                                          // 14 0E
+//    case RESET:       break;                                          // 15 0F
       case RELEASE:     IEC_release(); break;                           // 16 10
       case GETDEVICE:   UART_write(IEC_device); break;                  // 17 11
       case SETDEVICE:   IEC_device = CMD_buf[1]; break;                 // 18 12

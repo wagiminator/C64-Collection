@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Graphical User Interface
-# Version:   v1.4
+# Version:   v1.5
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -305,14 +305,14 @@ def diskFormat():
     progress = Progressbox(mainWindow, 'DiskBuddy64 - Formatting disk', 'Formatting disk ...')
     starttime = time.time()
     diskbuddy.timeout = 6
-    for x in range(tracks):
+    for x in range(tracks + 1):
         progr = diskbuddy.read(1)
         if not progr or progr[0] > 0:
             diskbuddy.close()
             progress.destroy()
             messagebox.showerror('Error', 'Failed to format the disk !')
             return
-        progress.setvalue(x * 100 // (tracks - 1))
+        progress.setvalue(x * 100 // tracks)
 
     # Finish all up
     duration = time.time() - starttime
@@ -976,7 +976,7 @@ def flashFirmware():
 # ===================================================================================
 
 mainWindow = Tk()
-mainWindow.title('DiskBuddy64 v1.4')
+mainWindow.title('DiskBuddy64 v1.5')
 mainWindow.resizable(width=False, height=False)
 
 device = IntVar()
