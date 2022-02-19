@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Upload
-; Version:   v1.2
+; Version:   v1.3
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator

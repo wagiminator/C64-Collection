@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DumpMaster64 - Fast IEC Implementation for 1541 - Writing
-; Version:   v1.2
+; Version:   v1.3.1
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -124,9 +124,19 @@ receivebyte:
 ; Job Routine (reads sectors via fast IEC and writes them on track)
 ; ====================================================================
 
+; Check track and set speed
+; -------------------------
+writejob:
+    lda $0a           ; get current track
+    cmp #36           ; >=36?
+    bcc writesector   ; no -> skip speed change
+    lda $1c00         ; set zone speed
+    and #$9f
+    sta $1c00
+
 ; Receive GCR-encoded block (325 bytes) from adapter via fast IEC
 ; ---------------------------------------------------------------
-writejob:
+writesector:
     lda #$01          ; wait for adapter 'READY TO SEND BLOCK':
 waitready:
     bit $1800         ; test DATA line
@@ -205,7 +215,7 @@ dataloop:
 ; --------------------
     inc $05           ; increment sector index
     dec $0206         ; decrement number of sectors left
-    bne writejob      ; repeat for all sectors
+    bne writesector   ; repeat for all sectors
 
 ; Set return code and terminate job
 ; ---------------------------------

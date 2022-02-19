@@ -1,6 +1,6 @@
 ; ====================================================================
 ; Project:   DiskBuddy64 - Fast IEC Implementation for 1541 - Writing
-; Version:   v1.5
+; Version:   v1.5.1
 ; Year:      2022
 ; Author:    Stefan Wagner
 ; Github:    https://github.com/wagiminator
@@ -113,9 +113,19 @@ waitready:
 ; Job Routine (reads sectors via fast IEC and writes them on track)
 ; ====================================================================
 
+; Check track and set speed
+; -------------------------
+writejob:
+    lda $0a           ; get current track
+    cmp #36           ; >=36?
+    bcc writesector   ; no -> skip speed change
+    lda $1c00         ; set zone speed
+    and #$9f
+    sta $1c00
+
 ; Receive GCR-encoded block (325 bytes) from adapter via fast IEC
 ; ---------------------------------------------------------------
-writejob:    
+writesector:
     ldy #$bb          ; bytes $01bb bis $01ff
 rloop1:
     jsr receivebyte   ; get byte from IEC
@@ -191,7 +201,7 @@ dataloop:
 nextsector:
     inc $05           ; increment sector index
     dec $0206         ; decrement number of sectors left
-    bne writejob      ; repeat for all sectors
+    bne writesector   ; repeat for all sectors
 
 ; Set return code and terminate job
 ; ---------------------------------
