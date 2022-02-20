@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -103,7 +103,7 @@ def diskDir():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
@@ -190,18 +190,13 @@ def diskFormat():
     ent2.insert(2, '64')
     ent2.grid(row=1, column=1, padx=4)
 
-    var1 = IntVar()
-    var2 = IntVar()
-    var3 = IntVar()
-    var4 = IntVar()
-    var2.set(1)
-    Checkbutton(parameterWindow, text="Demagnetize the disk", variable=var1).grid(
+    Checkbutton(parameterWindow, text="Demagnetize the disk", variable=f_demag_var).grid(
                             row=2, columnspan=2, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Bump the head", variable=var2).grid(
+    Checkbutton(parameterWindow, text="Bump the head", variable=f_bump_var).grid(
                             row=3, columnspan=2, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Format 40 tracks", variable=var3).grid(
+    Checkbutton(parameterWindow, text="Format 40 tracks", variable=f_extend_var).grid(
                             row=4, columnspan=2, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Verify on the fly", variable=var4).grid(
+    Checkbutton(parameterWindow, text="Verify on the fly", variable=f_verify_var).grid(
                             row=5, columnspan=2, sticky=W, padx=10, pady=4)
 
     Button(parameterWindow, text='Start formatting', command=parameterWindow.quit).grid(
@@ -210,11 +205,11 @@ def diskFormat():
 
     diskName  = ent1.get().upper()
     diskIdent = ent2.get().upper()
-    demag     = var1.get()
-    bump      = var2.get()
-    verify    = var4.get()
-    if var3.get() == 1: tracks = 40
-    else:               tracks = 35
+    demag     = f_demag_var.get()
+    bump      = f_bump_var.get()
+    verify    = f_verify_var.get()
+    if f_extend_var.get() == 1: tracks = 40
+    else:                       tracks = 35
     parameterWindow.destroy()
 
     if len(diskName) < 1 or len(diskName) > 16 or not len(diskIdent) == 2:
@@ -277,23 +272,20 @@ def diskRead():
     parameterWindow.transient(mainWindow)
     parameterWindow.grab_set()
 
-    var1 = IntVar()
-    var2 = IntVar()
-    var3 = IntVar()
-    var1.set(1)
-    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=var1).grid(
+    r_extend_var = IntVar()
+    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=r_bam_var).grid(
                             row=0, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Copy 40 tracks", variable=var3).grid(
+    Checkbutton(parameterWindow, text="Copy 40 tracks", variable=r_extend_var).grid(
                             row=1, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Verify after copying", variable=var2).grid(
+    Checkbutton(parameterWindow, text="Verify after copying", variable=r_verify_var).grid(
                             row=2, sticky=W, padx=10, pady=4)
     Button(parameterWindow, text='Select output file', command=parameterWindow.quit).grid(
                             row=3, columnspan=2, sticky=EW, padx=4, pady=4)
     parameterWindow.mainloop()
 
-    bamcopy   = var1.get()
-    verify    = var2.get()
-    if var3.get() > 0:
+    bamcopy = r_bam_var.get()
+    verify  = r_verify_var.get()
+    if r_extend_var.get() > 0:
         tracks    = 40
         allocated = 768
     else:
@@ -320,7 +312,7 @@ def diskRead():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
@@ -437,19 +429,16 @@ def diskWrite():
     parameterWindow.transient(mainWindow)
     parameterWindow.grab_set()
 
-    var1 = IntVar()
-    var2 = IntVar()
-    var1.set(1)
-    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=var1).grid(
+    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=w_bam_var).grid(
                             row=0, sticky=W, padx=10, pady=4)
-    Checkbutton(parameterWindow, text="Verify after copying", variable=var2).grid(
+    Checkbutton(parameterWindow, text="Verify after copying", variable=w_verify_var).grid(
                             row=1, sticky=W, padx=10, pady=4)
     Button(parameterWindow, text='Select input file', command=parameterWindow.quit).grid(
                             row=2, columnspan=2, sticky=EW, padx=4, pady=4)
     parameterWindow.mainloop()
 
-    bamcopy   = var1.get()
-    verify    = var2.get()
+    bamcopy   = w_bam_var.get()
+    verify    = w_verify_var.get()
     tracks    = 35
     allocated = 683
     parameterWindow.destroy()
@@ -473,7 +462,7 @@ def diskWrite():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastwrite.bin !')
         return
@@ -586,7 +575,7 @@ def diskVerify(filename, bamcopy, tracks):
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
@@ -1270,6 +1259,18 @@ def flashFirmware():
 mainWindow = Tk()
 mainWindow.title('DumpMaster64 v1.3')
 mainWindow.resizable(width=False, height=False)
+
+f_demag_var  = IntVar()
+f_bump_var   = IntVar()
+f_extend_var = IntVar()
+f_verify_var = IntVar()
+r_bam_var    = IntVar()
+r_verify_var = IntVar()
+w_bam_var    = IntVar()
+w_verify_var = IntVar()
+f_bump_var.set(1)
+r_bam_var.set(1)
+w_bam_var.set(1)
 
 device = IntVar()
 device.set(8)

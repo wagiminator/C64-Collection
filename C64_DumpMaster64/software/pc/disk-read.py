@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.3
+# Version:   v1.3.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -45,7 +45,8 @@ from libs.disktools import *
 
 
 # Constants and variables
-FASTREAD_BIN = 'libs/fastread.bin'
+FASTREAD_BIN   = 'libs/fastread.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 trackgap = 5
 tracks = 35
 
@@ -91,7 +92,7 @@ if not dumpmaster.checkdevice(device):
 
 # Upload fast loader to disk drive RAM
 print('Uploading fast loader ...')
-if dumpmaster.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
     dumpmaster.close()
     raise AdpError('Failed to upload fast loader')
 
