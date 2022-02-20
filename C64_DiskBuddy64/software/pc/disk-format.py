@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Format Disk
-# Version:   v1.5
+# Version:   v1.5.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -102,7 +102,8 @@ if not diskbuddy.checkdevice(device):
 
 # Upload fast formatter to disk drive RAM
 print('Uploading fast formatter ...')
-if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or diskbuddy.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or diskbuddy.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         diskbuddy.close()
         raise AdpError('Failed to upload fast formatter')
 

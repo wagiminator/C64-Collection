@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Write Disk Image from D64 File
-# Version:   v1.5
+# Version:   v1.5.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -45,7 +45,8 @@ from libs.disktools import *
 
 
 # Constants and variables
-FASTWRITE_BIN = 'libs/fastwrite.bin'
+FASTWRITE_BIN  = 'libs/fastwrite.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 trackgap = 5
 tracks = 35
 
@@ -89,7 +90,8 @@ if not diskbuddy.checkdevice(device):
 
 # Upload fast writer to disk drive RAM
 print('Uploading fast writer ...')
-if diskbuddy.uploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
+if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or diskbuddy.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
     diskbuddy.close()
     raise AdpError('Failed to upload fast writer')
 

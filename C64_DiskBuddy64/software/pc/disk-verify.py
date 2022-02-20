@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Verify Disk
-# Version:   v1.5
+# Version:   v1.5.1
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -46,7 +46,8 @@ from libs.disktools import *
 
 
 # Constants and variables
-FASTREAD_BIN = 'libs/fastread.bin'
+FASTREAD_BIN   = 'libs/fastread.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
 trackgap = 5
 tracks = 35
 
@@ -93,7 +94,8 @@ if not diskbuddy.checkdevice(device):
 
 # Upload fast loader to disk drive RAM
 print('Uploading fast loader ...')
-if diskbuddy.uploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+if diskbuddy.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or diskbuddy.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
     diskbuddy.close()
     raise AdpError('Failed to upload fast loader')
 
