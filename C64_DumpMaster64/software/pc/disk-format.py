@@ -102,7 +102,8 @@ if not dumpmaster.checkdevice(device):
 
 # Upload fast formatter to disk drive RAM
 print('Uploading fast formatter ...')
-if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         dumpmaster.close()
         raise AdpError('Failed to upload fast formatter')
 

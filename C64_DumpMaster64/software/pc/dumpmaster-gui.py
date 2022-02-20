@@ -103,7 +103,8 @@ def diskDir():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
@@ -229,7 +230,8 @@ def diskFormat():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or dumpmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastformat.bin !')
         return
@@ -312,7 +314,8 @@ def diskRead():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return
@@ -462,7 +465,8 @@ def diskWrite():
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or dumpmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastwrite.bin !')
         return
@@ -575,7 +579,8 @@ def diskVerify(filename, bamcopy, tracks):
         return
 
     # Upload fast loader to disk drive RAM
-    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+    if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
         dumpmaster.close()
         messagebox.showerror('Error', 'Failed to upload fastread.bin !')
         return

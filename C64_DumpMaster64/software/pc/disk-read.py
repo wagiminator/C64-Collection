@@ -92,7 +92,8 @@ if not dumpmaster.checkdevice(device):
 
 # Upload fast loader to disk drive RAM
 print('Uploading fast loader ...')
-if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or dumpmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
     dumpmaster.close()
     raise AdpError('Failed to upload fast loader')
 

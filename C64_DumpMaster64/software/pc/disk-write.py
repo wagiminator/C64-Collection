@@ -90,7 +90,8 @@ if not dumpmaster.checkdevice(device):
 
 # Upload fast writer to disk drive RAM
 print('Uploading fast writer ...')
-if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 or dumpmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
+if dumpmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+or dumpmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
     dumpmaster.close()
     raise AdpError('Failed to upload fast writer')
 
