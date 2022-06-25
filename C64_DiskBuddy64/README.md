@@ -5,8 +5,8 @@ The DiskBuddy64 is a proprietary interface. It does not turn the floppy disk dri
 
 The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
 
-Design Files (EasyEDA): https://easyeda.com/wagiminator/c64-diskbuddy64
-Project Video (Youtube): https://youtu.be/fXj1PHnRwoE
+- Design Files (EasyEDA): https://easyeda.com/wagiminator/c64-diskbuddy64
+- Project Video (Youtube): https://youtu.be/fXj1PHnRwoE
 
 ![DiskBuddy64_pic5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_pic5.jpg)
 
