@@ -31,6 +31,11 @@ Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum 
 
 ![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
 
+# [USB-C to 1541-II Power Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1541II_PowerAdapter)
+The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB-PD power supplies, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
+
+![1541II_PowerAdapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerAdapter/documentation/1541II_PowerAdapter_pic1.jpg)
+
 # [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
 TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
 
