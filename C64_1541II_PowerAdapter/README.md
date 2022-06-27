@@ -30,7 +30,6 @@ available standard external components. It feature:
 - 600kHz frequency operation
 - 2A output current
 - no schottky diode required
-- 4.5V to 16V input voltage range
 - over current protection
 - thermal shutdown
 - inrush current limit and soft start
