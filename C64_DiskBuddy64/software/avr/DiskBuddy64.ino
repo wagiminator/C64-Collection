@@ -45,7 +45,7 @@
 // https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers
 // and extract to tools/avr-gcc. Use the makefile to compile and upload.
 //
-// Fuse Settings: 0:0x00 1:0x00 2:0x02 4:0x00 5:0xC5 6:0x04 7:0x00 8:0x00
+// Fuse Settings: 0:0x00 1:0x00 2:0x01 4:0x00 5:0xC5 6:0x04 7:0x00 8:0x00
 //
 // Operating Instructions:
 // -----------------------
