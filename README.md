@@ -64,9 +64,9 @@ MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šo
 # [C64 512k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_512k)
 512k MagicDesk compatible cartridge for Commodore C64 based on the work of [Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k) and [Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/). Build your own cartridges out of even more PRG-files!
 
-![C64_Cartridge_512k_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_512k/documentation/C64_Cartridge_512k_pic1.jpg)
+![C64_Cartridge_512k_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_512k/documentation/C64_Cartridge_512k_pic2.jpg)
 
 # [C64 FreeLoad Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_FreeLoad)
 The FreeLoad cartridge is a simple clone of an Epyx Fastload cartridge, offering a system reset button, a file access activity LED and a disable switch. Load 5x faster from your floppy disk drive, your SD2IEC or your Pi1541!
 
-![C64_Cartridge_FreeLoad_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_FreeLoad/documentation/C64_Cartridge_FreeLoad_pic1.jpg)
+![C64_Cartridge_FreeLoad_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_FreeLoad/documentation/C64_Cartridge_FreeLoad_pic2.jpg)
