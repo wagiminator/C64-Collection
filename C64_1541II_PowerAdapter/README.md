@@ -1,5 +1,5 @@
 # USB-C to 1541-II Power Adapter
-The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB-PD power supplies, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
+The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB-PD power adapters, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
 
 ![1541II_PowerAdapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerAdapter/documentation/1541II_PowerAdapter_pic1.jpg)
 
@@ -46,7 +46,7 @@ The SD8942 in this application provides the 5V for the disk drive. The SD8942 ca
 Use a USB-C power supply that can provide at least 12V/1.5A (18W). Plug the power supply into an outlet. Connect the PowerAdapter to the power supply with a USB-C cable. Wait for the POWER-GOOD LED on the PowerAdapter to light up. Plug the PowerAdapter's 4-pin DIN connector into the 1541-II Floppy Disk Drive and turn it on.
 
 # References, Links and Notes
-1. [CH224K Datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/ADuM3160.pdf)
+1. [CH224K Datasheet](https://datasheet.lcsc.com/lcsc/2204251615_WCH-Jiangsu-Qin-Heng-CH224K_C970725.pdf)
 2. [SD8942 Datasheet](https://datasheet.lcsc.com/lcsc/1912111437_HI-LINK-HLK-1D0505A_C465411.pdf)
 3. [4-Pin DIN Connector](https://aliexpress.com/wholesale?SearchText=4+pin+din+connector)
 
