@@ -1,5 +1,5 @@
 # USB-C to 1541-II Power Adapter
-The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB-PD power adapters, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
+The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB Type-C PD power adapters, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
 
 ![1541II_PowerAdapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerAdapter/documentation/1541II_PowerAdapter_pic1.jpg)
 
@@ -8,12 +8,12 @@ The old "power bricks" that supply the 1541-II floppy disk drives with power los
 ![1541II_PowerAdapter_wiring.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerAdapter/documentation/1541II_PowerAdapter_wiring.png)
 
 ## CH224K USB-PD Power Receiving Chip
-The CH224K integrates multiple fast charging protocols such as USB PD3.0/2.0, BC1.2 and other boost fast charging protocols on a single-chip. It features:
+The CH224K is a USB PD power receiving protocol chip, which integrates PD3.0/2.0, BC1.2 and other fast charging protocols, automatically detects VCONN and analog E-Mark chips, supports up to 100W power, and has built-in PD communication module. It also integrates output voltage detection internally to support overheating and overvoltage protection. It features:
 
 - 4V to 22V input voltage
 - PD3.0/2.0, BC1.2 and other fast charging protocols
 - USB Type-C PD, positive and negative insertion detection and automatic switching
-- E-Mark simulation, automatically detect VCONN, support 100W power PD request
+- E-Mark simulation, automatically detects VCONN, supports 100W power PD request
 - requested voltage can be dynamically adjusted through a variety of methods
 - high integration of single chip, simplified peripheral and low cost
 - built-in over-voltage and over-temperature protection module
@@ -47,7 +47,7 @@ Use a USB-C power supply that can provide at least 12V/1.5A (18W). Plug the powe
 
 # References, Links and Notes
 1. [CH224K Datasheet](https://datasheet.lcsc.com/lcsc/2204251615_WCH-Jiangsu-Qin-Heng-CH224K_C970725.pdf)
-2. [SD8942 Datasheet](https://datasheet.lcsc.com/lcsc/1912111437_HI-LINK-HLK-1D0505A_C465411.pdf)
+2. [SD8942 Datasheet](https://datasheet.lcsc.com/lcsc/1808081634_SHOUDING-SD8942_C250795.pdf)
 3. [4-Pin DIN Connector](https://aliexpress.com/wholesale?SearchText=4+pin+din+connector)
 
 # License
