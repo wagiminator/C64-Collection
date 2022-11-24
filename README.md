@@ -26,13 +26,13 @@ Commodore Datasette Emulator based on the design and firmware by [Sweetlilmre](h
 
 ![C64_Tapuino_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic1.jpg)
 
-# [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
-Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
+# [1541-II Power Guard](https://github.com/wagiminator/C64-Collection/tree/master/C64_1541II_PowerGuard)
+The old "power bricks" that supply the 1541-II/1571-II/1581 floppy disk drives lose their reliability over time and can then damage the drive through overvoltage. The 1541-II Power Guard is connected between the power supply and the floppy drive, it monitors the voltages on the 5V and 12V rails and immediately disconnects if an overvoltage occurs. It thus makes a valuable contribution to protecting your old hardware.
 
-![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
+![1541II_PowerGuard_pic8.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerGuard/documentation/1541II_PowerGuard_pic8.jpg)
 
 # [USB-C to 1541-II Power Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1541II_PowerAdapter)
-The old "power bricks" that supply the 1541-II floppy disk drives with power lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB Type-C PD power adapters, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
+The old "power bricks" that supply the 1541-II/1571-II/1581 floppy disk drives lose their reliability over time and can then damage the drive through overvoltage. There are definitely newer power supplies to buy or you can build one yourself. However, with the increasing spread of USB Type-C PD power adapters, which can supply different voltages and high currents, it may make more sense to use one of these to power the 1541-II. The 1541-II PowerAdapter makes just that possible.
 
 ![1541II_PowerAdapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1541II_PowerAdapter/documentation/1541II_PowerAdapter_pic1.jpg)
 
@@ -40,6 +40,11 @@ The old "power bricks" that supply the 1541-II floppy disk drives with power los
 TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to dump your old software saved on tapes as TAP files. It is inspired by [TrueTape64](https://github.com/francescovannini/truetape64), a similar project by Francesco Vannini. The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware.
 
 ![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
+
+# [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
+Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
+
+![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
 
 # [C64 Keyboard Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
 C64 keyboard to USB adapter based on the design and firmware by [Mikkel Holm Olsen](https://symlink.dk/projects/c64key/). Use the original keyboard with you favourite emulator!
