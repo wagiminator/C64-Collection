@@ -34,7 +34,7 @@ Two P-channel MOSFETs are required to switch the power connections. In principle
 - Continuous Drain Current must be at least $I_D = 2A$,
 - Gate Threshold Voltage must not exceed $V_{GS(th)} = 2.5V$.
 
-The values referred to are usually given as negative values for P-channel MOSFETs. In addition, care should be taken to ensure that the On-Resistance ($R_{DS(on)} at a Gate-Source Voltage of -4.5V is as low as possible.
+The values referred to are usually given as negative values for P-channel MOSFETs. In addition, care should be taken to ensure that the On-Resistance ($R_{DS(on)}$) at a Gate-Source Voltage of -4.5V is as low as possible.
 
 An excellent choice is the [G7P03L](https://datasheet.lcsc.com/lcsc/2009211935_GOFORD-G7P03L_C840062.pdf) with an on-resistance of 23mΩ@-4.5V. If this is not available, an [AO3401A](https://datasheet.lcsc.com/lcsc/2007171935_HUASHUO-AO3401A_C700954.pdf) with an on-resistance of 64mΩ@-4.5V will also do.
 
@@ -53,7 +53,7 @@ Before use, test the 1541-II Power Guard for proper operation using a variable p
 2. [LM4040 Datasheet](https://datasheet.lcsc.com/lcsc/1912111437_Diodes-Incorporated-LM4040B25FTA_C460725.pdf)
 3. [G7P03L Datasheet](https://datasheet.lcsc.com/lcsc/2009211935_GOFORD-G7P03L_C840062.pdf)
 4. [AO3401A Datasheet](https://datasheet.lcsc.com/lcsc/2007171935_HUASHUO-AO3401A_C700954.pdf)
-5. [4-Pin DIN Connectors](https://aliexpress.com/wholesale?SearchText=4+pin+din+connector)
+5. [4-Pin DIN Connectors on AliExpress](https://aliexpress.com/wholesale?SearchText=4+pin+din+connector)
 6. [USB-C to 1541-II Power Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1541II_PowerAdapter)
 
 # License
