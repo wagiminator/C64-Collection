@@ -4,9 +4,6 @@
 # Year:     2022
 # URL:      https://github.com/wagiminator    
 # ===================================================================================
-# Download AVR 8-bit Toolchain:
-# https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers
-# and extract to ./tools/avr-gcc 
 # Type "make help" in the command line.
 # ===================================================================================
 
@@ -14,7 +11,7 @@
 SKETCH  = DiskBuddy64.ino
 TARGET  = diskbuddy64
 
-# Microcontroller Options
+# Microcontroller Settings
 DEVICE ?= attiny202
 CLOCK   = 16000000
 FUSE0   = 0x00
@@ -26,25 +23,25 @@ FUSE6   = 0x04
 FUSE7   = 0x00
 FUSE8   = 0x00
 
-# Paths
-GCCPATH = ./tools/avr-gcc
-DFPPATH = ./tools/dfp
-PYMPATH = ./tools/tinyupdi
+# Toolchain
+CC       = avr-gcc
+OBJCOPY  = avr-objcopy
+OBJDUMP  = avr-objdump
+AVRSIZE  = avr-size
+PYPROG   = python3 -u ./tools/tinyupdi.py -d $(DEVICE)
+CLEAN    = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
 
-# Commands
-DFPINCL = -B $(DFPPATH)/gcc/dev/$(DEVICE)/ -I $(DFPPATH)/include/
-COMPILE = $(GCCPATH)/bin/avr-gcc $(DFPINCL) -flto -Wall -Os -mmcu=$(DEVICE) -DF_CPU=$(CLOCK)UL -x c++ $(SKETCH)
-PYPROG  = python -u $(PYMPATH)/tinyupdi.py -d $(DEVICE)
-CLEAN   = rm -f *.lst *.obj *.cof *.list *.map *.eep.hex *.o *.s *.d
+# Compiler Flags
+CFLAGS   = -flto -Wall -Os -mmcu=$(DEVICE) -DF_CPU=$(CLOCK) -x c++
+CFLAGS  += -B include/dev/$(DEVICE) -I include
 
 # Symbolic Targets
 help:
 	@echo "Use the following commands:"
-	@echo "make all       compile and build $(TARGET).elf/.hex/.bin/.asm for $(DEVICE)"
-	@echo "make elf       compile and build $(TARGET).elf for $(DEVICE)"
+	@echo "make all       compile and build $(TARGET).elf/.bin/.hex/.asm for $(DEVICE)"
 	@echo "make hex       compile and build $(TARGET).hex for $(DEVICE)"
-	@echo "make bin       compile and build $(TARGET).bin for $(DEVICE)"
 	@echo "make asm       compile and disassemble to $(TARGET).asm for $(DEVICE)"
+	@echo "make bin       compile and build $(TARGET).bin for $(DEVICE)"
 	@echo "make upload    compile and upload to $(DEVICE)"
 	@echo "make fuses     burn fuses of $(DEVICE)"
 	@echo "make install   compile, upload and burn fuses for $(DEVICE)"
@@ -59,6 +56,8 @@ bin:	buildelf buildbin removetemp size removeelf
 hex:	buildelf buildhex removetemp size removeelf
 
 asm:	buildelf buildasm removetemp size removeelf
+
+flash:	install
 
 install:	bin
 	@echo "Installing to $(DEVICE) ..."
@@ -78,24 +77,26 @@ clean:
 	@rm -f $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).asm
 
 buildelf:
-	@echo "Building $(TARGET).elf for $(DEVICE) @ $(CLOCK)Hz ..."
-	@$(COMPILE) -o $(TARGET).elf
+	@echo "Compiling $(SKETCH) for $(DEVICE) @ $(CLOCK)Hz ..."
+	@$(CC) $(CFLAGS) $(SKETCH) -o $(TARGET).elf
 
 buildbin:
 	@echo "Building $(TARGET).bin ..."
-	@$(GCCPATH)/bin/avr-objcopy -O binary -R .eeprom $(TARGET).elf $(TARGET).bin
+	@$(OBJCOPY) -O binary -R .eeprom $(TARGET).elf $(TARGET).bin
 
 buildhex:
 	@echo "Building $(TARGET).hex ..."
-	@$(GCCPATH)/bin/avr-objcopy -O ihex -R .eeprom $(TARGET).elf $(TARGET).hex
+	@$(OBJCOPY) -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
 
 buildasm:
 	@echo "Disassembling to $(TARGET).asm ..."
-	@$(GCCPATH)/bin/avr-objdump -d $(TARGET).elf > $(TARGET).asm
+	@$(OBJDUMP) -d $(TARGET).elf > $(TARGET).asm
 
 size:
-	@echo "FLASH: $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
-	@echo "SRAM:  $(shell $(GCCPATH)/bin/avr-size -d $(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "------------------"
+	@echo "FLASH: $(shell $(AVRSIZE) -d $(TARGET).elf | awk '/[0-9]/ {print $$1 + $$2}') bytes"
+	@echo "SRAM:  $(shell $(AVRSIZE) -d $(TARGET).elf | awk '/[0-9]/ {print $$2 + $$3}') bytes"
+	@echo "------------------"
 
 removetemp:
 	@echo "Removing temporary files ..."

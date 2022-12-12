@@ -71,7 +71,7 @@ def _main():
                         help='fuses to set (syntax: fuse_nr:0xvalue)')
     args = parser.parse_args(sys.argv[1:])
 
-    if not any(args.fuses, args.flash, args.erase):
+    if not any( (args.fuses, args.flash, args.erase) ):
         print('No action necessary')
         sys.exit(0)
 
