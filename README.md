@@ -26,6 +26,11 @@ Commodore Datasette Emulator based on the design and firmware by [Sweetlilmre](h
 
 ![C64_Tapuino_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic1.jpg)
 
+# [C64 Power Guard](https://github.com/wagiminator/C64-Collection/tree/master/C64_PowerGuard)
+The old "power bricks" that supply the Commodore C64 lose their reliability over time and can then damage the device through overvoltage. The C64 Power Guard is connected between the power supply and the C64, it monitors the voltage and current on the 5V DC rail and immediately disconnects if an overvoltage or overcurrent occurs. It thus makes a valuable contribution to protecting your old hardware.
+
+![C64_PowerGuard_pic4.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_PowerGuard/documentation/C64_PowerGuard_pic4.jpg)
+
 # [1541-II Power Guard](https://github.com/wagiminator/C64-Collection/tree/master/C64_1541II_PowerGuard)
 The old "power bricks" that supply the 1541-II/1571-II/1581 floppy disk drives lose their reliability over time and can then damage the drive through overvoltage. The 1541-II Power Guard is connected between the power supply and the floppy drive, it monitors the voltages on the 5V and 12V rails and immediately disconnects if an overvoltage occurs. It thus makes a valuable contribution to protecting your old hardware.
 
