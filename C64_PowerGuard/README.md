@@ -29,7 +29,7 @@ A P-channel MOSFETs is required to switch the DC power connection. In principle,
 - Continuous Drain Current must be at least $I_D = 2A$,
 - Gate Threshold Voltage must not exceed $V_{GS(th)} = 2.5V$.
 
-The values referred to are usually given as negative values for P-channel MOSFETs. In addition, care should be taken to ensure that the On-Resistance ($R_{DS(on)}$) at a Gate-Source Voltage of -4.5V is as low as possible.
+The values referred to are usually given as negative values for P-channel MOSFETs. In addition, care should be taken to ensure that the On-Resistance $(R_{DS(on)})$ at a Gate-Source Voltage of -4.5V is as low as possible.
 
 An excellent choice is the [G7P03L](https://datasheet.lcsc.com/lcsc/2009211935_GOFORD-G7P03L_C840062.pdf) with an on-resistance of 23mΩ@-4.5V. If this is not available, an [AO3401A](https://datasheet.lcsc.com/lcsc/2007171935_HUASHUO-AO3401A_C700954.pdf) with an on-resistance of 64mΩ@-4.5V will also do.
 
