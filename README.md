@@ -61,6 +61,11 @@ Replacement board for the legendary SID soundchip of the Commodore C64 based on 
 
 ![C64_SwinSID_nano_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_SwinSID_nano/documentation/C64_SwinSID_nano_pic1.jpg)
 
+# [Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
+Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the hoystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
+
+![C64_Joystick_Tester_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Tester/C64_Joystick_Tester_pic1.jpg)
+
 # [C64 8k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_8k)
 Simple 8k cartridge for C64.
 
