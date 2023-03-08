@@ -51,7 +51,7 @@ With this simple adapter, a Commodore 1351 mouse (or compatible proportional mou
 
 ![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
 
-# [Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
+# [C64 Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
 Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the hoystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
 
 ![C64_Joystick_Tester_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Tester/C64_Joystick_Tester_pic1.jpg)
