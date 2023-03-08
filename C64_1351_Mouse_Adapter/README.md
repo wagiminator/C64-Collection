@@ -1,7 +1,7 @@
 # 1351 Mouse to USB Adapter
 With this simple adapter, a Commodore 1351 mouse (or compatible proportional mouse) can be used on a modern PC as a USB HID device.
 
-![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_USB_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
+![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
 
 # Hardware
 ## Schematic
