@@ -46,25 +46,30 @@ TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Da
 
 ![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
 
-# [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
-Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
+# [1351 Mouse to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1351_USB_Mouse_Adapter)
+With this simple adapter, a Commodore 1351 mouse (or compatible proportional mouse) can be used on a modern PC as a USB HID device.
 
-![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
+![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_USB_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
+
+# [Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
+Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the hoystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
+
+![C64_Joystick_Tester_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Tester/C64_Joystick_Tester_pic1.jpg)
 
 # [C64 Keyboard Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
 C64 keyboard to USB adapter based on the design and firmware by [Mikkel Holm Olsen](https://symlink.dk/projects/c64key/). Use the original keyboard with you favourite emulator!
 
 ![C64_Keyboard_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Keyboard_Adapter/documentation/C64_Keyboard_Adapter_pic1.jpg)
 
+# [xu1541](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
+Commodore floppy disk drive to USB adapter based on the designs by Till Harbaum and [Spiro R. Trikaliotis](https://spiro.trikaliotis.net/xu1541). It connects a variety of CBM drives (1541, 1541-II, 1570, 1571, 1581, SX-64's internal floppy disk) to USB-equipped PCs running Windows, Linux or Mac OS X. This allows for easy transfer of disk images to and from these devices and helps you preserve your old data.
+
+![C64_xu1541_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_xu1541/documentation/C64_xu1541_pic1.jpg)
+
 # [SwinSID nano](https://github.com/wagiminator/C64-Collection/tree/master/C64_SwinSID_nano)
 Replacement board for the legendary SID soundchip of the Commodore C64 based on the design by [Swinkels](http://www.swinkels.tvtom.pl/swinsid/).
 
 ![C64_SwinSID_nano_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_SwinSID_nano/documentation/C64_SwinSID_nano_pic1.jpg)
-
-# [Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
-Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the hoystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
-
-![C64_Joystick_Tester_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Tester/C64_Joystick_Tester_pic1.jpg)
 
 # [C64 8k Cartridge](https://github.com/wagiminator/C64-Collection/tree/master/C64_Cartridge_8k)
 Simple 8k cartridge for C64.
