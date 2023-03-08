@@ -10,10 +10,10 @@ With this simple adapter, a Commodore 1351 mouse (or compatible proportional mou
 ## CH552E 8-bit USB Device Microcontroller
 The CH552E is a low-cost, enhanced E8051 core microcontroller compatible with the MCS51 instruction set. It has an integrated USB 2.0 controller with full-speed data transfer (12 Mbit/s) and supports up to 64 byte data packets with integrated FIFO and direct memory access (DMA). The CH552E has a factory built-in bootloader so firmware can be uploaded directly via USB without the need for an additional programming device.
 
-![1351_USB_Adapter_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic3.jpg)
-
 ## Commodore 1351 Proportional Mouse
 The 1351 is a computer mouse made by Commodore in 1986, which can be directly plugged into the 9-pin control port of a Commodore 64 or 128. In its default mode, it is a true proportional mouse, but by holding down the right mouse button when powering up the machine, it can be made to emulate its predecessor, the 1350, which acted electrically like a joystick. The 1351 mouse is not compatible with the VIC-20 or the Amiga, even though it uses the same 9-pin connector. This is because the 1351 uses the 6581/8580 SID chip's analog-to-digital converter, which is specific to the C64/C128.
+
+![1351_USB_Adapter_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic3.jpg)
 
 # Software
 ## Working Principle
