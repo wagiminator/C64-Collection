@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   1351 Mouse to USB Adapter for CH551, CH552 and CH554
-// Version:   v1.0
+// Version:   v1.1
 // Year:      2023
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -57,6 +57,12 @@ void USB_ISR(void) __interrupt(INT_NO_USB) {
   USB_interrupt();
 }
 
+// Macros
+#define abs(x)  ((x)>0?(x):-(x))
+
+// Disable unnecessary warnings
+#pragma disable_warning 84
+
 // ===================================================================================
 // Timer0 Functions
 // ===================================================================================
@@ -91,8 +97,9 @@ void main(void) {
   PIN_output_OD(PIN_POTX);                // POT pins to open-drain output
   PIN_output_OD(PIN_POTY);                // POT pins to open-drain output
   CLK_config();                           // configure system clock
-  DLY_ms(5);                              // wait for clock to settle
+  DLY_ms(10);                             // wait for clock to settle
   MOUSE_init();                           // init USB HID mouse
+  DLY_ms(500);                            // wait for driver
   TIM_init();                             // init timer0
   WDT_start();                            // start watchdog
 
@@ -135,6 +142,14 @@ void main(void) {
       poty_last = poty;
     }
 
+      // Mouse acceleration
+      #ifdef ACCELERATE
+      if((abs(movx) > 5) || (abs(movy) > 5)) {
+        movx *= 2;
+        movy *= 2;
+      }
+      #endif
+
     // Move mouse pointer
     if(movx || movy) MOUSE_move(movx, movy);
 
@@ -152,6 +167,7 @@ void main(void) {
       lastright = buttonright;
     }
 
+    DLY_ms(5);                            // a little delay
     WDT_reset();                          // reset watchdog
   }
 }

@@ -10,6 +10,9 @@
 #define PIN_LEFT            P16       // pin connected to left mouse button
 #define PIN_RIGHT           P17       // pin connected to right mouse button
 
+// Mouse acceleration (uncomment to activate)
+//#define ACCELERATE
+
 // USB device descriptor
 #define USB_VENDOR_ID       0x16C0    // VID (shared www.voti.nl)
 #define USB_PRODUCT_ID      0x27DA    // PID (shared HID-mice)
