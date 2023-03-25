@@ -47,16 +47,21 @@ TapeDump64 is a simple and inexpensive adapter that can interface a Commodore Da
 ![TapeDump64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeDump64/documentation/TapeDump64_pic1.jpg)
 
 # [1351 Mouse to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1351_Mouse_Adapter)
-With this simple adapter, a Commodore 1351 mouse (or compatible proportional mouse) can be used on a modern PC as a USB HID device.
+With this simple adapter, a Commodore 1351 mouse (or compatible proportional mouse) can be used on a modern PC as a USB HID mouse.
 
 ![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
 
+# [C64 Joystick to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1351_Mouse_Adapter)
+With this simple adapter you can use your old C64 9-pin joysticks, paddles and mice on your modern PC.
+
+![C64_Joystick_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Adapter/documentation/C64_Joystick_Adapter_pic1.jpg)
+
 # [C64 Joystick Tester](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Tester)
-Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the hoystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
+Check the functionality of your old 9-pin joysticks without having to turn on your C64. Simply put a CR2032 button cell in the device and connect it to the joystick via the 9-pin D-Sub connector. Move the joystick in all directions and press the fire button. The corresponding LEDs on the device will light up if everything is working properly.
 
 ![C64_Joystick_Tester_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Tester/C64_Joystick_Tester_pic1.jpg)
 
-# [C64 Keyboard Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
+# [C64 Keyboard to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Keyboard_Adapter)
 C64 keyboard to USB adapter based on the design and firmware by [Mikkel Holm Olsen](https://symlink.dk/projects/c64key/). Use the original keyboard with you favourite emulator!
 
 ![C64_Keyboard_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Keyboard_Adapter/documentation/C64_Keyboard_Adapter_pic1.jpg)
