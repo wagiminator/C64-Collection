@@ -51,7 +51,7 @@ With this simple adapter, a Commodore 1351 mouse (or compatible proportional mou
 
 ![1351_USB_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_1351_Mouse_Adapter/documentation/1351_USB_Adapter_pic1.jpg)
 
-# [C64 Joystick to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_1351_Mouse_Adapter)
+# [C64 Joystick to USB Adapter](https://github.com/wagiminator/C64-Collection/tree/master/C64_Joystick_Adapter)
 With this simple adapter you can use your old C64 9-pin joysticks, paddles and mice on your modern PC.
 
 ![C64_Joystick_Adapter_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Adapter/documentation/C64_Joystick_Adapter_pic1.jpg)
