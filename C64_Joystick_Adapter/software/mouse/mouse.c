@@ -95,7 +95,7 @@ void main(void) {
   CLK_config();                           // configure system clock
   DLY_ms(10);                             // wait for clock to settle
   MOUSE_init();                           // init USB HID mouse
-  DLY_ms(500);                            // wait for driver
+  DLY_ms(500);                            // wait for Windows...
   TIM_init();                             // init timer0
   WDT_start();                            // start watchdog
 

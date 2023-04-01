@@ -68,8 +68,9 @@ void main(void) {
   PIN_output_OD(PIN_POTX);                // POT pins to open-drain output
   PIN_output_OD(PIN_POTY);                // POT pins to open-drain output
   CLK_config();                           // configure system clock
-  DLY_ms(5);                              // wait for clock to settle
+  DLY_ms(10);                             // wait for clock to settle
   JOY_init();                             // init USB HID joystick
+  DLY_ms(500);                            // wait for Windows...
   T2MOD = bTMR_CLK | bT0_CLK;             // set timer clock to Fsys
   WDT_start();                            // start watchdog
 

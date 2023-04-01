@@ -59,8 +59,9 @@ void USB_ISR(void) __interrupt(INT_NO_USB) {
 void main(void) {
   // Setup
   CLK_config();                           // configure system clock
-  DLY_ms(5);                              // wait for clock to settle
+  DLY_ms(10);                             // wait for clock to settle
   JOY_init();                             // init USB HID joystick
+  DLY_ms(500);                            // wait for Windows...
   WDT_start();                            // start watchdog
 
   // Loop
