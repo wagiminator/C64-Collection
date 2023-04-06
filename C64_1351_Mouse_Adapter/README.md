@@ -52,7 +52,7 @@ echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="4348", ATTR{idProduct}=="55e0", MODE="6
 sudo service udev restart
 ```
 
-On Windows you will need the [Zadig tool](https://zadig.akeo.ie/) to install the correct driver. Click "Options" and "List All Devices" to select the USB module, then install the libusb-win32 driver.
+On Windows you will need the [Zadig tool](https://zadig.akeo.ie/) to install the correct driver. Click "Options" and "List All Devices" to select the USB module, then install the libusb-win32 driver. To do this, the board must be connected and the CH55x must be in bootloader mode.
 
 #### Entering CH55x Bootloader Mode
 A brand new chip starts automatically in bootloader mode as soon as it is connected to the PC via USB. Once firmware has been uploaded, the bootloader must be started manually for new uploads. To do this, the board must first be disconnected from the USB port and all voltage sources. Now press the BOOT button and keep it pressed while reconnecting the board to the USB port of your PC. The chip now starts again in bootloader mode, the BOOT button can be released and new firmware can be uploaded within the next couple of seconds.
@@ -69,7 +69,7 @@ sudo pip install pyusb
 #### Compiling and Uploading Firmware
 - Open a terminal.
 - Navigate to the folder with the makefile. 
-- Connect the board and make sure the CH55x ist in bootloader mode. 
+- Connect the board and make sure the CH55x is in bootloader mode. 
 - Run ```make flash``` to compile and upload the firmware. 
 - If you don't want to compile the firmware yourself, you can also upload the precompiled binary. To do this, just run ```python3 ./tools/chprog.py 1351_usb.bin```.
 
@@ -85,7 +85,7 @@ Install the [Arduino IDE](https://www.arduino.cc/en/software) if you haven't alr
   - **Clock Source:**   12 MHz (internal)
   - **Upload Method:**  USB
   - **USB Settings:**   USER CODE /w 148B USB RAM
-- Connect the board and make sure the CH55x ist in bootloader mode. 
+- Connect the board and make sure the CH55x is in bootloader mode. 
 - Click **Upload**.
 
 # References, Links and Notes
