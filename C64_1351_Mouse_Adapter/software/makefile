@@ -10,12 +10,12 @@
 # Input and Output File Names
 SKETCH     = 1351_usb.c
 TARGET     = 1351_usb
-INCLUDE    = include
+INCLUDE    = src
 
 # Microcontroller Settings
 FREQ_SYS   = 12000000
-XRAM_SIZE  = 0x0380
 XRAM_LOC   = 0x0080
+XRAM_SIZE  = 0x0380
 CODE_SIZE  = 0x3800
 
 # Toolchain
@@ -27,7 +27,7 @@ WCHISP    ?= python3 tools/chprog.py
 # Compiler Flags
 CFLAGS  = -mmcs51 --model-small --no-xinit-opt
 CFLAGS += --xram-size $(XRAM_SIZE) --xram-loc $(XRAM_LOC) --code-size $(CODE_SIZE)
-CFLAGS += -I$(INCLUDE) -DFREQ_SYS=$(FREQ_SYS)
+CFLAGS += -I$(INCLUDE) -DF_CPU=$(FREQ_SYS)
 CFILES  = $(SKETCH) $(wildcard $(INCLUDE)/*.c)
 RFILES  = $(CFILES:.c=.rel)
 CLEAN   = rm -f *.ihx *.lk *.map *.mem *.lst *.rel *.rst *.sym *.asm *.adb
