@@ -16,6 +16,11 @@ TapeBuddy64 is a simple and inexpensive adapter that can interface a Commodore D
 
 ![TapeBuddy64_pic6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic6.jpg)
 
+# [DiskMaster64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskMaster64)
+The DiskMaster64 is a small adapter that allows you to connect a Commodore 1541(II) floppy disk drive to your computer via USB. This enables you to read from and write to floppy disks. The adapter is equipped with a fast loading system that reduces transfer times. You can control the device using a command line interface or a graphical interface programmed in Python. The DiskMaster64 is a conversion of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) from the ATtiny to the CH552 microcontroller. This makes the adapter even smaller, simpler, and cheaper while retaining its full functionality.
+
+![DiskMaster64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskMaster64/documentation/DiskMaster64_pic1.jpg)
+
 # [SD2IEC LP](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
 C64 SD-card adapter and floppy disk drive emulator based on the design by [Lars Pontoppidan](https://larsee.com/blog/2007/02/the-mmc2iec-device/) with cassette port plug. Copy C64 games and programs to SD-card on your PC, put the SD-card in your SD2IEC and load games and programs on your C64!
 

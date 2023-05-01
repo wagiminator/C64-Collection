@@ -1,0 +1,988 @@
+#!/usr/bin/env python3
+# ===================================================================================
+# Project:   DiskMaster64 - Python Script - Read Disk Image to D64 File
+# Version:   v1.0
+# Year:      2022
+# Author:    Stefan Wagner
+# Github:    https://github.com/wagiminator
+# License:   http://creativecommons.org/licenses/by-sa/3.0/
+# ===================================================================================
+#
+# Description:
+# ------------
+# Graphical front end for DiskMaster64
+#
+# Dependencies:
+# -------------
+# - adapter   (included in libs folder)
+# - disktools (included in libs folder)
+# - chprog    (included in libs folder)
+# - pyserial
+# - tkinter (8.6 or newer)
+#
+# Operating Instructions:
+# -----------------------
+# - Connect the adapter to your Datasette and/or your floppy disk drive(s).
+# - Connect the adapter to a USB port of your PC.
+# - Switch on your floppy disk drive(s) if connected.
+# - Execute the desired Python script on your PC to interface the adapter.
+
+
+import sys
+import os
+import time
+from tkinter import *
+from tkinter import messagebox, filedialog
+from tkinter.ttk import *
+from libs.adapter import *
+from libs.disktools import *
+from libs.chprog import Programmer
+
+
+# Binary Files
+FIRMWARE_BIN   = 'libs/diskmaster64.bin'
+FASTREAD_BIN   = 'libs/fastread.bin'
+FASTLOAD_BIN   = 'libs/fastload.bin'
+FASTWRITE_BIN  = 'libs/fastwrite.bin'
+FASTUPLOAD_BIN = 'libs/fastupload.bin'
+FASTFORMAT_BIN = 'libs/fastformat.bin'
+
+# Default variables
+interleave = 4
+trackgap   = 6
+
+
+# ===================================================================================
+# Progress Box Class - Shows a Progress Bar
+# ===================================================================================
+
+class Progressbox(Toplevel):
+    def __init__(self, root = None, title = 'Please wait !', 
+                activity = 'Doing stuff ...', value = 0):
+        Toplevel.__init__(self, root)
+        self.__step = IntVar()
+        self.__step.set(value)
+        self.__act = StringVar()
+        self.__act.set(activity)
+        self.title(title)
+        self.resizable(width=False, height=False)
+        self.transient(root)
+        self.grab_set()
+        Label(self, textvariable = self.__act).pack(padx = 20, pady = 10)
+        Progressbar(self, orient = HORIZONTAL, length = 200, 
+                variable = self.__step, mode = 'determinate').pack(
+                padx = 10, pady = 10)
+        self.update_idletasks()
+
+    def setactivity(self, activity):
+        self.__act.set(activity)
+        self.update_idletasks()
+
+    def setvalue(self, value):
+        if not value == self.__step.get():
+            self.__step.set(value)
+            self.update_idletasks()
+
+
+# ===================================================================================
+# Show Disk Directory
+# ===================================================================================
+
+def diskDir():
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskmaster.checkdevice(device.get()):
+        diskmaster.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or diskmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
+        return
+
+    # Read BAM
+    dbam = BAM(diskmaster.readblock(18, 0))
+    if not dbam.bam:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to read the BAM !')
+        return
+
+    # Draw content window
+    contentWindow = Toplevel(mainWindow)
+    contentWindow.title('Directory')
+    contentWindow.minsize(200, 100)
+    contentWindow.resizable(width=False, height=True)
+    contentWindow.transient(mainWindow)
+    contentWindow.grab_set()
+
+    l = Listbox(contentWindow, font = 'TkFixedFont', height = 24, width = 32)
+    l.pack(side='left', fill=BOTH)
+    s = Scrollbar(contentWindow, orient = VERTICAL, command = l.yview)
+    l['yscrollcommand'] = s.set
+    s.pack(side='right', fill='y')
+
+    # Print disk title
+    l.insert('end', ' ' + dbam.getheader())
+
+    # Get number of free blocks
+    blocksfree = dbam.getblocksfree()
+
+    # Print file entries
+    track  = 18
+    sector = 1
+    while track > 0:
+        block = diskmaster.readblock(track, sector)
+        if not block:
+          diskmaster.close()
+          contentWindow.quit()
+          messagebox.showerror('Error', 'Failed to read from disk !')
+          return
+
+        track  = block[0]
+        sector = block[1]
+        ptr    = 0
+        while ptr < 0xFF and block[ptr+0x02] > 0:
+            line  = ' '
+            line += str(int.from_bytes(block[ptr+0x1E:ptr+0x20], byteorder='little')).ljust(5)
+            line += '\"'
+            line += (PETtoASC(PETdelpadding(block[ptr+0x05:ptr+0x15])) + '\"').ljust(19)
+            line += FILETYPES[block[ptr+0x02] & 0x07]
+            if (block[ptr+0x02] & 0x40) > 0:  line += '<'
+            if (block[ptr+0x02] & 0x80) == 0: line += '*'
+            l.insert('end', line.upper())
+            ptr  += 0x20
+    
+    # Print free blocks
+    l.insert('end', ' ' + str(blocksfree) + ' BLOCKS FREE.')
+
+    diskmaster.close()
+    contentWindow.mainloop()
+    contentWindow.quit()
+
+
+# ===================================================================================
+# Format Disk
+# ===================================================================================
+
+def diskFormat():
+    # Draw parameter entry window
+    parameterWindow = Toplevel(mainWindow)
+    parameterWindow.title('Format Disk Parameters')
+    parameterWindow.resizable(width=False, height=False)
+    parameterWindow.transient(mainWindow)
+    parameterWindow.grab_set()
+
+    Label(parameterWindow, text='Disk title:').grid(row=0, sticky=W, padx=4, pady=4)
+    ent1 = Entry(parameterWindow)
+    ent1.insert(16, 'COMMODORE')
+    ent1.grid(row=0, column=1, padx=4)
+
+    Label(parameterWindow, text='Disk ident:').grid(row=1, sticky=W, padx=4, pady=4)
+    ent2 = Entry(parameterWindow)
+    ent2.insert(2, '64')
+    ent2.grid(row=1, column=1, padx=4)
+
+    Checkbutton(parameterWindow, text="Demagnetize the disk", variable=f_demag_var).grid(
+                            row=2, columnspan=2, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Bump the head", variable=f_bump_var).grid(
+                            row=3, columnspan=2, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Format 40 tracks", variable=f_extend_var).grid(
+                            row=4, columnspan=2, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Verify on the fly", variable=f_verify_var).grid(
+                            row=5, columnspan=2, sticky=W, padx=10, pady=4)
+
+    Button(parameterWindow, text='Start formatting', command=parameterWindow.quit).grid(
+                            row=6, columnspan=2, sticky=EW, padx=4, pady=4)
+    parameterWindow.mainloop()
+
+    diskName  = ent1.get().upper()
+    diskIdent = ent2.get().upper()
+    demag     = f_demag_var.get()
+    bump      = f_bump_var.get()
+    verify    = f_verify_var.get()
+    if f_extend_var.get() == 1: tracks = 40
+    else:                       tracks = 35
+    parameterWindow.destroy()
+
+    if len(diskName) < 1 or len(diskName) > 16 or not len(diskIdent) == 2:
+        messagebox.showerror('Error', 'Unsupported disk title or disk ident !')
+        return
+
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskmaster.checkdevice(device.get()):
+        diskmaster.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or diskmaster.fastuploadbin(FASTFORMAT_LOADADDR, FASTFORMAT_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastformat.bin !')
+        return
+
+    # Format the disk
+    if diskmaster.startfastformat(tracks, bump, demag, verify, diskName, diskIdent) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to send command !')
+        return
+
+    progress = Progressbox(mainWindow, 'Formatting disk', 'Formatting disk ...')
+    starttime = time.time()
+    diskmaster.timeout = 4
+    for x in range(tracks + 1):
+        progr = diskmaster.read(1)
+        if not progr or progr[0] > 0:
+            diskmaster.close()
+            progress.destroy()
+            messagebox.showerror('Error', 'Failed to format the disk !')
+            return
+        progress.setvalue(x * 100 // tracks)
+
+    # Finish all up
+    duration = time.time() - starttime
+    diskmaster.close()
+    progress.destroy()
+    messagebox.showinfo('Mission accomplished', 
+            'Formatting finished !\nDuration: ' + str(round(duration)) + ' sec')
+
+
+# ===================================================================================
+# Read Disk Image
+# ===================================================================================
+
+def diskRead():
+    # Draw parameter entry window
+    parameterWindow = Toplevel(mainWindow)
+    parameterWindow.title('Copy Disk Parameters')
+    parameterWindow.resizable(width=False, height=False)
+    parameterWindow.transient(mainWindow)
+    parameterWindow.grab_set()
+
+    r_extend_var = IntVar()
+    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=r_bam_var).grid(
+                            row=0, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Copy 40 tracks", variable=r_extend_var).grid(
+                            row=1, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Verify after copying", variable=r_verify_var).grid(
+                            row=2, sticky=W, padx=10, pady=4)
+    Button(parameterWindow, text='Select output file', command=parameterWindow.quit).grid(
+                            row=3, columnspan=2, sticky=EW, padx=4, pady=4)
+    parameterWindow.mainloop()
+
+    bamcopy = r_bam_var.get()
+    verify  = r_verify_var.get()
+    if r_extend_var.get() > 0:
+        tracks    = 40
+        allocated = 768
+    else:
+        tracks    = 35
+        allocated = 683
+    parameterWindow.destroy()
+
+    # Get output file
+    filename = filedialog.asksaveasfilename(title = 'Select output file',
+                filetypes = (("D64 files","*.d64"), ('All files','*.*')))
+    if not filename:
+        return
+
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskmaster.checkdevice(device.get()):
+        diskmaster.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or diskmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
+        return
+
+    # Create output file
+    try:
+        f = open(filename, 'wb')
+    except:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to create output file !')
+        return
+
+    # Fill output file with default values
+    for track in range(1, tracks + 1):
+        for sector in range(getsectors(track)):
+            f.write(b'\x4B' + b'\x01' * 255)
+
+    # Read BAM if necessary
+    progress = Progressbox(mainWindow, 'Reading from disk', 'Copy disk to D64 file ...')
+    if bamcopy > 0:
+        dbam = BAM(diskmaster.readblock(18, 0))
+        if not dbam.bam:
+            f.close()
+            diskmaster.close()
+            progress.destroy()
+            messagebox.showerror('Error', 'Failed to read the BAM !')
+            return
+        allocated = dbam.getallocated()
+        if tracks > 35:
+            allocated += 85
+
+    # Read disk
+    copied = 0
+    errors = 0
+    starttime = time.time()
+    for track in range(1, tracks + 1):
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
+
+        # Cancel sectors without BAM entry
+        if bamcopy > 0 and track < 36:
+            for x in range(secnum):
+                if dbam.blockisfree(track, x): sectors.remove(x)
+
+        # Optimize order of sectors for speed
+        sector  = trackgap * (track - 1)
+        counter = len(sectors)
+        while counter:
+            sector %= secnum
+            while not sector in sectors:
+                sector += 1
+                if sector >= secnum: sector = 0
+            seclist.append(sector)
+            sectors.remove(sector)
+            sector  += interleave
+            counter -= 1
+
+        # Send command to disk drive, if there's something to read on track
+        progress.setactivity('Copy disk to D64 file ...' +
+                '\nTrack: ' + str(track) + ' of ' + str(tracks))
+        seclen = len(seclist)
+        if seclen > 0:
+            if diskmaster.startfastread(track, seclist) > 0:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return
+
+        # Read track
+        diskmaster.timeout = 3
+        for sector in seclist:
+            f.seek(getfilepointer(track, sector))
+            block = diskmaster.getblockgcr()
+            if not block:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return
+            if not len(block) == 256:
+                errors += 1
+            else:
+                f.write(block)
+            diskmaster.timeout = 1
+            copied += 1
+        progress.setvalue(copied * 100 // allocated)
+
+    # Finish all up
+    if verify == 0:
+        diskmaster.executememory(MEMCMD_SETTRACK18)
+    duration = time.time() - starttime
+    f.close()
+    diskmaster.close()
+    progress.destroy()
+    if verify > 0:
+        diskVerify(filename, bamcopy, tracks)
+    else:
+        messagebox.showinfo('Mission accomplished', 
+            'Copying finished !\nRead Errors: ' + str(errors) + 
+            '\nDuration: ' + str(round(duration)) + ' sec')
+
+
+# ===================================================================================
+# Write Disk Image
+# ===================================================================================
+
+def diskWrite():
+    # Draw parameter entry window
+    parameterWindow = Toplevel(mainWindow)
+    parameterWindow.title('Copy Disk Parameters')
+    parameterWindow.resizable(width=False, height=False)
+    parameterWindow.transient(mainWindow)
+    parameterWindow.grab_set()
+
+    Checkbutton(parameterWindow, text="Copy only blocks with BAM entry", variable=w_bam_var).grid(
+                            row=0, sticky=W, padx=10, pady=4)
+    Checkbutton(parameterWindow, text="Verify after copying", variable=w_verify_var).grid(
+                            row=1, sticky=W, padx=10, pady=4)
+    Button(parameterWindow, text='Select input file', command=parameterWindow.quit).grid(
+                            row=2, columnspan=2, sticky=EW, padx=4, pady=4)
+    parameterWindow.mainloop()
+
+    bamcopy   = w_bam_var.get()
+    verify    = w_verify_var.get()
+    tracks    = 35
+    allocated = 683
+    parameterWindow.destroy()
+
+    # Get output file
+    filename = filedialog.askopenfilename(title = 'Select input file',
+                filetypes = (("D64 files","*.d64"), ('All files','*.*')))
+    if not filename:
+        return
+
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskmaster.checkdevice(device.get()):
+        diskmaster.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or diskmaster.fastuploadbin(FASTWRITE_LOADADDR, FASTWRITE_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastwrite.bin !')
+        return
+
+    # Open input file
+    try:
+        filesize = os.stat(filename).st_size
+        f = open(filename, 'rb')
+    except:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to open input file !')
+        return
+
+    # Check input file
+    if not filesize == getfilepointer(tracks + 1, 0):
+        if filesize == getfilepointer(41, 0):
+            messagebox.showinfo('Warning', 
+                'This is a disk image with 40 tracks!')
+            tracks    = 40
+            allocated = 768
+        else:
+            f.close()
+            diskmaster.close()
+            messagebox.showerror('Error', 'Wrong input file size !')
+            return
+
+    # Read BAM if necessary
+    if bamcopy > 0:
+        f.seek(getfilepointer(18, 0))
+        fbam = BAM(f.read(256))
+        allocated = fbam.getallocated()
+        if tracks > 35: allocated += 85
+
+    # Write disk
+    copied = 0
+    progress = Progressbox(mainWindow, 'Writing to disk', 'Copy D64 file to disk ...')
+    starttime = time.time()
+    for track in range(1, tracks + 1):
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
+
+        # Cancel sectors without BAM entry
+        if bamcopy > 0 and track < 36:
+            for x in range(secnum):
+                if fbam.blockisfree(track, x): sectors.remove(x)
+
+        # Optimize order of sectors for speed
+        sector  = trackgap * (track - 1)
+        counter = len(sectors)
+        while counter:
+            sector %= secnum
+            while not sector in sectors:
+                sector += 1
+                if sector >= secnum: sector = 0
+            seclist.append(sector)
+            sectors.remove(sector)
+            sector  += interleave
+            counter -= 1
+
+        # Send command to disk drive, if there's something to write on track
+        progress.setactivity('Copy D64 file to disk ...' +
+                '\nTrack: ' + str(track) + ' of ' + str(tracks))
+        seclen = len(seclist)
+        if seclen > 0:
+            if diskmaster.startfastwrite(track, seclist) > 0:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to write on disk !')
+                return
+
+        # Write track
+        diskmaster.timeout = 3
+        for sector in seclist:
+            f.seek(getfilepointer(track, sector))
+            if diskmaster.sendblockgcr(f.read(256)) > 0:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to write on disk !')
+                return
+            copied += 1
+        if seclen > 0:  diskmaster.read(1);
+        progress.setvalue(copied * 100 // allocated)
+
+    # Finish all up
+    if verify == 0:
+        diskmaster.executememory(MEMCMD_SETTRACK18)
+    duration = time.time() - starttime
+    f.close()
+    diskmaster.close()
+    progress.destroy()
+    if verify > 0:
+        diskVerify(filename, bamcopy, tracks)
+    else:
+        messagebox.showinfo('Mission accomplished', 
+            'Copying finished !\nDuration: ' + str(round(duration)) + ' sec')
+
+
+# ===================================================================================
+# Verify Disk Image
+# ===================================================================================
+
+def diskVerify(filename, bamcopy, tracks):
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTUPLOAD_LOADADDR, FASTUPLOAD_BIN) > 0 \
+    or diskmaster.fastuploadbin(FASTREAD_LOADADDR, FASTREAD_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastread.bin !')
+        return
+
+    # Open image file
+    try:
+        f = open(filename, 'rb')
+    except:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to open image file !')
+        return
+
+    # Read BAM if necessary
+    progress = Progressbox(mainWindow, 'Verifying disk', 'Verify disk image ...')
+    allocated = getsectornumber(tracks + 1, 0)
+    if bamcopy > 0:
+        dbam = BAM(diskmaster.readblock(18, 0))
+        if not dbam.bam:
+            f.close()
+            diskmaster.close()
+            progress.destroy()
+            messagebox.showerror('Error', 'Failed to open BAM !')
+            return
+        f.seek(getfilepointer(18, 0))
+        fbam = BAM(f.read(256))
+        if not dbam.bam == fbam.bam:
+            f.close()
+            diskmaster.close()
+            progress.destroy()
+            messagebox.showerror('Error', 'BAM mismatch !')
+            return
+        allocated = dbam.getallocated()
+        if tracks > 35:
+            allocated += 85
+
+    # Read disk
+    errors    = 0
+    verified  = 0
+    for track in range(1, tracks + 1):
+        secnum  = getsectors(track)
+        sectors = [x for x in range(secnum)]
+        seclist = []
+
+        # Cancel sectors without BAM entry
+        if bamcopy > 0 and track < 36:
+            for x in range(secnum):
+                if dbam.blockisfree(track, x): sectors.remove(x)
+
+        # Optimize order of sectors for speed
+        sector  = trackgap * (track - 1)
+        counter = len(sectors)
+        while counter:
+            sector %= secnum
+            while not sector in sectors:
+                sector += 1
+                if sector >= secnum: sector = 0
+            seclist.append(sector)
+            sectors.remove(sector)
+            sector  += interleave
+            counter -= 1
+
+        # Send command to disk drive, if there's something to read on track
+        seclen = len(seclist)
+        if seclen > 0:
+            if diskmaster.startfastread(track, seclist) > 0:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return
+
+        # Read track
+        diskmaster.timeout = 3
+        for sector in seclist:
+            f.seek(getfilepointer(track, sector))
+            fblock = f.read(256)
+            block  = diskmaster.getblockgcr()
+            if not block:
+                f.close()
+                diskmaster.close()
+                progress.destroy()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return
+            if not fblock == block:
+                errors += 1
+            verified += 1
+            diskmaster.timeout = 1
+        progress.setvalue(verified * 100 // allocated)
+        progress.setactivity('Verify disk image ...' +
+                '\nTrack: ' + str(track) + ' of ' + str(tracks) +
+                '\nSectors: ' + str(verified) + ' of ' + str(allocated) +
+                '\nErrors: ' + str(errors))
+
+    # Finish all up
+    diskmaster.executememory(MEMCMD_SETTRACK18)
+    f.close()
+    diskmaster.close()
+    progress.destroy()
+    messagebox.showinfo('Mission accomplished', 
+            'Verifying finished !\nErrors: ' + str(errors))
+
+
+# ===================================================================================
+# Load Files from Disk
+# ===================================================================================
+
+def loadFiles():
+
+    def readFile(fileindex):
+        # Create output file
+        filename  = cleanstring(directory.filelist[fileindex]['name']) + '.prg'
+        blocksize = directory.filelist[fileindex]['size']
+        try:
+            f = open(folder + '/' + filename, 'wb')
+        except:
+            messagebox.showerror('Error', 'Failed to create ' + filename + ' !')
+            return 1
+
+        # Start read operation
+        progress.setactivity('Transfering \"' + directory.filelist[fileindex]['name'] 
+                             + '\"\nto \"' + filename + '\" ...')
+        progress.setvalue(0)
+        track  = directory.filelist[fileindex]['track']
+        sector = directory.filelist[fileindex]['sector']
+        if diskmaster.startfastload(track, sector) > 0:
+            f.close()
+            messagebox.showerror('Error', 'Failed to start disk operation !')
+            return 1
+
+        # Read file from disk to output file
+        written = 0;
+        diskmaster.timeout = 4
+        while 1:
+            block = diskmaster.getblock(256)
+            diskmaster.timeout = 1
+            if not block:
+                f.close()
+                messagebox.showerror('Error', 'Failed to read from disk !')
+                return 1
+            written += 1
+            progress.setvalue(written * 100 // blocksize)
+            if block[0] == 0:
+                f.write(block[2:block[1]+1])
+                break
+            f.write(block[2:])
+
+        f.close()
+        return 0
+
+
+    # Establish serial connection
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showerror('Error', 'DiskMaster64 Adapter not found !')
+        return
+
+    # Check if IEC device ist present
+    if not diskmaster.checkdevice(device.get()):
+        diskmaster.close()
+        messagebox.showerror('Error', 'IEC device ' + str(device.get()) + ' not found !')
+        return
+
+    # Upload fast loader to disk drive RAM
+    if diskmaster.uploadbin(FASTLOAD_LOADADDR, FASTLOAD_BIN) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to upload fastload.bin !')
+        return
+
+    # Read directory
+    blocks = bytes()
+    if diskmaster.startfastload(18, 0) > 0:
+        diskmaster.close()
+        messagebox.showerror('Error', 'Failed to start disk operation !')
+        return
+
+    diskmaster.timeout = 4
+    while 1:
+        block = diskmaster.getblock(256)
+        diskmaster.timeout = 1
+        if not block:
+            diskmaster.close()
+            messagebox.showerror('Error', 'Failed to read directory !')
+            return
+        blocks += block
+        if block[0] == 0:
+            break
+
+    directory = Dir(blocks)
+
+    # Draw content window
+    contentWindow = Toplevel(mainWindow)
+    contentWindow.title('Copy PRG files from disk')
+    contentWindow.minsize(200, 100)
+    contentWindow.resizable(width=False, height=False)
+    contentWindow.transient(mainWindow)
+    contentWindow.grab_set()
+
+    actionFrame = Frame(contentWindow, borderwidth = 0)
+    l = Listbox(actionFrame, font = 'TkFixedFont', height = 16, width = 30,
+                             selectmode='extended')
+    l.pack(side='left', fill=BOTH)
+    s = Scrollbar(actionFrame, orient = VERTICAL, command = l.yview)
+    l['yscrollcommand'] = s.set
+    s.pack(side='right', fill='y')
+    actionFrame.pack()
+    Button(contentWindow, text='Copy selected file(s)', 
+            command=contentWindow.quit).pack(pady = 10)
+
+    # Print files
+    indices = list()
+    index = 0
+    for file in directory.filelist:
+        if file['type'] == 'PRG' and file['size'] > 0:
+            line  = str(file['size']).rjust(4) + '  '
+            line += ('"' + file['name'] + '"').ljust(20)
+            line += 'PRG'
+            l.insert('end', line)
+            indices.append(index)
+        index += 1
+
+    contentWindow.mainloop()
+    selected = l.curselection()
+
+    if selected:
+        folder = filedialog.askdirectory(title = 'Select output folder')
+        if not folder:
+            contentWindow.destroy()
+            diskmaster.close()
+            return
+
+        progress = Progressbox(mainWindow, 'Reading file from disk', '')
+        for i in selected:
+            readFile(indices[i])
+        progress.destroy()
+
+    contentWindow.destroy()
+    diskmaster.close()
+
+
+# ===================================================================================
+# Show File Content (HEX View)
+# ===================================================================================
+
+def showContent():
+    fileName = filedialog.askopenfilename(title = 'Select file for HEX view',
+                filetypes = (("D64 files","*.d64"), ("TAP files","*.tap"), 
+                            ("BIN files","*.bin"), ('All files','*.*')))
+    if not fileName:
+        return
+
+    try:
+        f = open(fileName, 'rb')
+    except:
+        messagebox.showerror('Error', 'Failed to open file !')
+        return
+
+    fileSize = os.stat(fileName).st_size
+
+    contentWindow = Toplevel(mainWindow)
+    contentWindow.title('File content')
+    contentWindow.minsize(200, 100)
+    contentWindow.resizable(width=False, height=True)
+    contentWindow.transient(mainWindow)
+    contentWindow.grab_set()
+
+    l = Listbox(contentWindow, font = 'TkFixedFont', height = 36, width = 73)
+    l.pack(side='left', fill=BOTH)
+    s = Scrollbar(contentWindow, orient = VERTICAL, command = l.yview)
+    l['yscrollcommand'] = s.set
+    s.pack(side='right', fill='y')
+
+    startAddr = 0
+
+    while (startAddr < fileSize):
+        bytesline = '%06X: ' % startAddr
+        asciiline = ' '
+        i = 0
+        while i < 16:
+            if startAddr + i < fileSize:
+                data = f.read(1)
+                bytesline += '%02X ' % data[0]
+                if (data[0] > 31): asciiline += chr(data[0])
+                else: asciiline += '.'
+            else:
+                bytesline += '   '
+                asciiline += ' '
+            i += 1
+        l.insert('end', bytesline + asciiline)
+        startAddr += 16
+    f.close()
+
+    contentWindow.mainloop()
+    contentWindow.quit()
+
+
+# ===================================================================================
+# Flash Firmware
+# ===================================================================================
+
+def flashFirmware():
+    # Show info
+    messagebox.showinfo('Flash Firmware', 
+            'Hold BOOT button while connecting the device to the USB port,\nthen press OK.')
+
+    # Establish USB connection
+    progress = Progressbox(mainWindow, 'Flashing firmware', 'Connecting to device ...')
+    try:
+        isp = Programmer()
+        isp.detect()
+    except:
+        progress.destroy()
+        messagebox.showerror('Error', 'Device not found or not in bootmode!')
+        return
+
+    # Erase chip
+    progress.setactivity('Erasing chip ...')
+    progress.setvalue(10)
+    try:
+        isp.erase()
+    except:
+        progress.destroy()
+        messagebox.showerror('Error', 'Erasing chip failed!')
+        return
+
+    # Flash firmware
+    progress.setactivity('Flashing firmware ...')
+    progress.setvalue(20)
+    try:
+        with open(FIRMWARE_BIN, 'rb') as f: data = f.read()
+        isp.flash_data(data)
+    except:
+        progress.destroy()
+        messagebox.showerror('Error', 'Flashing firmware failed!')
+        return
+
+    # Verify firmware
+    progress.setactivity('Verifying firmware ...')
+    progress.setvalue(80)
+    try:
+        isp.verify_data(data)
+    except:
+        progress.destroy()
+        messagebox.showerror('Error', 'Verifying firmware failed!')
+        return
+
+    progress.destroy()
+    isp.exit()
+
+    # Show info
+    messagebox.showinfo('Mission accomplished', 
+            'Firmware successfully flashed.')
+
+
+# ===================================================================================
+# Main Function
+# ===================================================================================
+
+mainWindow = Tk()
+mainWindow.title('DiskMaster64 v1.0')
+mainWindow.resizable(width=False, height=False)
+
+f_demag_var  = IntVar()
+f_bump_var   = IntVar()
+f_extend_var = IntVar()
+f_verify_var = IntVar()
+r_bam_var    = IntVar()
+r_verify_var = IntVar()
+w_bam_var    = IntVar()
+w_verify_var = IntVar()
+f_bump_var.set(1)
+r_bam_var.set(1)
+w_bam_var.set(1)
+
+device = IntVar()
+device.set(8)
+devices = [('#8',8), ('#9',9), ('#10',10), ('#11',11)]
+
+actionFrame = Frame(mainWindow, borderwidth = 2, relief = 'groove')
+Label(actionFrame, text = 'Floppy Disk Functions:').pack(pady = 5)
+deviceFrame = Frame(actionFrame, borderwidth = 0)
+for txt, val in devices:
+    Radiobutton(deviceFrame, text=txt, variable=device, value=val).grid(row=1,column=val-8,padx=5)
+deviceFrame.pack(pady = 5)
+Button(actionFrame, text = 'Format disk', command = diskFormat
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(actionFrame, text = 'Copy disk to D64 file', command = diskRead,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(actionFrame, text = 'Copy D64 file to disk', command = diskWrite,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(actionFrame, text = 'Copy PRG files from disk', command = loadFiles,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(actionFrame, text = 'Show disk directory', command = diskDir,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+actionFrame.pack(padx =10, pady = 10, ipadx = 5, ipady = 5, fill = 'x')
+
+specialFrame = Frame(mainWindow, borderwidth = 2, relief = 'groove')
+Label(specialFrame, text = 'Additional Functions:').pack(pady = 5)
+Button(specialFrame, text = 'Show file content (hex)', command = showContent,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+Button(specialFrame, text = 'Flash firmware', command = flashFirmware,
+            ).pack(padx = 10, pady = 2, fill = 'x')
+specialFrame.pack(padx =10, pady = 10, ipadx = 5, ipady = 5, fill = 'x')
+
+Button(mainWindow, text = 'Exit', command = mainWindow.quit).pack(pady = 10)
+
+mainWindow.mainloop()
