@@ -244,9 +244,9 @@ uint8_t IEC_readAsynch(void) {
 // Write byte via fast IEC
 void IEC_writeAsynch(uint8_t data) {
   T0_setperiod(3);                                  // set timer period to 3 floppy cycles
-  EA = 0;                                           // disable interrupts
   while(IEC_CLK_isHigh());                          // wait for 'READY TO RECEIVE'
-  IEC_CLK_setHigh(); IEC_DATA_setHigh();            // initially '0' - bits
+  IEC_DATA_setHigh();                               // release DATA line
+  EA = 0;                                           // disable interrupts
   while(IEC_CLK_isLow());                           // wait for 'LETS GO'
   T0_start();                                       // start timer
   if(data & 0b00001000) IEC_CLK_setLow();           // set data bit 3

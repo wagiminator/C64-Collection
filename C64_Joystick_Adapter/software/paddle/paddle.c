@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   C64 Paddle to USB Adapter for CH551, CH552 and CH554
-// Version:   v1.1
+// Version:   v1.2
 // Year:      2023
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator

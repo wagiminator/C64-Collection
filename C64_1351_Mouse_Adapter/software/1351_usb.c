@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   1351 Mouse to USB Adapter for CH551, CH552 and CH554
-// Version:   v1.2
+// Version:   v1.3
 // Year:      2023
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator

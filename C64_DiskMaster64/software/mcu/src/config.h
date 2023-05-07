@@ -11,7 +11,7 @@
 #define PIN_CLK             P17       // pin connected to IEC CLK (clock)
 
 // Firmware parameters
-#define VERSION             "1.0"     // version number sent via serial if requested
+#define VERSION             "1.1"     // version number sent via serial if requested
 #define IDENT      "DiskMaster64"     // identifier sent via serial if requested
 
 // USB device descriptor

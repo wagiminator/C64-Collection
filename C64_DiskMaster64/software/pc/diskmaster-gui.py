@@ -880,12 +880,19 @@ def showContent():
 # ===================================================================================
 
 def flashFirmware():
-    # Show info
-    messagebox.showinfo('Flash Firmware', 
-            'Hold BOOT button while connecting the device to the USB port,\nthen press OK.')
-
-    # Establish USB connection
+    # Establish serial connection
     progress = Progressbox(mainWindow, 'Flashing firmware', 'Connecting to device ...')
+    diskmaster = Adapter()
+    if not diskmaster.is_open:
+        messagebox.showinfo('Flash Firmware', 
+            'Hold BOOT button while connecting the device to the USB port,\nthen press OK.')
+    else:
+        progress.setactivity('Setting device to bootmode ...')
+        diskmaster.sendcommand(CMD_BOOTLOADER)
+        diskmaster.close()
+        time.sleep(1)
+
+    # Establish ISP connection
     try:
         isp = Programmer()
         isp.detect()

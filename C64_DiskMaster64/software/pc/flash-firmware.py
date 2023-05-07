@@ -41,13 +41,14 @@ print('--------------------------------------------------')
 
 diskmaster = Adapter()
 if diskmaster.is_open:
+    print('DiskMaster64 found on port', diskmaster.port)
     print('Setting device to bootmode ...')
     diskmaster.sendcommand(CMD_BOOTLOADER)
     diskmaster.close()
     time.sleep(1)
 
 try:
-    print('Connecting to device ...')
+    print('Connecting to bootloader ...')
     isp = Programmer()
     isp.detect()
     print('FOUND:', isp.chipname, 'with bootloader v' + isp.bootloader + '.')

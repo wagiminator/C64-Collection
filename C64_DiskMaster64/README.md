@@ -52,9 +52,11 @@ For Windows, you need the [CH372 driver](http://www.wch-ic.com/downloads/CH372DR
 #### Entering CH55x Bootloader Mode
 A brand new chip starts automatically in bootloader mode as soon as it is connected to the PC via USB. Once firmware has been uploaded, the bootloader must be started manually for new uploads. To do this, the board must first be disconnected from the USB port and all voltage sources. Now press the BOOT button and keep it pressed while reconnecting the board to the USB port of your PC. The chip now starts again in bootloader mode, the BOOT button can be released and new firmware can be uploaded within the next couple of seconds.
 
+If a DiskMaster64 firmware is already installed, the corresponding Python scripts can also put the microcontroller into boot mode on the software side. In this case, it is no longer necessary to press the BOOT button.
+
 ### Preparing the Device for Uploading
 - Disconnect the device from the floppy disk drive and the USB port. 
-- Press the BOOT button on the device and keep it pressed while connecting to the USB port.
+- Press the BOOT button on the device and keep it pressed while connecting to the USB port. Pressing the BOOT button is not required if DiskMaster64 firmware is already installed and one of the Python scripts is used for uploading.
 - Use one of the following methods:
 
 ### If using the graphical front end (recommended)
@@ -75,11 +77,11 @@ Install the [Arduino IDE](https://www.arduino.cc/en/software) if you haven't alr
 - Go to **Tools** and choose the following board options:
   - **Clock Source:**   16 MHz (internal)
   - **Upload Method:**  USB
-  - **USB Settings:**   USER CODE /w 148B USB RAM
+  - **USB Settings:**   USER CODE /w 0B USB RAM
 - Connect the board and make sure the CH55x is in bootloader mode. 
 - Click **Upload**.
 
-### If using the makefile (Linux/Mac)
+### If using the makefile (Linux)
 #### Installing SDCC Toolchain for CH55x
 Install the [SDCC Compiler](https://sdcc.sourceforge.net/). In order for the programming tool to work, Python3 must be installed on your system. To do this, follow these [instructions](https://www.pythontutorial.net/getting-started/install-python/). In addition [pyusb](https://github.com/pyusb/pyusb) must be installed. On Linux (Debian-based), all of this can be done with the following commands:
 

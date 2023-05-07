@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskMaster64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.0
+// Version:   v1.1
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
@@ -59,16 +59,42 @@
 // ===================================================================================
 
 // Libraries
-#include <config.h>                       // user configurations
-#include <system.h>                       // system clock functions
-#include <delay.h>                        // for delays
-#include <usb_cdc.h>                      // for USB-CDC serial
-#include <iec.h>                          // for IEC bus functions
+#include "src/config.h"                   // user configurations
+#include "src/system.h"                   // system clock functions
+#include "src/delay.h"                    // for delays
+#include "src/timer.h"                    // for timers
+#include "src/usb_cdc.h"                  // for USB-CDC serial
+#include "src/iec.h"                      // for IEC bus functions
 
 // Prototypes for used interrupts
 void USB_interrupt(void);
 void DeviceUSBInterrupt(void) __interrupt (INT_NO_USB) {
   USB_interrupt();
+}
+
+// ===================================================================================
+// Alternative Watchdog Implementation
+// ===================================================================================
+
+// Watchdog variables
+volatile __idata uint8_t WDT_counter;               // watchdog cycle counter
+
+// Start watchdog
+inline void WDT_begin(void) {
+  WDT_counter = T1_CYCLES;                          // reset cycle counter (~4sec)
+  T1_init();                                        // init timer1
+  T1_start();                                       // start timer1
+}
+
+// Restart watchdog
+inline void WDT_restart(void) {
+  T1_reset();                                       // reset timer1
+  WDT_counter = T1_CYCLES;                          // reset cycle counter (~4sec)
+}
+
+// Watchdog interrupt service routine
+void WDT_interrupt(void) __interrupt (INT_NO_TMR1) {
+  if(!--WDT_counter) RST_now();                     // dec counter; reset when zero
 }
 
 // ===================================================================================
@@ -117,7 +143,7 @@ void IEC_readBlock(uint16_t cnt) {
   uint8_t data;                                     // for data bytes
   uint16_t len = cnt;                               // buffer length
   __xdata uint8_t* ptr = BUF_buffer;                // buffer pointer
-  //WDT_reset();                                      // reset watchdog
+  WDT_restart();                                    // restart watchdog
   while(IEC_DATA_isHigh());                         // wait for 'READING BLOCK COMPLETE'
   if(IEC_CLK_isLow()) {                             // 'READ ERROR' ?
     CDC_writeflush(1);                              // send 'READ ERROR' to PC
@@ -144,7 +170,7 @@ void IEC_writeBlock(uint16_t cnt) {
   __xdata uint8_t* ptr = BUF_buffer;                // buffer pointer
   if(!cnt) cnt = 256;                               // 256 bytes if cnt = 0
   len = cnt;                                        // save length
-  //WDT_reset();                                      // reset watchdog
+  WDT_restart();                                    // restart watchdog
   CDC_writeflush(0);                                // request sector data from PC
   while(len--) *ptr++ = CDC_read();                 // read data block from PC to buffer
   ptr = BUF_buffer;                                 // reset buffer pointer
@@ -217,7 +243,7 @@ void IEC_format(void) {
   if(IEC_sendCommand()) return;                     // send command to drive (return if error)
   cnt = BUF_buffer[6] + 1;                          // get number of tracks
   while(!IEC_error && cnt--) {                      // for each track:
-    //WDT_reset();                                    // reset watchdog
+    WDT_restart();                                  // restart watchdog
     while(IEC_DATA_isHigh());                       // wait for track complete
     IEC_error = IEC_CLK_isLow();                    // get return code
     CDC_writeflush(IEC_error);                      // send return code to PC
@@ -244,18 +270,24 @@ enum {NOP, LISTEN, UNLISTEN, TALK, UNTALK, READBYTE, READBYTES, READRAW,
       GETATN, SETATN, RELATN, GETCLK, SETCLK, RELCLK, GETDATA, SETDATA, RELDATA};
 
 void main(void) {
+  // Check if device has to be set to boot mode
+  if(RST_getKeep()) {                                 // boot command prior to reset?
+    RST_keep(0);                                      // reset KEEP value
+    BOOT_now();                                       // jump to bootloader
+  }
+
   // Setup
-  CLK_config();                               // configure system clock
-  DLY_ms(10);                                 // wait for clock to stabilize
-  CDC_init();                                 // init USB CDC
-  IEC_init();                                 // init IEC
-  //WDT_start();                                 // start watchdog timer
+  CLK_config();                                       // configure system clock
+  DLY_ms(10);                                         // wait for clock to stabilize
+  CDC_init();                                         // init USB CDC
+  IEC_init();                                         // init IEC
+  WDT_begin();                                        // start watchdog timer
 
   // Loop
   while(1) {
     uint8_t cmd;
     PIN_high(PIN_LED);                                // turn off LED
-    while(!CDC_available()); //WDT_reset();           // wait for command byte
+    while(!CDC_available()) WDT_restart();            // wait for command byte
     PIN_low(PIN_LED);                                 // turn on LED
     cmd = CDC_read();                                 // read command byte
     CMD_get();                                        // get arguments
@@ -272,7 +304,7 @@ void main(void) {
       case 'm':         IEC_readMem(); break;         // read memory
       case 'c':         IEC_sendCommand(); break;     // send command to IEC device
       case 't':         IEC_getStatus(); break;       // get status from IEC device
-      case 'b':         BOOT_now(); break;            // start bootloader
+      case 'b':         RST_keep(1);RST_now(); break; // reset and start bootloader
 
       // Low-level commands
       case LISTEN:      IEC_listen(IEC_device, 0x0F); break;            //  1 01
@@ -292,7 +324,7 @@ void main(void) {
 //    case RESET:       break;                                          // 15 0F
       case RELEASE:     IEC_release(); break;                           // 16 10
       case GETDEVICE:   CDC_write(IEC_device); break;                   // 17 11
-      case SETDEVICE:   IEC_device = BUF_buffer[1]; break;                 // 18 12
+      case SETDEVICE:   IEC_device = BUF_buffer[1]; break;              // 18 12
       case GETEOI:      CDC_write(IEC_EOI); break;                      // 19 13
       case SETEOI:      IEC_EOI = 1; break;                             // 20 14
       case CLREOI:      IEC_EOI = 0; break;                             // 21 15

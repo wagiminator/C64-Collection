@@ -14,8 +14,8 @@ INCLUDE    = src
 
 # Microcontroller Settings
 FREQ_SYS   = 12000000
-XRAM_LOC   = 0x0080
-XRAM_SIZE  = 0x0380
+XRAM_LOC   = 0x0000
+XRAM_SIZE  = 0x0400
 CODE_SIZE  = 0x3800
 
 # Toolchain
