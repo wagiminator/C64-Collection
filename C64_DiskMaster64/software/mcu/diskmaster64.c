@@ -1,6 +1,6 @@
 // ===================================================================================
 // Project:   DiskMaster64 - USB to Commodore Floppy Disk Drive Adapter
-// Version:   v1.1
+// Version:   v1.2
 // Year:      2022
 // Author:    Stefan Wagner
 // Github:    https://github.com/wagiminator
