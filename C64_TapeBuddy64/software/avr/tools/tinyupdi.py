@@ -526,7 +526,7 @@ class Programmer(Serial):
         try:
             f = open(filename, 'rb')
         except:
-            return false
+            return False
         data = f.read()
         f.close()
         print('Performing chip erase ...')
