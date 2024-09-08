@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DiskBuddy64 - Python Script - Graphical User Interface
-# Version:   v1.5.1
+# Version:   v1.5.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -73,16 +73,16 @@ class Progressbox(Toplevel):
         Progressbar(self, orient = HORIZONTAL, length = 200, 
                 variable = self.__step, mode = 'determinate').pack(
                 padx = 10, pady = 10)
-        self.update_idletasks()
+        self.update()
 
     def setactivity(self, activity):
         self.__act.set(activity)
-        self.update_idletasks()
+        self.update()
 
     def setvalue(self, value):
         if not value == self.__step.get():
             self.__step.set(value)
-            self.update_idletasks()
+            self.update()
 
 
 # ===================================================================================

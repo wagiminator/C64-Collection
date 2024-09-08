@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===================================================================================
 # Project:   DumpMaster64 - Python Script - Read Disk Image to D64 File
-# Version:   v1.3.1
+# Version:   v1.3.2
 # Year:      2022
 # Author:    Stefan Wagner
 # Github:    https://github.com/wagiminator
@@ -73,16 +73,16 @@ class Progressbox(Toplevel):
         Progressbar(self, orient = HORIZONTAL, length = 200, 
                 variable = self.__step, mode = 'determinate').pack(
                 padx = 10, pady = 10)
-        self.update_idletasks()
+        self.update()
 
     def setactivity(self, activity):
         self.__act.set(activity)
-        self.update_idletasks()
+        self.update()
 
     def setvalue(self, value):
         if not value == self.__step.get():
             self.__step.set(value)
-            self.update_idletasks()
+            self.update()
 
 
 # ===================================================================================
@@ -860,7 +860,7 @@ def tapeRead():
 
     # Send read command to DumpMaster64 and wait for PLAY pressed
     text1 = canvas.create_text(128, 150, text='PRESS PLAY ON TAPE', fill='black', anchor='c', font=('Helvetica', 12, 'bold'))
-    contentWindow.update_idletasks()
+    contentWindow.update()
     dumpmaster.sendcommand(CMD_READTAPE)
     while 1:
         response = dumpmaster.read(1)
@@ -877,7 +877,7 @@ def tapeRead():
     canvas.delete(text1)
     text1 = canvas.create_text(128, 150, text='SEARCHING', fill='black', anchor='c', font=('Helvetica', 12, 'bold'))
     line1 = canvas.create_line(0, 0, 0, 128, fill='black')
-    contentWindow.update_idletasks()
+    contentWindow.update()
 
     # Receive data from DumpMaster64 and write to output file
     count     = 0
@@ -919,12 +919,12 @@ def tapeRead():
             if count == 1:
                 canvas.delete(text1)
                 text1 = canvas.create_text(128, 150, text='READING FROM TAPE', fill='black', anchor='c', font=('Helvetica', 12, 'bold'))
-                contentWindow.update_idletasks()
+                contentWindow.update()
             if count % 32 == 0:
                 x = (count // 32 + 2) % 256
                 canvas.delete(line1)
                 line1 = canvas.create_line(x, 0, x, 128, fill='black')
-                contentWindow.update_idletasks()
+                contentWindow.update()
         
     taptime  = taptime * 8 // 1000000 + 1
     f.seek(16)
