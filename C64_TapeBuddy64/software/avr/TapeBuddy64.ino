@@ -108,7 +108,7 @@
 #define TAP_BUF_LEN   128         // tape buffer length (must be power of 2)
 
 // Identifiers
-#define VERSION     "1.1"         // version number sent via serial if requested
+#define VERSION     "1.2"         // version number sent via serial if requested
 #define IDENT       "TapeBuddy64" // identifier sent via serial if requested
 
 // Pin manipulation macros
@@ -207,6 +207,35 @@ ISR(RTC_CNT_vect) {
   RTC_timeout = 1;                                  // raise timeout flag
 }
 
+static inline void delay_us_runtime(uint16_t us) {
+  // @16 MHz: 1 us ≈ 16 cycles.
+  // _delay_loop_2 executes 4 cycles per iteration.
+  // i ≈ us * 16 / 4 = us * 4
+  uint16_t loops = us * 4;
+  _delay_loop_2(loops);
+}
+
+// avoid current surge when starting motor
+void motor_soft_start(void) {
+  const uint8_t steps = 25;     // ramp steps
+  const uint16_t period_us = 1000; // PWM 1 ms (1000 Hz)
+
+  for (uint8_t duty = 1; duty <= steps; duty++) {
+    for (uint8_t i = 0; i < 10; i++) { 
+      uint16_t on_us  = (uint32_t)period_us * duty / steps;
+      uint16_t off_us = period_us - on_us;
+      
+      pinHigh(PIN_MOTOR);
+      delay_us_runtime(on_us);
+
+      pinLow(PIN_MOTOR); 
+      delay_us_runtime(off_us);
+    }
+  }
+  // full on
+  pinHigh(PIN_MOTOR);
+}
+
 // ===================================================================================
 // Datasette Port Interface Implementation - Setup
 // ===================================================================================
@@ -268,8 +297,9 @@ uint8_t TAP_buf_items(void) {
 ISR(PORTA_PORT_vect) {
   pinIntFlagClr(PIN_SENSE);                         // clear interrupt flag
   if(pinRead(PIN_SENSE)) pinLow(PIN_MOTOR);         // button released -> stop  motor
-  else                  pinHigh(PIN_MOTOR);         // button pressed  -> start motor
+  else                  motor_soft_start();         // button pressed  -> start motor
 }
+
 
 // ===================================================================================
 // Datasette Port Interface Implementation - Read from Tape
