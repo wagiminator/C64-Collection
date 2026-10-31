@@ -1,5 +1,5 @@
 # DiskBuddy64 - Connect your Commodore 1541 Floppy Disk Drive to a PC
-DiskBuddy64 is a minimal adapter that can interface a Commodore 1541(II) floppy disk drive to your PC via USB in order to read from and write on disks. It uses its own fast loader to minimize the transfer times. The DiskBuddy64 is controlled via a command line interface or a graphical front end written in Python.
+DiskBuddy64 is a minimal adapter that can interface a Commodore 1541(II) floppy disk drive to your PC via USB in order to read from and write on disks. It uses its own fast loader to minimize the transfer times. The DiskBuddy64 is controlled via a command line interface, a graphical front end written in Python, or a web app in your browser.
 
 The DiskBuddy64 is a proprietary interface. It does not turn the floppy disk drive into a standard USB mass storage device. Instead, it offers the ability to send low-level IEC commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk. Thanks to the integrated fast loader, the adapter reads or writes floppy disks at twelve times the normal speed, dumping an entire disk in about 32 seconds. DiskBuddy64 cannot read or write copy-protected disks.
 
@@ -40,7 +40,7 @@ For a more detailed explanation of some functional principle, I recommend Michae
 The DiskBuddy64 adapter bridges the gap between your PC and the Commodore 1541 floppy disk drives. It communicates with the floppy disk drive via bit banging of the IEC protocol and with the PC via the integrated USB-to-serial converter. The adapter also supports the proprietary protocol for faster data transmission. It essentially provides the basic functions of the IEC protocol in such a way that they can be called up from the PC using serial commands via USB. The source codes of the firmware can be found in the software/avr/ folder.
 
 ## PC
-The Python scripts provide the user interface on the PC. These control the adapter and thus the floppy disk drive via USB. Both command line tools and a simple graphical user interface are available. The Python scripts can be found in the software/pc/ folder.
+The Python scripts provide the user interface on the PC. These control the adapter and thus the floppy disk drive via USB. Both command line tools and a simple graphical user interface are available. The Python scripts can be found in the software/pc/ folder. There is also a [Web App](https://wagiminator.github.io/apps/d64-transfer/).
 
 ## D64 File Format
 DiskBuddy64 uses the D64 format to read or create disk images. The structure of a D64 file can be found [here](http://unusedino.de/ec64/technical/formats/d64.html). The D64 format is supported by all C64 emulators as well as by [SD2IEC](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP) and Pi1541.
@@ -86,7 +86,10 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 - Connect the adapter to your Commodore 1541(II) floppy disk drive via an IEC cable.
 - Connect the adapter to your PC via a USB cable.
 - Switch on your floppy disk drive.
-- Use the provided Python scripts in the software/pc/ folder on your PC.
+- Use the provided Python scripts in the software/pc/ folder or the [web app](https://wagiminator.github.io/apps/d64-transfer/) on your PC.
+
+## Web App
+The easiest way to access your floppy disk drive is by using the [Web App](https://wagiminator.github.io/apps/d64-transfer/). This only works in Chrome, Edge, or Opera browsers on a desktop PC.
 
 ## Graphical Front End
 - Execute the respective Python script on your PC: `python diskbuddy-gui.py`.
@@ -187,7 +190,7 @@ python flash-firmware.py
 ```
 
 ## Working with D64 Files
-There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [WebDrive](https://cbm8bit.com/webdrive/) on [cbm8bit.com](https://cbm8bit.com/). As a web application, it is platform-independent and requires no installation. In addition, you can even visualize the image of the diskette - very cool!
+There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [C64 Disk Editor](https://wagiminator.github.io/apps/d64-editor/). As a web application, it is platform-independent and requires no installation. With [C64 Disk Viewer](https://wagiminator.github.io/apps/d64-viewer/), you can even visualize the image of the diskette - very cool!
 
 ![DumpMaster64_output.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_output.png)
 
@@ -196,17 +199,20 @@ If you are looking for a command line tool for working with D64 files, [cc1541](
 # References, Links and Notes
 1. [SD2IEC Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
 2. [XU1541 Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
-3. [Michael Steil: Commodore Peripheral Bus](https://www.pagetable.com/?p=1018)
-4. [Michael Steil: A 256 Byte Autostart Fast Loader](https://www.pagetable.com/?p=568)
-5. [Michael Steil: Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08)
-6. [Jim Butterfield: How The VIC/64 Serial Bus Works](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.txt)
-7. [J. Derogee: IEC disected](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.pdf)
-8. [Immers/Neufeld/Moser: D64 File Format](http://unusedino.de/ec64/technical/formats/d64.html)
-9. [OpenCBM Software](https://github.com/OpenCBM/OpenCBM)
-10. [cc1541 Software](https://bitbucket.org/PTV_Claus/cc1541)
-11. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
-12. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
-13. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+3. [C64 Disk Viewer](https://wagiminator.github.io/apps/d64-viewer/)
+4. [C64 Disk Editor](https://wagiminator.github.io/apps/d64-editor/)
+5. [C64 Disk Transfer](https://wagiminator.github.io/apps/tap-transfer/)
+6. [Michael Steil: Commodore Peripheral Bus](https://www.pagetable.com/?p=1018)
+7. [Michael Steil: A 256 Byte Autostart Fast Loader](https://www.pagetable.com/?p=568)
+8. [Michael Steil: Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08)
+9. [Jim Butterfield: How The VIC/64 Serial Bus Works](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.txt)
+10. [J. Derogee: IEC disected](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.pdf)
+11. [Immers/Neufeld/Moser: D64 File Format](http://unusedino.de/ec64/technical/formats/d64.html)
+12. [OpenCBM Software](https://github.com/OpenCBM/OpenCBM)
+13. [cc1541 Software](https://bitbucket.org/PTV_Claus/cc1541)
+14. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
+15. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
+16. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 
 ![DiskBuddy64_stick5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick5.jpg)
 ![DiskBuddy64_stick6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick6.jpg)

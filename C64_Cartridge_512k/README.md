@@ -9,6 +9,10 @@ Most 512k (E)EPROMs should work. They usually have one of the following identifi
 # Creating your own Cartridge from PRG Files
 You can create a games/software collection with a selection menu on a single cartridge using the [MagicDesk Cartridge Generator](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/) software by Zzarko. You can also create a cartridge with just one game/program without a menu using the [Single PRG Cartridge Generator](https://github.com/Feandreu/mdeskcrtgenfsp) software by Feandreu. How it works is explained on the respective website. A BIN file containing the image for the cartridge is created in each case.
 
+An easier way to create your own cartridge is by using the [Web App](https://wagiminator.github.io/apps/cart-builder/).
+
+![C64_Cartridge_64k_256k_pic3.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_64k_256k_pic3.png)
+
 # Burning a BIN File to the (E)EPROM 
 There are numerous programming devices/EPROMers. The [MiniPRO TL866](https://aliexpress.com/wholesale?SearchText=MiniPro+TL866) is used in these instructions. This is available for around €50 and supports almost all (E)EPROMs.
 
@@ -35,5 +39,6 @@ In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EP
 1. [Original Hardware by Marko Šolajić](https://github.com/msolajic/c64-magic-desk-512k)
 2. [Original Software by Zzarko](https://bitbucket.org/zzarko/magic-desk-cartridge-generator/src/master/)
 3. [Single PRG Modification by Feandreu](https://github.com/Feandreu/mdeskcrtgenfsp)
-4. [minipro Software](https://gitlab.com/DavidGriffith/minipro/)
-5. [C64 Games](https://www.c64games.de/)
+4. [Cartridge Builder Web App](https://wagiminator.github.io/apps/cart-builder/)
+5. [minipro Software](https://gitlab.com/DavidGriffith/minipro/)
+6. [C64 Games](https://www.c64games.de/)

@@ -1,5 +1,5 @@
 # DumpMaster64 - Connect your Commodore Datasette or 1541 Floppy Disk Drive to your PC
-The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The DumpMaster64 is controlled via a command line interface or a graphical front end written in Python.
+The DumpMaster64 adapter bridges the gap between your modern PC and your ancient mass storage devices for the Commodore C64. It can interface Commodore 1541(II) floppy disk drives as well as Commodore C2N/1530 Datasettes. It is a combination of the [DiskBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_DiskBuddy64) and the [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64). The DumpMaster64 is controlled via a command line interface, a graphical front end written in Python, or a web app in your browser.
 
 The DumpMaster64 is a proprietary interface. It does not turn the floppy disk drive or the Datasette into a standard USB mass storage device. Instead, it offers the ability to send low-level commands back and forth over USB. The provided Python scripts were developed to support this interface and can directly access the floppy disk drive and the contents of an inserted floppy disk or read from and write on tapes. Thanks to the integrated fast loader, the adapter reads or writes floppy disks at twelve times the normal speed, dumping an entire disk in about 32 seconds. DumpMaster64 cannot read or write copy-protected disks.
 
@@ -74,7 +74,10 @@ Windows users may also need to install a [driver](http://www.wch.cn/download/CH3
 - Connect the adapter to your Datasette and/or your floppy disk drive(s).
 - Connect the adapter to a USB port of your PC.
 - Switch on your floppy disk drive(s) if connected.
-- Use the provided Python scripts in the software/pc/ folder on your PC.
+- Use the provided Python scripts in the software/pc/ folder on your PC or the web apps.
+
+## Web Apps
+The easiest way to access your floppy disk drive is by using the [C64 Disk Transfer Web App](https://wagiminator.github.io/apps/d64-transfer/). For the datasette use the [C64 Tape Transfer Web App](https://wagiminator.github.io/apps/tap-transfer/). Both web apps only work in Chrome, Edge, or Opera browsers on a desktop PC.
 
 ## Graphical User Interface
 - Execute the respective Python script on your PC: `python dumpmaster-gui.py`.
@@ -195,7 +198,7 @@ python flash-firmware.py
 |BUSY|Steady: device is accessing a disk or cassette<br>Flashing: device waits for the prompted key on the Datasette being pressed|
 
 ## Working with D64 Files
-There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [WebDrive](https://cbm8bit.com/webdrive/) on [cbm8bit.com](https://cbm8bit.com/). As a web application, it is platform-independent and requires no installation. In addition, you can even visualize the image of the diskette - very cool!
+There are numerous applications to create and modify D64 image files and add or delete PRG files yourself. The whole thing is very quick and easy, for example with [C64 Disk Editor](https://wagiminator.github.io/apps/d64-editor/). As a web application, it is platform-independent and requires no installation. With [C64 Disk Viewer](https://wagiminator.github.io/apps/d64-viewer/), you can even visualize the image of the diskette - very cool!
 
 ![DumpMaster64_output.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_output.png)
 
@@ -210,6 +213,8 @@ Slight deviations in the pulse lengths are compensated for and everything is ada
 If you want to convert the TAP file into a WAV audio file, then use the following command:
 `tapclean -wav outputfile.tap`
 There is also a graphical [front end](https://www.luigidifraia.com/software/) for TAPClean.
+
+The [C64 Tape Transfer Web App](https://wagiminator.github.io/apps/tap-transfer/) also provide some basic methods for cleaning TAP files.
 
 ## Datasette Head Alignment
 If you have problems loading programs from tape, the azimuth of the tape head may be out of position. Before setting the azimuth, however, all other causes of error should be ruled out. Try other cassettes first, as the tapes will age over time and the signals will weaken. Also clean the connector contacts with contact cleaner and the read head with isopropyl alcohol. If it still doesn't work, it's time for the screwdriver.
@@ -230,26 +235,30 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 3. [SD2IEC Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_SD2IEC_LP)
 4. [XU1541 Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_xu1541)
 5. [Tapuino Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_Tapuino)
-6. [Immers/Neufeld/Moser: D64 File Format](http://unusedino.de/ec64/technical/formats/d64.html)
-7. [Schepers/Sundell/Brenner: TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
-8. [Michael Steil: Commodore Peripheral Bus](https://www.pagetable.com/?p=1018)
-9. [Michael Steil: A 256 Byte Autostart Fast Loader](https://www.pagetable.com/?p=568)
-10. [Michael Steil: Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08)
-11. [Jim Butterfield: How The VIC/64 Serial Bus Works](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.txt)
-12. [J. Derogee: IEC disected](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.pdf)
-13. [Harrie De Ceukelaire: How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
-14. [Luigi Di Fraia: Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
-15. [Michael Steil: Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
-16. [OpenCBM Software](https://github.com/OpenCBM/OpenCBM)
-17. [cc1541 Software](https://bitbucket.org/PTV_Claus/cc1541)
-18. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
-19. [TAPClean Software](https://sourceforge.net/projects/tapclean/)
-20. [TAPClean Front End](https://www.luigidifraia.com/software/)
-21. [CBM: 1540/1541 Service Manual](http://www.zimmers.net/anonftp/pub/cbm/schematics/drives/new/1541/1540-1541_Disk_Drive_Service_Manual_314002-01_(1985_Nov).pdf)
-22. [CBM: Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
-23. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny804-06-07-1604-06-07-DataSheet-DS40002312A.pdf)
-24. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
-25. [AeroSemi: MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+6. [C64 Disk Viewer](https://wagiminator.github.io/apps/d64-viewer/)
+7. [C64 Disk Editor](https://wagiminator.github.io/apps/d64-editor/)
+8. [C64 Disk Transfer](https://wagiminator.github.io/apps/tap-transfer/)
+9. [C64 Tape Transfer](https://wagiminator.github.io/apps/tap-transfer/)
+10. [Immers/Neufeld/Moser: D64 File Format](http://unusedino.de/ec64/technical/formats/d64.html)
+11. [Schepers/Sundell/Brenner: TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
+12. [Michael Steil: Commodore Peripheral Bus](https://www.pagetable.com/?p=1018)
+13. [Michael Steil: A 256 Byte Autostart Fast Loader](https://www.pagetable.com/?p=568)
+14. [Michael Steil: Ultimate Commodore 1541 Drive Talk](https://youtu.be/_1jXExwse08)
+15. [Jim Butterfield: How The VIC/64 Serial Bus Works](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.txt)
+16. [J. Derogee: IEC disected](http://www.zimmers.net/anonftp/pub/cbm/programming/serial-bus.pdf)
+17. [Harrie De Ceukelaire: How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
+18. [Luigi Di Fraia: Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
+19. [Michael Steil: Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
+20. [OpenCBM Software](https://github.com/OpenCBM/OpenCBM)
+21. [cc1541 Software](https://bitbucket.org/PTV_Claus/cc1541)
+22. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
+23. [TAPClean Software](https://sourceforge.net/projects/tapclean/)
+24. [TAPClean Front End](https://www.luigidifraia.com/software/)
+25. [CBM: 1540/1541 Service Manual](http://www.zimmers.net/anonftp/pub/cbm/schematics/drives/new/1541/1540-1541_Disk_Drive_Service_Manual_314002-01_(1985_Nov).pdf)
+26. [CBM: Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
+27. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny804-06-07-1604-06-07-DataSheet-DS40002312A.pdf)
+28. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+29. [AeroSemi: MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
 
 ![DumpMaster64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_pic2.jpg)
 

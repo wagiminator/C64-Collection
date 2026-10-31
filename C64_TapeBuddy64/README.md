@@ -1,5 +1,5 @@
 # TapeBuddy64 - Connect your Commodore Datasette to a PC
-TapeBuddy64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to read from and write on tapes. It is an advanced version of the [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The TapeBuddy64 is controlled via a command line interface or a graphical front end written in Python.
+TapeBuddy64 is a simple and inexpensive adapter that can interface a Commodore Datasette to your PC via USB in order to read from and write on tapes. It is an advanced version of the [TapeDump64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64). The integrated USB to serial converter can also be used as a SerialUPDI programmer for the on-board ATtiny microcontroller, so that no additional hardware is required to flash the firmware. The TapeBuddy64 is controlled via a command line interface, a graphical front end written in Python, or a web app in your browser.
 
 ![TapeBuddy64_pic6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic6.jpg)
 
@@ -175,6 +175,9 @@ The following command line tools are available:
 ![TapeBuddy64_gui1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_gui1.jpg)
 ![TapeBuddy64_gui2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_gui2.jpg)
 
+## Web App
+The easiest way to access your datasette is by using the [C64 Tape Transfer Web App](https://wagiminator.github.io/apps/tap-transfer/). It only works in Chrome, Edge, or Opera browsers on a desktop PC.
+
 ## Status LEDs
 |LED|Description|
 |:-|:-|
@@ -191,6 +194,8 @@ Slight deviations in the pulse lengths are compensated for and everything is ada
 If you want to convert the TAP file into a WAV audio file, then use the following command:
 `tapclean -wav outputfile.tap`
 There is also a graphical [front end](https://www.luigidifraia.com/software/) for TAPClean.
+
+The [C64 Tape Transfer Web App](https://wagiminator.github.io/apps/tap-transfer/) also provide some basic methods for cleaning TAP files.
 
 ## Datasette Head Alignment
 If you have problems loading programs from tape, the azimuth of the tape head may be out of position. Before setting the azimuth, however, all other causes of error should be ruled out. Try other cassettes first, as the tapes will age over time and the signals will weaken. Also clean the connector contacts with contact cleaner and the read head with isopropyl alcohol. If it still doesn't work, it's time for the screwdriver.
@@ -209,19 +214,20 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 1. [TapeDump64 Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeDump64)
 2. [TrueTape64 Project](https://github.com/francescovannini/truetape64)
 3. [Tapuino Project](https://github.com/wagiminator/C64-Collection/tree/master/C64_Tapuino)
-4. [How Commodore Tapes Work](https://wav-prg.sourceforge.io/tape.html)
-5. [How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
-6. [Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
-7. [Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
-8. [TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
-9. [VICE Emulator File Formats](https://vice-emu.sourceforge.io/vice_17.html)
-10. [TAPClean](https://sourceforge.net/projects/tapclean/)
-11. [TAPClean Front End](https://www.luigidifraia.com/software/)
-12. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
-13. [Adjusting the Datassette Head Azimuth](https://theokoulis.com/index.php/2020/11/15/some-notes-on-adjusting-the-datassette-head-azimuth-on-the-vic-20/)
-14. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
-15. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
-16. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+4. [C64 Tape Transfer](https://wagiminator.github.io/apps/tap-transfer/)
+5. [How Commodore Tapes Work](https://wav-prg.sourceforge.io/tape.html)
+6. [How TurboTape Works](https://www.atarimagazines.com/compute/issue57/turbotape.html)
+7. [Analyzing C64 Tape Loaders](https://github.com/binaryfields/zinc64/blob/master/doc/Analyzing%20C64%20tape%20loaders.txt)
+8. [Archiving C64 Tapes Correctly](https://www.pagetable.com/?p=1002)
+9. [TAP File Format](https://ist.uwaterloo.ca/~schepers/formats/TAP.TXT)
+10. [VICE Emulator File Formats](https://vice-emu.sourceforge.io/vice_17.html)
+11. [TAPClean](https://sourceforge.net/projects/tapclean/)
+12. [TAPClean Front End](https://www.luigidifraia.com/software/)
+13. [Datasette Service Manual](https://www.vic-20.it/wp-content/uploads/C2N-1530-1531_service_manual.pdf)
+14. [Adjusting the Datassette Head Azimuth](https://theokoulis.com/index.php/2020/11/15/some-notes-on-adjusting-the-datassette-head-azimuth-on-the-vic-20/)
+15. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
+16. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+17. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
 
 ![TapeBuddy64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic1.jpg)
 ![TapeBuddy64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic3.jpg)
