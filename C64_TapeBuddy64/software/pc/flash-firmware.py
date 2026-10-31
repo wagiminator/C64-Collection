@@ -23,6 +23,7 @@
 # - Execute this skript: python flash-firmware.py
 
 
+import argparse
 import sys
 from libs.tinyupdi import Programmer, PrgError
 
@@ -39,8 +40,18 @@ FIRMWARE_TARGETS = {
 # Fuse settings
 FIRMWARE_FUSES = {0:0x00, 1:0x00, 2:0x01, 4:0x00, 5:0xC5, 6:0x04, 7:0x00, 8:0x00}
 
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description="Flash firmware for the TapeBuddy64 adapter.")
+parser.add_argument(
+    'firmware', 
+    type=str, 
+    default='libs/firmware.bin', 
+    help='Path to the firmware binary file (default: libs/firmware.bin)'
+)
+args = parser.parse_args()
+
 # Binary file
-FIRMWARE_BIN = 'libs/firmware.bin'
+FIRMWARE_BIN = args.firmware
 
 
 # Print Header
