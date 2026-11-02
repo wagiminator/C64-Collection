@@ -15,7 +15,7 @@ After starting the MiniPRO software, search in the IC database for the (E)EPROM 
 
 The (E)EPROM is now ready for use and can be plugged into the socket of the cartridge. Important: Pay attention to the alignment of the notch on the (E)EPROM! It must match the notch on the module PCB.
 
-The MiniPRO software is only available for Windows, but it also runs smoothly on Linux and Mac with WINE. Alternatively, the open source command line tool [minipro](https://gitlab.com/DavidGriffith/minipro/) is available for these operating systems.
+The MiniPRO software is only available for Windows, but it also runs smoothly on Linux and Mac with WINE. Alternatively, the open source command line tool [minipro](https://gitlab.com/DavidGriffith/minipro/) is available for these operating systems. You can also use the Python tool [tinypro](https://pypi.org/project/tinypro/) or the [XGecu Memory Programmer Web App](https://wagiminator.github.io/apps/tinypro/) for Chrome, Edge or Opera on a desktop computer.
 
 # Erasing an EPROM
 In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EPROMs cannot be overwritten with new data, but must first be erased with an EPROM eraser. This sends ultraviolet radiation into the EPROM. This erases the memory, which can then be rewritten. A cheap [EPROM eraser](https://aliexpress.com/wholesale?SearchText=eprom+eraser) is sufficient. Don't forget to remove any UV cover from the EPROM. The erasing process takes 10-15 minutes in most cases. The EPROM can then be written to again.
@@ -34,4 +34,7 @@ Take a look at the [manual](https://raw.githubusercontent.com/wagiminator/C64-Co
 # References, Links and Notes
 1. [Original Project by DDI](http://www.sys64738.net/ddifl/ddifl.htm)
 2. [Epyx Fastload Cartridge on Wikipedia](https://en.wikipedia.org/wiki/Epyx_Fast_Load)
-3. [minipro Software](https://gitlab.com/DavidGriffith/minipro/)
+3. [XGecu Programmer Web App](https://wagiminator.github.io/apps/tinypro/)
+4. [tinypro Python Tool](https://pypi.org/project/tinypro/)
+5. [minipro Software](https://gitlab.com/DavidGriffith/minipro/)
+6. [ATmega EEPROM Programmer](https://github.com/wagiminator/ATmega-EEPROM-Programmer)
