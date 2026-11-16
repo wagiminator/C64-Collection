@@ -148,6 +148,8 @@ optional arguments:
 Example: python disk-write.py -b -f game.d64
 ```
 
+Looking for something to write? The [C64-Games](https://github.com/wagiminator/C64-Games) repository contains several original games as D64 images with their own fastloader, which are a good test for the adapter and the floppy disk drive.
+
 ### Comparing D64 image file with floppy disk content (verify)
 ```
 python disk-verify.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] [-e ERRORS] -f FILE
@@ -185,6 +187,8 @@ python tape-write.py FILE
 
 Example: python tape-write.py inputfile.tap
 ```
+
+The games of the [C64-Games](https://github.com/wagiminator/C64-Games) repository are also available as TAP files with a turbo loader, ready to be written on tape.
 
 ### Flashing firmware to DiskBuddy64 adapter
 ```
@@ -259,6 +263,7 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 27. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny804-06-07-1604-06-07-DataSheet-DS40002312A.pdf)
 28. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 29. [AeroSemi: MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+30. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 ![DumpMaster64_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DumpMaster64/documentation/DumpMaster64_pic2.jpg)
 

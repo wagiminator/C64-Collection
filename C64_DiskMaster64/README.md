@@ -181,6 +181,8 @@ optional arguments:
 Example: python disk-write.py -b -f game.d64
 ```
 
+Looking for something to write? The [C64-Games](https://github.com/wagiminator/C64-Games) repository contains several original games as D64 images with their own fastloader, which are a good test for the adapter and the floppy disk drive.
+
 ### Comparing D64 image file with floppy disk content (verify)
 ```
 python3 disk-verify.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] [-e ERRORS] -f FILE
@@ -236,6 +238,7 @@ If you are looking for a command line tool for working with D64 files, [cc1541](
 16. [CH551/552 Datasheet](http://www.wch-ic.com/downloads/CH552DS1_PDF.html)
 17. [SDCC Compiler](https://sdcc.sourceforge.net/)
 18. [EasyEDA Design Files](https://oshwlab.com/wagiminator)
+19. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 ![DiskMaster64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskMaster64/documentation/DiskMaster64_pic3.jpg)
 ![DiskMaster64_pic4.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskMaster64/documentation/DiskMaster64_pic4.jpg)

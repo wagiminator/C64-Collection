@@ -160,6 +160,8 @@ optional arguments:
 Example: python disk-write.py -b -f game.d64
 ```
 
+Looking for something to write? The [C64-Games](https://github.com/wagiminator/C64-Games) repository contains several original games as D64 images with their own fastloader, which are a good test for the adapter and the floppy disk drive.
+
 ### Comparing D64 image file with floppy disk content (verify)
 ```
 python disk-verify.py [-h] [-b] [-d {8,9,10,11}] [-i INTER] [-e ERRORS] -f FILE
@@ -213,6 +215,7 @@ If you are looking for a command line tool for working with D64 files, [cc1541](
 14. [cbm8bit WebDrive](https://cbm8bit.com/webdrive/)
 15. [Microchip: ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
 16. [WCH: CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
+17. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 ![DiskBuddy64_stick5.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick5.jpg)
 ![DiskBuddy64_stick6.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_DiskBuddy64/documentation/DiskBuddy64_stick6.jpg)

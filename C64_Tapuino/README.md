@@ -24,6 +24,8 @@ Copy your TAP files to the SD card and insert the card into the SD card slot. Sw
 
 The game/program is now loaded to the C64 and the progress bar on the OLED display shows the loading status in percent.
 
+Turbo loaders work as well, since the Tapuino reproduces the exact pulse lengths of the TAP file. You can try this, for example, with the TAP files of the games in the [C64-Games](https://github.com/wagiminator/C64-Games) repository.
+
 ## Saving a File
 Writing data onto the SD card is just as easy as reading from the card. All you have to do is select the "Record" option in the menu. Here are the steps:
 
@@ -53,6 +55,7 @@ If you still have old tapes and a Commodore Datasette, you can use them to creat
 2. [Tapuino Tutorial (german)](https://www.mingos-commodorepage.com/tutorials/c64tapuino.php?title=Der%20Tapuino%20im%20Selbstbau)
 3. [TapeBuddy64](https://github.com/wagiminator/C64-Collection/tree/master/C64_TapeBuddy64)
 4. [C64 Games](https://www.c64games.de/)
+5. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 ![C64_Tapuino_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic3.jpg)
 ![C64_Tapuino_pic2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Tapuino/documentation/C64_Tapuino_pic2.jpg)

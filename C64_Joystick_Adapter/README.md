@@ -88,6 +88,7 @@ Install the [Arduino IDE](https://www.arduino.cc/en/software) if you haven't alr
 - Make sure you have installed the correct firmware for your C64 input device.
 - Connect your C64 input device via the 9-pin connector to the board.
 - Connect the board via USB to your PC. It should be detected as a HID device.
+- Now you can use your good old joystick with emulators, e.g. to play the games of the [C64-Games](https://github.com/wagiminator/C64-Games) repository in the [C64 Emulator Web App](https://wagiminator.github.io/apps/c64-emulator/).
 
 ![C64_Joystick_Adapter_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Joystick_Adapter/documentation/C64_Joystick_Adapter_pic3.jpg)
 
@@ -95,6 +96,7 @@ Install the [Arduino IDE](https://www.arduino.cc/en/software) if you haven't alr
 1. [EasyEDA Design Files](https://oshwlab.com/wagiminator)
 2. [CH551/552 Datasheet](http://www.wch-ic.com/downloads/CH552DS1_PDF.html)
 3. [SDCC Compiler](https://sdcc.sourceforge.net/)
+4. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 # License
 ![license.png](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)

@@ -166,6 +166,8 @@ The following command line tools are available:
 - Press <kbd>RECORD</kbd> on your Datasette when prompted.
 - The recording is done fully automatically. It stops when all data is written, the end of the cassette is reached, or when the <kbd>STOP</kbd> button on the Datasette is pressed.
 
+The games of the [C64-Games](https://github.com/wagiminator/C64-Games) repository are available as TAP files with a turbo loader, ready to be written on tape.
+
 ![TapeBuddy64_cli2.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_cli2.jpg)
 
 ## Graphical User Interface
@@ -228,6 +230,7 @@ To make the azimuth setting, there is a tiny screw hole above the rewind button 
 15. [ATtiny Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-204-402-404-406-DataSheet-DS40002318A.pdf)
 16. [CH340N Datasheet](https://datasheet.lcsc.com/lcsc/2101130932_WCH-Jiangsu-Qin-Heng-CH340N_C506813.pdf)
 17. [MT3608 Datasheet](https://datasheet.lcsc.com/lcsc/1811151539_XI-AN-Aerosemi-Tech-MT3608_C84817.pdf)
+18. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
 
 ![TapeBuddy64_pic1.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic1.jpg)
 ![TapeBuddy64_pic3.jpg](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_TapeBuddy64/documentation/TapeBuddy64_pic3.jpg)

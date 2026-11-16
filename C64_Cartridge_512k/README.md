@@ -11,6 +11,8 @@ You can create a games/software collection with a selection menu on a single car
 
 An easier way to create your own cartridge is by using the [Web App](https://wagiminator.github.io/apps/cart-builder/).
 
+The games of the [C64-Games](https://github.com/wagiminator/C64-Games) repository are also available as ready-to-burn 64 KB Magic Desk BIN files. You can also put their PRG files together with other programs on one cartridge using the web app.
+
 ![C64_Cartridge_64k_256k_pic3.png](https://raw.githubusercontent.com/wagiminator/C64-Collection/master/C64_Cartridge_64k_256k/documentation/C64_Cartridge_64k_256k_pic3.png)
 
 # Burning a BIN File to the (E)EPROM 
@@ -44,3 +46,4 @@ In contrast to EEPROMS (Electrically Erasable Programmable Read-only Memory), EP
 6. [tinypro Python Tool](https://pypi.org/project/tinypro/)
 7. [minipro Software](https://gitlab.com/DavidGriffith/minipro/)
 8. [C64 Games](https://www.c64games.de/)
+9. [C64-Games Repository](https://github.com/wagiminator/C64-Games)
